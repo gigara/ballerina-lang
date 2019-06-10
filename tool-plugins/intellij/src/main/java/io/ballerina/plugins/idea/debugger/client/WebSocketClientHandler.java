@@ -16,6 +16,7 @@
 
 package io.ballerina.plugins.idea.debugger.client;
 
+import com.intellij.openapi.diagnostic.Logger;
 import io.ballerina.plugins.idea.debugger.Callback;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -28,7 +29,6 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.CharsetUtil;
-import com.intellij.openapi.diagnostic.Logger;
 
 
 /**

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.remoteServer.util.CloudNotifier;
 import com.intellij.util.messages.MessageBusConnection;
 import io.ballerina.plugins.idea.sdk.BallerinaPathModificationTracker;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ public class BallerinaPreloadingActivity extends PreloadingActivity {
     private static final Logger LOGGER = Logger.getInstance(BallerinaPreloadingActivity.class);
     private static final String launcherScriptPath = "lib/tools/lang-server/launcher";
     private static final String ballerinaSourcePath = "lib/repo";
+    private static CloudNotifier notifier = new CloudNotifier("Language Server Protocol client:");
 
     /**
      * Preloading of the ballerina plugin.

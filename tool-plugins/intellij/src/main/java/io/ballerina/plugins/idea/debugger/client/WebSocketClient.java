@@ -16,6 +16,7 @@
 
 package io.ballerina.plugins.idea.debugger.client;
 
+import com.intellij.openapi.diagnostic.Logger;
 import io.ballerina.plugins.idea.debugger.Callback;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -35,7 +36,6 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketCl
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -67,7 +67,7 @@ public class WebSocketClient {
      * @return true if the handshake is done properly.
      * @throws URISyntaxException   throws if there is an error in the URI syntax.
      * @throws InterruptedException throws if the connecting the server is interrupted.
-     * @throws SSLException throws if any SSL error is occurred.
+     * @throws SSLException         throws if any SSL error is occurred.
      */
     public boolean handshake(Callback callback) throws InterruptedException, URISyntaxException, SSLException {
         boolean isDone;
