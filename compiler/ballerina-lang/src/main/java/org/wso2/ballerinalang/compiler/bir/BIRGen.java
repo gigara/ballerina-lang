@@ -632,7 +632,7 @@ public class BIRGen extends BLangNodeVisitor {
     public void visit(BLangSimpleVariable varNode) {
         BIRGlobalVariableDcl birVarDcl = new BIRGlobalVariableDcl(varNode.pos, varNode.symbol.flags,
                                                                   varNode.symbol.type, this.env.nextGlobalVarId(names),
-                                                                  VarScope.GLOBAL, VarKind.GLOBAL);
+                                                                  VarScope.GLOBAL, VarKind.GLOBAL, varNode.name);
         this.env.enclPkg.globalVars.add(birVarDcl);
 
         this.env.globalVarMap.put(varNode.symbol, birVarDcl);
@@ -1257,7 +1257,7 @@ public class BIRGen extends BLangNodeVisitor {
         BSymbol symbol = astPackageVarRefExpr.symbol;
         if ((symbol.tag & SymTag.CONSTANT) == SymTag.CONSTANT) {
             return new BIRGlobalVariableDcl(astPackageVarRefExpr.pos, symbol.flags, symbol.type, symbol.pkgID,
-                    symbol.name, VarScope.GLOBAL, VarKind.CONSTANT);
+                    symbol.name, VarScope.GLOBAL, VarKind.CONSTANT, astPackageVarRefExpr.variableName);
         }
 
         return this.env.globalVarMap.get(symbol);

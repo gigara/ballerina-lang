@@ -148,7 +148,7 @@ public class BIRBinaryWriter {
             buf.writeInt(addStringCPEntry(birGlobalVar.name.value));
             // Flags
             buf.writeInt(birGlobalVar.flags);
-
+            //            buf.writeInt(addStringCPEntry(birGlobalVar.metaVarName.value));
             // Function type as a CP Index
             writeType(buf, birGlobalVar.type);
         }

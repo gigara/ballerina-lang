@@ -413,6 +413,9 @@ function generateMethod(bir:Function func, jvm:ClassWriter cw, bir:Package modul
     mv.visitInsn(AASTORE);
 
     termGen.genReturnTerm({pos:{}, kind:"RETURN"}, returnVarRefIndex, func);
+    jvm:Label l1 = new;
+    jvm:Label l2 = new;
+    mv.visitLocalVariable("pahan", "I", l1, l2);
     mv.visitMaxs(200, 400);
     mv.visitEnd();
 }

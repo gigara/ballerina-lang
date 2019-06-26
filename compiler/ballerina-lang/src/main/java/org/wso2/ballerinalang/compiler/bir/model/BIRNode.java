@@ -20,6 +20,7 @@ package org.wso2.ballerinalang.compiler.bir.model;
 import org.ballerinalang.model.elements.PackageID;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BInvokableType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
+import org.wso2.ballerinalang.compiler.tree.BLangIdentifier;
 import org.wso2.ballerinalang.compiler.util.Name;
 import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 
@@ -167,16 +168,19 @@ public abstract class BIRNode {
          */
         public int flags;
         public PackageID pkgId;
+        public BLangIdentifier metaVarName;
 
         public BIRGlobalVariableDcl(DiagnosticPos pos, int flags, BType type,
-                                    Name name, VarScope scope, VarKind kind) {
+                                    Name name, VarScope scope, VarKind kind, BLangIdentifier metaVarName) {
             super(pos, type, name, scope, kind);
+            this.metaVarName = metaVarName;
             this.flags = flags;
         }
 
         public BIRGlobalVariableDcl(DiagnosticPos pos, int flags, BType type, PackageID pkgId, Name name,
-                                    VarScope scope, VarKind kind) {
+                                    VarScope scope, VarKind kind, BLangIdentifier metaVarName) {
             super(pos, type, name, scope, kind);
+            this.metaVarName = metaVarName;
             this.flags = flags;
             this.pkgId = pkgId;
         }
