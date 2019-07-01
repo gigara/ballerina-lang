@@ -123,8 +123,9 @@ public class JBallerinaDebugServer implements IDebugProtocolServer {
             int debuggeePort = Integer.parseInt(args.get("debuggeePort").toString());
             debuggee = new DebuggerAttachingVM(debuggeePort).initialize();
 
-            EventRequestManager erm = debuggee.eventRequestManager();
-            erm.createClassPrepareRequest().enable();
+            ClassPrepareRequest classPrepareRequest = debuggee.eventRequestManager().createClassPrepareRequest();
+            classPrepareRequest.addClassExclusionFilter("java.*");
+            classPrepareRequest.addClassExclusionFilter("sun.*");
 
             this.eventBus.startListening(debuggee, client);
 

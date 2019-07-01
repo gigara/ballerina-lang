@@ -138,7 +138,7 @@ public class BallerinaDAPClientConnector {
             if (command == Command.ATTACH) {
                 Map<String, Object> requestArgs = new HashMap<>();
                 requestArgs.put(CONFIG_SOURCEROOT, project.getBasePath());
-                requestArgs.put(CONFIG_DEBUGEE_PORT, Integer.toString(port));
+                requestArgs.put(CONFIG_DEBUGEE_PORT, Integer.toString(5006));
                 try {
                     requestManager.attach(requestArgs);
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
