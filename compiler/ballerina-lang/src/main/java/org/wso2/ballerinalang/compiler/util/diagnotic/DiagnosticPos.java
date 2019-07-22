@@ -18,6 +18,7 @@
 package org.wso2.ballerinalang.compiler.util.diagnotic;
 
 import org.ballerinalang.model.elements.PackageID;
+import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.Diagnostic.DiagnosticPosition;
 
 /**
@@ -47,6 +48,7 @@ public class DiagnosticPos implements DiagnosticPosition {
         this.sCol = startCol;
         this.eCol = endCol;
     }
+
 
     @Override
     public BDiagnosticSource getSource() {
@@ -130,5 +132,25 @@ public class DiagnosticPos implements DiagnosticPosition {
         }
 
         return strPos + sLine + ":" + sCol + ":";
+    }
+
+    @Override
+    public void setStartLine(int sLine) {
+        this.sLine = sLine;
+    }
+
+    @Override
+    public void setEndLine(int eLine) {
+        this.eLine = eLine;
+    }
+
+    @Override
+    public void setStartColumn(int sCol) {
+        this.sCol = sCol;
+    }
+
+    @Override
+    public void setEndColumn(int eCol) {
+        this.eCol = eCol;
     }
 }

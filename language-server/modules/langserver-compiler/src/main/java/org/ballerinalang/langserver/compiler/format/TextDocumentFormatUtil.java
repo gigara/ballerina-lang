@@ -173,6 +173,7 @@ public class TextDocumentFormatUtil {
             positionJson.addProperty("startLine", position.getStartLine());
             positionJson.addProperty("endColumn", position.getEndColumn());
             positionJson.addProperty("endLine", position.getEndLine());
+
             nodeJson.add("position", positionJson);
         }
 

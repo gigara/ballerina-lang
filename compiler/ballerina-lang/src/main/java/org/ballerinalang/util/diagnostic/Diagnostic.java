@@ -69,6 +69,14 @@ public interface Diagnostic extends Comparable<Diagnostic> {
         int getStartColumn();
 
         int getEndColumn();
+
+        void setStartLine(int startLine);
+
+        void setEndLine(int endLine);
+
+        void setStartColumn(int startColumn);
+
+        void setEndColumn(int endColumn);
     }
 
     Kind getKind();

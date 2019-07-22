@@ -39,7 +39,7 @@ public class WebSubBaseTest extends BaseTest {
         String balFile = new File("src" + File.separator + "test" + File.separator + "resources" + File.separator +
                                           "websub" + File.separator + "publisher").getAbsolutePath();
         publisherServerInstance = new BServerInstance(balServer);
-        publisherServerInstance.startServer(balFile, "services", requiredPorts);
+        publisherServerInstance.startServer(balFile, "META-INF/services", requiredPorts);
     }
 
     @AfterGroups(value = "websub-test")
