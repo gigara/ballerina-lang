@@ -82,6 +82,7 @@ dependencies {
 
     dist project(':testerina:testerina-core')
     dist project(':ballerina-formatter')
+    dist project(':ballerina-linter')
     dist project(':openapi-ballerina:openapi-to-ballerina-generator')
     dist project(':ballerina-backend-jvm')
     dist project(':language-server:language-server-compiler')
