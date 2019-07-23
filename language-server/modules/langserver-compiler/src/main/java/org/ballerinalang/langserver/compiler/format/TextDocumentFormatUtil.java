@@ -27,9 +27,9 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.ballerinalang.langserver.compiler.LSCompiler;
 import org.ballerinalang.langserver.compiler.LSCompilerException;
-import org.ballerinalang.langserver.compiler.LSCompilerUtil;
 import org.ballerinalang.langserver.compiler.LSContext;
 import org.ballerinalang.langserver.compiler.common.LSCustomErrorStrategy;
+import org.ballerinalang.langserver.compiler.common.LSDocument;
 import org.ballerinalang.langserver.compiler.common.modal.SymbolMetaInfo;
 import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentManager;
 import org.ballerinalang.model.Whitespace;
@@ -44,6 +44,7 @@ import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.tree.BLangAnnotation;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
+import org.wso2.ballerinalang.compiler.tree.BLangErrorVariable;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangNode;
 import org.wso2.ballerinalang.compiler.tree.BLangPackage;
@@ -93,8 +94,8 @@ public class TextDocumentFormatUtil {
                                     WorkspaceDocumentManager documentManager, LSContext context)
             throws JSONGenerationException, LSCompilerException {
         String path = file.toAbsolutePath().toString();
-        String sourceRoot = LSCompilerUtil.getSourceRoot(file);
-        String packageName = LSCompilerUtil.getPackageNameForGivenFile(sourceRoot, path);
+        LSDocument lsDocument = new LSDocument(path);
+        String packageName = lsDocument.getOwnerModule();
         String[] breakFromPackage = path.split(Pattern.quote(packageName + File.separator));
         String relativePath = breakFromPackage[breakFromPackage.length - 1];
 
@@ -133,9 +134,9 @@ public class TextDocumentFormatUtil {
     /**
      * Generate json representation for the given node.
      *
-     * @param node              Node to get the json representation
-     * @param anonStructs       Map of anonymous structs
-     * @param visibleEPsByNode        Visible endpoints by node map
+     * @param node             Node to get the json representation
+     * @param anonStructs      Map of anonymous structs
+     * @param visibleEPsByNode Visible endpoints by node map
      * @return {@link JsonElement}          Json Representation of the node
      * @throws JSONGenerationException when Json error occurs
      */
@@ -281,6 +282,11 @@ public class TextDocumentFormatUtil {
                         listPropJson.add(generateJSON(((BLangRecordVariable.BLangRecordVariableKeyValue) listPropItem)
                                 .getKey(), anonStructs, visibleEPsByNode));
                         listPropJson.add(generateJSON(((BLangRecordVariable.BLangRecordVariableKeyValue) listPropItem)
+                                .getValue(), anonStructs, visibleEPsByNode));
+                    } else if (listPropItem instanceof BLangErrorVariable.BLangErrorDetailEntry) {
+                        listPropJson.add(generateJSON(((BLangErrorVariable.BLangErrorDetailEntry) listPropItem)
+                                .getKey(), anonStructs, visibleEPsByNode));
+                        listPropJson.add(generateJSON(((BLangErrorVariable.BLangErrorDetailEntry) listPropItem)
                                 .getValue(), anonStructs, visibleEPsByNode));
                     } else if (listPropItem instanceof String) {
                         listPropJson.add((String) listPropItem);

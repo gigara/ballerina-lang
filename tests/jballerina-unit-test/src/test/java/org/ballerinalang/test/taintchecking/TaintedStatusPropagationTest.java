@@ -217,7 +217,7 @@ public class TaintedStatusPropagationTest {
         Assert.assertEquals(result.getDiagnostics().length, 0);
     }
 
-    @Test
+    @Test(groups = { "brokenOnLangLibChange" })
     public void testLambdaNegative() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/lambda-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 1);
@@ -257,7 +257,7 @@ public class TaintedStatusPropagationTest {
         Assert.assertEquals(result.getDiagnostics().length, 0);
     }
 
-    @Test
+    @Test(groups = { "brokenOnLangLibChange" })
     public void testIterableNegative() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/iterable-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 2);
@@ -265,7 +265,7 @@ public class TaintedStatusPropagationTest {
         BAssertUtil.validateError(result, 1, "tainted value passed to untainted parameter 'secureIn'", 5, 59);
     }
 
-    @Test(groups = { "brokenOnJBallerina" })
+    @Test
     public void testIterableWitinIterable() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/iterable-within-iterable.bal");
         Assert.assertEquals(result.getDiagnostics().length, 0);
@@ -332,8 +332,9 @@ public class TaintedStatusPropagationTest {
     public void testChainedInvocationsNegative() {
         CompileResult result = BCompileUtil
                 .compile("test-src/taintchecking/propagation/chained-invocations-negative.bal");
-        Assert.assertEquals(result.getDiagnostics().length, 1);
+        Assert.assertEquals(result.getDiagnostics().length, 2);
         BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'secureIn'", 2, 20);
+        BAssertUtil.validateError(result, 1, "tainted value passed to untainted parameter 'rec'", 6, 22);
     }
 
     @Test
@@ -369,17 +370,17 @@ public class TaintedStatusPropagationTest {
         CompileResult result = BCompileUtil
                 .compile("test-src/taintchecking/propagation/service-level-variables-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 3);
-        BAssertUtil.validateError(result, 0, "tainted value passed to global variable 'serviceLevelVariable'", 18, 9);
-        BAssertUtil.validateError(result, 1, "tainted value passed to global variable 'globalLevelVariable'", 19, 9);
-        BAssertUtil.validateError(result, 2, "tainted value passed to untainted parameter 'secureIn'", 20, 13);
+        BAssertUtil.validateError(result, 0, "tainted value passed to global variable 'serviceLevelVariable'", 17, 9);
+        BAssertUtil.validateError(result, 1, "tainted value passed to global variable 'globalLevelVariable'", 18, 9);
+        BAssertUtil.validateError(result, 2, "tainted value passed to untainted parameter 'secureIn'", 19, 13);
     }
 
     @Test
     public void testHttpService() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/http-service.bal");
         Assert.assertEquals(result.getDiagnostics().length, 2);
-        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'secureIn'", 14, 24);
-        BAssertUtil.validateError(result, 1, "tainted value passed to untainted parameter 'secureIn'", 15, 24);
+        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'secureIn'", 13, 24);
+        BAssertUtil.validateError(result, 1, "tainted value passed to untainted parameter 'secureIn'", 14, 24);
     }
 
     @Test
@@ -388,7 +389,7 @@ public class TaintedStatusPropagationTest {
         Assert.assertEquals(result.getDiagnostics().length, 0);
     }
 
-    @Test
+    @Test(groups = { "brokenOnLangLibChange" })
     public void testCompoundAssignmentNegative() {
         CompileResult result = BCompileUtil
                 .compile("test-src/taintchecking/propagation/compound-assignment-negative.bal");
@@ -521,19 +522,19 @@ public class TaintedStatusPropagationTest {
         BAssertUtil.validateError(result, 4, "tainted value passed to untainted parameter 'secureIn'", 44, 20);
     }
 
-    @Test(groups = { "brokenOnJBallerina" })
+    @Test
     public void testParameterStatusWithNativeInvocations() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/" +
                 "param-status-with-native-invocations.bal");
         Assert.assertEquals(result.getDiagnostics().length, 0);
     }
 
-    @Test(groups = { "brokenOnJBallerina" })
+    @Test
     public void testParameterStatusWithNativeInvocationsNegative() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/" +
                 "param-status-with-native-invocations-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 1);
-        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'sqlQuery'", 32, 43);
+        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'key'", 23, 33);
     }
 
     @Test
@@ -562,7 +563,7 @@ public class TaintedStatusPropagationTest {
     public void testCallNegative() {
         CompileResult result = BCompileUtil.compile("test-src/taintchecking/propagation/call-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 1);
-        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'secureIn'", 18, 25);
+        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'secureIn'", 18, 20);
     }
 
     @Test
@@ -578,5 +579,14 @@ public class TaintedStatusPropagationTest {
                 "closure-variable-assignment-negative.bal");
         Assert.assertEquals(result.getDiagnostics().length, 1);
         BAssertUtil.validateError(result, 0, "tainted value passed to closure variable 'test'", 22, 9);
+    }
+
+    @Test
+    public void testLangLibFunctionTaintPropagationNegative() {
+        CompileResult result = BCompileUtil.compile(
+                "test-src/taintchecking/propagation/lang-lib-function-negative.bal");
+        Assert.assertEquals(result.getDiagnostics().length, 2);
+        BAssertUtil.validateError(result, 0, "tainted value passed to untainted parameter 'p'", 33, 16);
+        BAssertUtil.validateError(result, 1, "tainted value passed to untainted parameter 'p'", 39, 16);
     }
 }

@@ -105,14 +105,6 @@ function testSetContentIdAndGetValueAsHeader() returns @tainted string {
     return entity.getHeader(mime:CONTENT_ID);
 }
 
-function testMimeBase64EncodeString(string contentToBeEncoded) returns (string|error) {
-    return mime:base64EncodeString(contentToBeEncoded);
-}
-
-function testMimeBase64DecodeString(string contentToBeDecoded) returns (string|error) {
-    return mime:base64DecodeString(contentToBeDecoded);
-}
-
 function testMimeBase64EncodeBlob(byte[] contentToBeEncoded) returns (byte[]|error) {
     return mime:base64EncodeBlob(contentToBeEncoded);
 }
@@ -121,21 +113,13 @@ function testMimeBase64DecodeBlob(byte[] contentToBeDecoded) returns (byte[]|err
     return mime:base64DecodeBlob(contentToBeDecoded);
 }
 
-function testMimeBase64EncodeByteChannel(io:ReadableByteChannel contentToBeEncoded) returns (io:ReadableByteChannel|error) {
-    return mime:base64EncodeByteChannel(contentToBeEncoded);
-}
-
-function testMimeBase64DecodeByteChannel(io:ReadableByteChannel contentToBeDecoded) returns (io:ReadableByteChannel|error) {
-    return mime:base64DecodeByteChannel(contentToBeDecoded);
-}
-
 function testSetAndGetJson(json jsonContent) returns @tainted json|error {
     mime:Entity entity = new;
     entity.setJson(jsonContent);
     return entity.getJson();
 }
 
-function testGetJsonMultipleTimes(json jsonContent) returns @tainted (json) {
+function testGetJsonMultipleTimes(json jsonContent) returns @tainted json {
     mime:Entity entity = new;
     entity.setJson(jsonContent);
     json|error returnContent1 = entity.getJson();
@@ -149,19 +133,19 @@ function testGetJsonMultipleTimes(json jsonContent) returns @tainted (json) {
     if (returnContent1 is json) {
         content1 = returnContent1;
     } else {
-        log:printError("error in returnContent1", err = returnContent1);
+        log:printError("error in returnContent1", returnContent1);
     }
 
     if (returnContent2 is json) {
         content2 = returnContent2;
     } else {
-        log:printError("error in returnContent2", err = returnContent2);
+        log:printError("error in returnContent2", returnContent2);
     }
 
     if (returnContent3 is json) {
         content3 = returnContent3;
     } else {
-        log:printError("error in returnContent3", err = returnContent3);
+        log:printError("error in returnContent3", returnContent3);
     }
 
     json returnContent = { concatContent: [content1, content2, content3] };
@@ -174,7 +158,7 @@ function testSetAndGetXml(xml xmlContent) returns @tainted xml|error {
     return entity.getXml();
 }
 
-function testGetXmlMultipleTimes(xml xmlContent) returns @tainted (xml) {
+function testGetXmlMultipleTimes(xml xmlContent) returns @tainted xml {
     mime:Entity entity = new;
     entity.setXml(xmlContent);
     xml|error returnContent1 = entity.getXml();
@@ -213,7 +197,7 @@ function testSetAndGetText(string textContent) returns @tainted string|error {
     return entity.getText();
 }
 
-function testGetTextMultipleTimes(string textContent) returns @tainted (string) {
+function testGetTextMultipleTimes(string textContent) returns @tainted string {
     mime:Entity entity = new;
     entity.setText(textContent);
     string|error returnContent1 = entity.getText();
@@ -227,19 +211,19 @@ function testGetTextMultipleTimes(string textContent) returns @tainted (string) 
     if (returnContent1 is string) {
         content1 = returnContent1;
     } else {
-        log:printError("error in returnContent1", err = returnContent1);
+        log:printError("error in returnContent1", returnContent1);
     }
 
     if (returnContent2 is string) {
         content2 = returnContent2;
     } else {
-        log:printError("error in returnContent2", err = returnContent2);
+        log:printError("error in returnContent2", returnContent2);
     }
 
     if (returnContent3 is string) {
         content3 = returnContent3;
     } else {
-        log:printError("error in returnContent3", err = returnContent3);
+        log:printError("error in returnContent3", returnContent3);
     }
 
     string returnContent = content1 + content2 + content3;
@@ -252,7 +236,7 @@ function testSetAndGetByteArray(byte[] blobContent) returns @tainted byte[]|erro
     return entity.getByteArray();
 }
 
-function testGetByteArrayMultipleTimes(byte[] blobContent) returns (string) {
+function testGetByteArrayMultipleTimes(byte[] blobContent) returns @tainted [byte[], byte[], byte[]] {
     mime:Entity entity = new;
     entity.setByteArray(blobContent);
     byte[]|error returnContent1 = entity.getByteArray();
@@ -266,24 +250,22 @@ function testGetByteArrayMultipleTimes(byte[] blobContent) returns (string) {
     if (returnContent1 is byte[]) {
         content1 = returnContent1;
     } else {
-        log:printError("error in returnContent1", err = returnContent1);
+        log:printError("error in returnContent1", returnContent1);
     }
 
     if (returnContent2 is byte[]) {
         content2 = returnContent2;
     } else {
-        log:printError("error in returnContent2", err = returnContent2);
+        log:printError("error in returnContent2", returnContent2);
     }
 
     if (returnContent3 is byte[]) {
         content3 = returnContent3;
     } else {
-        log:printError("error in returnContent3", err = returnContent3);
+        log:printError("error in returnContent3", returnContent3);
     }
 
-    string contentAsString = encoding:byteArrayToString(content1, encoding = "utf-8") + encoding:byteArrayToString(content2, encoding = "utf-8") +
-        encoding:byteArrayToString(content3, encoding = "utf-8");
-    return contentAsString;
+    return [content1, content2, content3];
 }
 
 function testSetFileAsEntityBody(string fileLocation) returns @tainted byte[]|error {
@@ -315,7 +297,8 @@ function testSetEntityBodyMultipleTimes(io:ReadableByteChannel byteChannel, stri
         if (returnValue is string) {
             return returnValue;
         } else {
-            return returnValue.reason();
+            error e = <error>returnValue;
+            return e.reason();
         }
     } else {
         return result.reason();
@@ -431,13 +414,13 @@ function testSetBodyAndGetByteChannel((string|xml|json|byte[]|io:ReadableByteCha
 
 function testGetAnyStreamAsString(io:ReadableByteChannel byteChannel, string contentType) returns @tainted string|error {
     mime:Entity entity = new;
-    entity.setByteChannel(byteChannel, contentType = contentType);
+    entity.setByteChannel(byteChannel, contentType);
     return entity.getText();
 }
 
 function testByteArrayWithContentType(io:ReadableByteChannel byteChannel, string contentTypeValue) returns @tainted byte[]|error {
     mime:Entity entity = new;
-    entity.setByteChannel(byteChannel, contentType = contentTypeValue);
+    entity.setByteChannel(byteChannel, contentTypeValue);
     //First time the json will be constructed from the byte channel
     json firstTime = check entity.getJson();
     //Then get the body as byte[]
@@ -451,7 +434,7 @@ function testGetBodyPartsAsChannel() returns @tainted io:ReadableByteChannel|err
 
     //Create another body part with a xml file.
     mime:Entity bodyPart2 = new;
-    bodyPart2.setFileAsEntityBody("src/test/resources/datafiles/file.xml", contentType = mime:TEXT_XML);
+    bodyPart2.setFileAsEntityBody("src/test/resources/datafiles/file.xml", mime:TEXT_XML);
 
     //Create a text body part.
     mime:Entity bodyPart3 = new;
@@ -465,7 +448,7 @@ function testGetBodyPartsAsChannel() returns @tainted io:ReadableByteChannel|err
     mime:Entity[] bodyParts = [bodyPart1, bodyPart2, bodyPart3, bodyPart4];
     mime:Entity multipartEntity = new;
     string contentType = mime:MULTIPART_MIXED + "; boundary=e3a0b9ad7b4e7cdt";
-    multipartEntity.setBodyParts(bodyParts, contentType = contentType);
+    multipartEntity.setBodyParts(bodyParts, contentType);
 
     return multipartEntity.getBodyPartsAsChannel();
 }
@@ -498,7 +481,7 @@ function getChannelFromMultipartEntity() returns @tainted io:ReadableByteChannel
 
 function getAnyStreamAsStringFromCache(io:ReadableByteChannel byteChannel, string contentType) returns @tainted string|error {
     mime:Entity entity = new;
-    entity.setByteChannel(byteChannel, contentType = contentType);
+    entity.setByteChannel(byteChannel, contentType);
     string returnContent;
     returnContent = check entity.getText();
     //String body should be retrieved from the cache the second time this is called
@@ -508,13 +491,13 @@ function getAnyStreamAsStringFromCache(io:ReadableByteChannel byteChannel, strin
 
 function testXmlWithByteArrayContent(io:ReadableByteChannel byteChannel, string contentTypeValue) returns @tainted xml|error {
     mime:Entity entity = new;
-    entity.setByteChannel(byteChannel, contentType = contentTypeValue);
+    entity.setByteChannel(byteChannel, contentTypeValue);
     byte[] binaryPayload = check entity.getByteArray();
     return entity.getXml();
 }
 
 function getPartsFromInvalidChannel(io:ReadableByteChannel byteChannel, string contentType) returns mime:Entity[]|error {
     mime:Entity entity = new;
-    entity.setByteChannel(byteChannel, contentType = contentType);
+    entity.setByteChannel(byteChannel, contentType);
     return entity.getBodyParts();
 }
