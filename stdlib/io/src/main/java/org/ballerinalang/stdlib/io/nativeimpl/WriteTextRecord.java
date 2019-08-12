@@ -17,7 +17,7 @@
 
 package org.ballerinalang.stdlib.io.nativeimpl;
 
-import org.ballerinalang.jvm.Strand;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.connector.NonBlockingCallback;
@@ -76,6 +76,8 @@ public class WriteTextRecord {
         Throwable error = eventContext.getError();
         if (null != error) {
             callback.setReturnValues(IOUtils.createError(error.getMessage()));
+        } else {
+            callback.setReturnValues(null);
         }
         callback.notifySuccess();
         return result;

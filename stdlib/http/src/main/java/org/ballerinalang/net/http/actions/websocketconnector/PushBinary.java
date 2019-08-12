@@ -17,7 +17,7 @@
 package org.ballerinalang.net.http.actions.websocketconnector;
 
 import io.netty.channel.ChannelFuture;
-import org.ballerinalang.jvm.Strand;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ArrayValue;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.connector.NonBlockingCallback;
@@ -49,7 +49,6 @@ public class PushBinary {
 
     public static Object pushBinary(Strand strand, ObjectValue wsConnection, ArrayValue binaryData,
                                     boolean finalFrame) {
-        //TODO : NonBlockingCallback is temporary fix to handle non blocking call
         NonBlockingCallback callback = new NonBlockingCallback(strand);
         try {
             WebSocketOpenConnectionInfo connectionInfo = (WebSocketOpenConnectionInfo) wsConnection
@@ -58,7 +57,6 @@ public class PushBinary {
                     ByteBuffer.wrap(binaryData.getBytes()), finalFrame);
             WebSocketUtil.handleWebSocketCallback(callback, webSocketChannelFuture);
         } catch (Exception e) {
-            //TODO remove this call back
             callback.setReturnValues(createWebSocketError(WsConnectionError, e.getMessage()));
             callback.notifySuccess();
         }

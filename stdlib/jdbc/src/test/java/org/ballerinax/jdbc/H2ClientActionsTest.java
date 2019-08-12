@@ -75,7 +75,7 @@ public class H2ClientActionsTest {
         Assert.assertEquals(retValue.intValue(), 1);
     }
 
-    @Test(groups = { H2_TEST_GROUP, "broken" })
+    @Test(groups = { H2_TEST_GROUP })
     public void testCall() {
         BValue[] args = {};
         BValue[] returns = BRunUtil.invokeFunction(result, "testCall", args);
@@ -129,7 +129,7 @@ public class H2ClientActionsTest {
 
     @Test(expectedExceptions = BLangRuntimeException.class,
           expectedExceptionsMessageRegExp =
-                  ".*error in sql connector configuration:"
+                  ".*Error in sql connector configuration: "
                           + "Property INVALID_PARAM does not exist on target class org.h2.jdbcx.JdbcDataSource.*",
           groups = { H2_TEST_GROUP })
     public void testInitWithInvalidDbOptions() {

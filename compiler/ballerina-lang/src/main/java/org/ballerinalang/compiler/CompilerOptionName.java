@@ -26,6 +26,8 @@ public enum CompilerOptionName {
 
     PROJECT_DIR("projectDirectory"),
 
+    SOURCE_TYPE("sourceType"),
+
     PRESERVE_WHITESPACE("preserveWhitespace"),
 
     OFFLINE("offline"),

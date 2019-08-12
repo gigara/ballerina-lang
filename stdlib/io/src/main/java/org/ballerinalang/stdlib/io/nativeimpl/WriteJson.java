@@ -18,7 +18,7 @@
 
 package org.ballerinalang.stdlib.io.nativeimpl;
 
-import org.ballerinalang.jvm.Strand;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.connector.NonBlockingCallback;
 import org.ballerinalang.model.types.TypeKind;
@@ -55,6 +55,7 @@ public class WriteJson {
                     IOConstants.CHARACTER_CHANNEL_NAME);
             EventContext eventContext = new EventContext(callback);
             IOUtils.writeFull(characterChannel, content.toString(), eventContext);
+            callback.setReturnValues(null);
         } catch (BallerinaException e) {
             callback.setReturnValues(IOUtils.createError(e.getMessage()));
         } finally {

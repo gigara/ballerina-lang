@@ -17,7 +17,7 @@
 package org.ballerinalang.net.http.actions.websocketconnector;
 
 import io.netty.channel.ChannelFuture;
-import org.ballerinalang.jvm.Strand;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.values.ObjectValue;
 import org.ballerinalang.jvm.values.connector.NonBlockingCallback;
 import org.ballerinalang.model.types.TypeKind;
@@ -46,7 +46,6 @@ import static org.ballerinalang.net.http.WebSocketUtil.createWebSocketError;
 public class PushText {
 
     public static Object externPushText(Strand strand, ObjectValue wsConnection, String text, boolean finalFrame) {
-        //TODO : NonBlockingCallback is temporary fix to handle non blocking call
         NonBlockingCallback callback = new NonBlockingCallback(strand);
         try {
             WebSocketOpenConnectionInfo connectionInfo = (WebSocketOpenConnectionInfo) wsConnection
@@ -54,7 +53,6 @@ public class PushText {
             ChannelFuture future = connectionInfo.getWebSocketConnection().pushText(text, finalFrame);
             WebSocketUtil.handleWebSocketCallback(callback, future);
         } catch (Exception e) {
-            //TODO remove this call back
             callback.setReturnValues(createWebSocketError(WsConnectionError, e.getMessage()));
             callback.notifySuccess();
         }
