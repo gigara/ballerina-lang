@@ -18,14 +18,8 @@ public class LinteringVisitor {
     public void beginVisit(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog) {
 
         LinteringNodeTree linteringNodeTree = new LinteringNodeTree();
-        Class cls = linteringNodeTree.getClass();
-        Method[] methods = cls.getMethods();
-        for (Method method : methods) {
-            if(node.get("kind").getAsString().equalsIgnoreCase("if")){
-                int ii =0;
-            }
-            if (isFunctionMatch(node, method.getName())) {
-                Method methodcall1 = null;
+        Class cls = linteringNodeTree.getClass();Method[] methods = cls.getMethods();for (Method method : methods) {
+            if (isFunctionMatch(node, method.getName())) {Method methodcall1 = null;
                 try {
                     methodcall1 = cls.getDeclaredMethod(method.getName(), node.getClass(), Node.class, DiagnosticLog.class);
                     methodcall1.invoke(cls.newInstance(), node, compilationUnitNode, dLog);
