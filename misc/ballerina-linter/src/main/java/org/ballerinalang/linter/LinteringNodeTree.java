@@ -1597,25 +1597,41 @@ public class LinteringNodeTree {
                         if (text.equals(packageAlias)) {
                             packageAliasAvailableBeforeColon = true;
                         }
-                        currentWS.addProperty(FormattingConstants.WS, FormattingConstants.EMPTY_SPACE);
+                        if((node.get(FormattingConstants.PARENT).getAsJsonObject().has("invocationType")
+                                && node.get(FormattingConstants.PARENT).getAsJsonObject().get("invocationType").getAsString().equals("FUNCTION"))
+                                && node.get("symbolType").getAsJsonArray().get(0).getAsString().equals("object")) {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
+                                logError(node, compilationUnitNode, dLog, "Irregular White Space near " + currentWS.get(FormattingConstants.TEXT));
+                            }
+                        }
                     } else if (text.equals(Tokens.COLON)) {
-                        currentWS.addProperty(FormattingConstants.WS, FormattingConstants.EMPTY_SPACE);
+                        if(!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)){
+                            logError(node, compilationUnitNode, dLog, "Irregular White Space near "+ currentWS.get(FormattingConstants.TEXT));
+                        }
                         ++colonIndex;
                     } else {
                         if (colonIndex == 1) {
                             if (packageAliasAvailableBeforeColon) {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.EMPTY_SPACE);
+                                if(!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)){
+                                    logError(node, compilationUnitNode, dLog, "Irregular White Space near "+ currentWS.get(FormattingConstants.TEXT));
+                                }
                             } else {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
+                                if(!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)){
+                                    logError(node, compilationUnitNode, dLog, "Irregular White Space near "+ currentWS.get(FormattingConstants.TEXT));
+                                }
                             }
                         } else if (colonIndex > 1) {
-
+                            //TODO
 
                         } else {
                             if (ws.size() > 1) {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
+                                if(!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)){
+                                    logError(node, compilationUnitNode, dLog, "Irregular White Space near "+ currentWS.get(FormattingConstants.TEXT));
+                                }
                             } else {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.EMPTY_SPACE);
+                                if(!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)){
+                                    logError(node, compilationUnitNode, dLog, "Irregular White Space near "+ currentWS.get(FormattingConstants.TEXT));
+                                }
                             }
                         }
                     }
