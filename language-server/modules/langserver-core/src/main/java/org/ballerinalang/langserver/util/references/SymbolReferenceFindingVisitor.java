@@ -645,7 +645,9 @@ public class SymbolReferenceFindingVisitor extends LSNodeVisitor {
                 // Action invocation or lambda invocation. . token is added to the invocationExpr ws list
                 sCol += this.getCharLengthBeforeToken(".", new ArrayList<>(invocationExpr.expr.getWS())) + 1;
                 // Remove the first element which is . if the expr is not null
-                wsList.remove(0);
+                if (wsList.get(0).getPrevious().equals(".")) {
+                    wsList.remove(0);
+                }
             }
             sCol += this.getCharLengthBeforeToken(this.tokenName, wsList);
             int eCol = sCol + this.tokenName.length();
@@ -708,8 +710,14 @@ public class SymbolReferenceFindingVisitor extends LSNodeVisitor {
 
     @Override
     public void visit(BLangTypeInit typeInit) {
-        if (typeInit.initInvocation != null && typeInit.initInvocation.name.value.equals(this.tokenName)) {
-            this.addSymbol(typeInit.initInvocation, typeInit.initInvocation.symbol, false, typeInit.initInvocation.pos);
+        if (typeInit.initInvocation != null &&
+                (typeInit.initInvocation.name.value.equals(this.tokenName) ||
+                (typeInit.type.tsymbol != null && typeInit.type.tsymbol.name.value.equals(this.tokenName)))) {
+            BSymbol symbol = typeInit.initInvocation.symbol;
+            if (symbol == null) {
+                symbol = typeInit.type.tsymbol;
+            }
+            this.addSymbol(typeInit.initInvocation, symbol, false, typeInit.initInvocation.pos);
         } else if (typeInit.userDefinedType != null) {
             this.acceptNode(typeInit.userDefinedType);
         }

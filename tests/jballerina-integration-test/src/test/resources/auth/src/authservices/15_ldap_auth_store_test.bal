@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/config;
 import ballerina/ldap;
 import ballerina/http;
 
@@ -35,7 +36,7 @@ ldap:LdapConnectionConfig ldapConfig = {
     membershipAttribute: "member",
     userRolesCacheEnabled: true,
     connectionPoolingEnabled: false,
-    ldapConnectionTimeout: 5000,
+    connectionTimeoutInMillis: 5000,
     readTimeoutInMillis: 60000,
     retryAttempts: 3
 };
@@ -49,7 +50,7 @@ listener http:Listener ep = new(20021, {
     },
     secureSocket: {
         keyStore: {
-            path: "${ballerina.home}/bre/security/ballerinaKeystore.p12",
+            path: config:getAsString("keystore"),
             password: "ballerina"
         }
     }

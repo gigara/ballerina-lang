@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/crypto;
+import ballerina/encoding;
 import ballerina/http;
 import ballerina/io;
 import ballerina/log;
@@ -214,7 +214,7 @@ function buildSubscriptionChangeRequest(@untainted string mode,
     http:Request request = new;
 
     string callback = subscriptionChangeRequest.callback;
-    var encodedCallback = http:encode(callback, "UTF-8");
+    var encodedCallback = encoding:encodeUriComponent(callback, "UTF-8");
     if (encodedCallback is string) {
         callback = encodedCallback;
     }

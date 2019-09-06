@@ -21,6 +21,8 @@ package org.ballerinalang.messaging.kafka.transactions;
 import io.debezium.kafka.KafkaCluster;
 import io.debezium.util.Testing;
 import org.ballerinalang.model.values.BBoolean;
+import org.ballerinalang.model.values.BError;
+import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.test.util.BCompileUtil;
 import org.ballerinalang.test.util.BRunUtil;
@@ -33,12 +35,12 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.ballerinalang.messaging.kafka.utils.KafkaTestUtils.TEST_SRC;
 import static org.ballerinalang.messaging.kafka.utils.KafkaTestUtils.TEST_TRANSACTIONS;
+import static org.ballerinalang.messaging.kafka.utils.KafkaTestUtils.createKafkaCluster;
 import static org.ballerinalang.messaging.kafka.utils.KafkaTestUtils.getFilePath;
 
 /**
@@ -52,9 +54,8 @@ public class KafkaProducerTransactionsTest {
 
     @BeforeClass
     public void setup() throws IOException {
-        Properties prop = new Properties();
-        kafkaCluster = kafkaCluster().deleteDataPriorToStartup(true)
-                .deleteDataUponShutdown(true).withKafkaConfiguration(prop).addBrokers(3).startup();
+        dataDir = Testing.Files.createTestingDirectory("cluster-kafka-transaction-test");
+        kafkaCluster = createKafkaCluster(dataDir, 14012, 14112).addBrokers(3).startup();
     }
 
     @Test(description = "Test Kafka producer send function within transaction")
@@ -62,7 +63,7 @@ public class KafkaProducerTransactionsTest {
         result = BCompileUtil.compile(getFilePath(
                 Paths.get(TEST_SRC, TEST_TRANSACTIONS, "kafka_transactions_send.bal")));
         BValue[] inputBValues = {};
-        BValue[] returnBValues = BRunUtil.invoke(result, "funcKafkaAbortTransactionTest", inputBValues);
+        BValue[] returnBValues = BRunUtil.invoke(result, "funcKafkaTransactionSendTest", inputBValues);
 
         try {
             await().atMost(5000, TimeUnit.MILLISECONDS).until(() -> {
@@ -122,6 +123,18 @@ public class KafkaProducerTransactionsTest {
         }
     }
 
+    @Test(description = "Test transactional producer with idempotence false")
+    public void testKafkaTransactionalProducerWithoutIdempotenceTest() {
+        String message = "Failed to initialize the producer: configuration enableIdempotence must be set to true to " +
+                "enable transactional producer";
+        result = BCompileUtil.compile(getFilePath(
+                Paths.get(TEST_SRC, TEST_TRANSACTIONS, "transactional_producer_without_idempotence.bal")));
+        BValue[] returnValues = BRunUtil.invoke(result, "funcKafkaCreateProducer");
+        Assert.assertEquals(returnValues.length, 1);
+        Assert.assertTrue(returnValues[0] instanceof BError);
+        Assert.assertEquals(((BMap) ((BError) returnValues[0]).getDetails()).get("message").stringValue(), message);
+    }
+
     @AfterClass
     public void tearDown() {
         if (kafkaCluster != null) {
@@ -133,14 +146,5 @@ public class KafkaProducerTransactionsTest {
                 dataDir.deleteOnExit();
             }
         }
-    }
-
-    protected static KafkaCluster kafkaCluster() {
-        if (kafkaCluster != null) {
-            throw new IllegalStateException();
-        }
-        dataDir = Testing.Files.createTestingDirectory("cluster-kafka-transaction-test");
-        kafkaCluster = new KafkaCluster().usingDirectory(dataDir).withPorts(2288, 9144);
-        return kafkaCluster;
     }
 }

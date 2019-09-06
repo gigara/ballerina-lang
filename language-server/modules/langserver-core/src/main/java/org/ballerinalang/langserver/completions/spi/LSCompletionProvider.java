@@ -48,12 +48,14 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.wso2.ballerinalang.compiler.parser.antlr4.BallerinaParser;
+import org.wso2.ballerinalang.compiler.semantics.model.Scope;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BAttachedFunction;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BConstantSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BConstructorSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BInvokableSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BObjectTypeSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BPackageSymbol;
+import org.wso2.ballerinalang.compiler.semantics.model.symbols.BRecordTypeSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BTypeSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BVarSymbol;
@@ -154,7 +156,7 @@ public abstract class LSCompletionProvider {
             } else if (bSymbol instanceof BConstantSymbol) {
                 completionItems.add(BConstantCompletionItemBuilder.build((BConstantSymbol) bSymbol, context));
             } else if (!(bSymbol instanceof BInvokableSymbol) && bSymbol instanceof BVarSymbol) {
-                String typeName = CommonUtil.getBTypeName(symbol.type, context);
+                String typeName = CommonUtil.getBTypeName(symbol.type, context, false);
                 completionItems.add(
                         BVariableCompletionItemBuilder.build((BVarSymbol) bSymbol, symbolInfo.getSymbolName(), typeName)
                 );
@@ -190,8 +192,13 @@ public abstract class LSCompletionProvider {
         List<CompletionItem> completionItems = new ArrayList<>();
         visibleSymbols.forEach(symbolInfo -> {
             BSymbol bSymbol = symbolInfo.getScopeEntry().symbol;
-            if (bSymbol instanceof BTypeSymbol && !(bSymbol instanceof BPackageSymbol)) {
-                completionItems.add(BTypeCompletionItemBuilder.build(bSymbol, symbolInfo.getSymbolName()));
+            if (((bSymbol instanceof BConstructorSymbol && Names.ERROR.equals(bSymbol.name)))
+                    || (bSymbol instanceof BTypeSymbol && !(bSymbol instanceof BPackageSymbol))) {
+                BSymbol symbol = bSymbol;
+                if (bSymbol instanceof BConstructorSymbol) {
+                    symbol = ((BConstructorSymbol) bSymbol).type.tsymbol;
+                }
+                completionItems.add(BTypeCompletionItemBuilder.build(symbol, symbolInfo.getSymbolName()));
             }
         });
 
@@ -280,7 +287,7 @@ public abstract class LSCompletionProvider {
         // First we include the packages from the imported list.
         List<String> populatedList = new ArrayList<>();
         BLangPackage currentPkg = ctx.get(DocumentServiceKeys.CURRENT_BLANG_PACKAGE_CONTEXT_KEY);
-        List<BLangImportPackage> currentModuleImports = CommonUtil.getCurrentModuleImports(ctx);
+        List<BLangImportPackage> currentModuleImports = ctx.get(DocumentServiceKeys.CURRENT_DOC_IMPORTS_KEY);
         List<CompletionItem> completionItems = currentModuleImports.stream()
                 .map(pkg -> {
                     PackageID pkgID = pkg.symbol.pkgID;
@@ -395,26 +402,40 @@ public abstract class LSCompletionProvider {
      * @return {@link List} List of completion Items
      */
     protected List<CompletionItem> getVarDefExpressionCompletions(LSContext context, boolean onGlobal) {
-        List<CompletionItem> completionItems = new ArrayList<>(this.getVarDefCompletions(context));
+        List<CompletionItem> completionItems = new ArrayList<>();
+        Integer invocationType = context.get(CompletionKeys.INVOCATION_TOKEN_TYPE_KEY);
         try {
             Optional<BLangType> assignmentType = getAssignmentType(context, onGlobal);
-            if (!assignmentType.isPresent()) {
+            
+            if (assignmentType.isPresent() && !(assignmentType.get() instanceof BLangUserDefinedType)
+                    && invocationType > -1) {
+                Either<List<CompletionItem>, List<SymbolInfo>> filteredList =
+                        SymbolFilters.get(DelimiterBasedContentFilter.class).filterItems(context);
+                completionItems.addAll(this.getCompletionItemList(filteredList, context));
                 return completionItems;
             }
 
-            boolean isTypeDesc = assignmentType.get() instanceof BLangConstrainedType
+            boolean isTypeDesc = assignmentType.isPresent() && assignmentType.get() instanceof BLangConstrainedType
                     && ((BLangConstrainedType) assignmentType.get()).type instanceof BLangBuiltInRefTypeNode
                     && ((BLangBuiltInRefTypeNode) ((BLangConstrainedType) assignmentType.get()).type).typeKind ==
                     TypeKind.TYPEDESC;
-            if (assignmentType.get() instanceof BLangFunctionTypeNode) {
+            if (assignmentType.isPresent() && assignmentType.get() instanceof BLangFunctionTypeNode) {
                 // Function Type Suggestion
+                completionItems.addAll(this.getVarDefCompletions(context));
                 fillFunctionWithBodySnippet((BLangFunctionTypeNode) assignmentType.get(), context, completionItems);
                 fillArrowFunctionSnippet((BLangFunctionTypeNode) assignmentType.get(), context, completionItems);
-            } else if (assignmentType.get() instanceof BLangUserDefinedType) {
+            } else if (assignmentType.isPresent() && assignmentType.get() instanceof BLangUserDefinedType) {
                 completionItems.addAll(
-                        getObjectInitCompletions(context, (BLangUserDefinedType) assignmentType.get(), true));
+                        getUserDefinedTypeCompletions(context, (BLangUserDefinedType) assignmentType.get()));
             } else if (isTypeDesc) {
                 completionItems.add(Snippet.KW_TYPEOF.get().build(context));
+                completionItems.addAll(getVarDefCompletions(context));
+            } else if (invocationType > -1) {
+                Either<List<CompletionItem>, List<SymbolInfo>> filteredList =
+                        SymbolFilters.get(DelimiterBasedContentFilter.class).filterItems(context);
+                return this.getCompletionItemList(filteredList, context);
+            } else {
+                completionItems.addAll(getVarDefCompletions(context));
             }
         } catch (LSCompletionException ex) {
             // do nothing
@@ -423,33 +444,75 @@ public abstract class LSCompletionProvider {
         return completionItems;
     }
 
-    protected List<CompletionItem> getObjectInitCompletions(LSContext context, BLangUserDefinedType type,
-                                                            boolean addNewConstructor) {
+    protected List<CompletionItem> getUserDefinedTypeCompletions(LSContext context, BLangUserDefinedType type) {
+        List<Integer> defaultTokenTypes = context.get(CompletionKeys.LHS_DEFAULT_TOKEN_TYPES_KEY);
+        Integer invocationType = context.get(CompletionKeys.INVOCATION_TOKEN_TYPE_KEY);
         List<CompletionItem> completionItems = new ArrayList<>();
-        List<SymbolInfo> visibleSymbols = new ArrayList<>(context.get(CommonKeys.VISIBLE_SYMBOLS_KEY));
+        int newTokenIndex = defaultTokenTypes.indexOf(BallerinaParser.NEW);
+        int lastColonIndex = defaultTokenTypes.lastIndexOf(BallerinaParser.COLON);
+        int firstColonIndex = defaultTokenTypes.indexOf(BallerinaParser.COLON);
         String typeName = type.typeName.value;
-        Optional<SymbolInfo> pkgSymbol = this.getPackageSymbolFromAlias(context, type.pkgAlias.value);
-        BObjectTypeSymbol objectTypeSymbol;
-        if (!pkgSymbol.isPresent()) {
-            // search in the visible symbols
-            Optional<SymbolInfo> objSymbol = visibleSymbols.stream().filter(symbolInfo -> {
-                BSymbol bSymbol = symbolInfo.getScopeEntry().symbol;
-                return bSymbol instanceof BObjectTypeSymbol && bSymbol.getName().getValue().equals(typeName);
-            }).findAny();
-            if (!objSymbol.isPresent() || !(objSymbol.get().getScopeEntry().symbol instanceof BObjectTypeSymbol)) {
-                return completionItems;
-            }
-            objectTypeSymbol = (BObjectTypeSymbol) objSymbol.get().getScopeEntry().symbol;
-        } else {
-            Optional<BSymbol> objectInPackage = getObjectInPackage(pkgSymbol.get().getScopeEntry().symbol,
-                                                                   typeName);
-            if (!objectInPackage.isPresent() || !(objectInPackage.get() instanceof BObjectTypeSymbol)) {
-                return completionItems;
-            }
-            objectTypeSymbol = (BObjectTypeSymbol) objectInPackage.get();
-        }
+        String pkgAlias = type.pkgAlias.value;
+        BSymbol bSymbol;
 
+        Optional<SymbolInfo> pkgSymbol = this.getPackageSymbolFromAlias(context, pkgAlias);
+        if (pkgSymbol.isPresent()) {
+            Optional<Scope.ScopeEntry> entry = pkgSymbol.get().getScopeEntry().symbol.scope.entries.values().stream()
+                    .filter(scopeEntry -> scopeEntry.symbol.getName().getValue().equals(typeName)).findAny();
+            
+            if (!entry.isPresent()) {
+                return completionItems;
+            }
+            bSymbol = entry.get().symbol;
+        } else {
+            List<SymbolInfo> typeSymbol = getSymbolByName(typeName, context);
+            if (typeSymbol.isEmpty()) {
+                return completionItems;
+            }
+            bSymbol = typeSymbol.get(0).getScopeEntry().symbol;
+        }
+        
+        if (bSymbol == null) {
+            return completionItems;
+        }
+        
+        if (bSymbol instanceof BRecordTypeSymbol) {
+            return getVarDefCompletions(context);
+        }
+        if (!(bSymbol instanceof BObjectTypeSymbol)) {
+            if (invocationType > -1) {
+                Either<List<CompletionItem>, List<SymbolInfo>> filteredList =
+                        SymbolFilters.get(DelimiterBasedContentFilter.class).filterItems(context);
+                return this.getCompletionItemList(filteredList, context);
+            }
+            return getVarDefCompletions(context);
+        }
+        
+        BObjectTypeSymbol objectTypeSymbol = (BObjectTypeSymbol) bSymbol;
         BAttachedFunction initFunction = objectTypeSymbol.initializerFunc;
+        
+        if (newTokenIndex > -1 && firstColonIndex > -1 && lastColonIndex == firstColonIndex) {
+            /*
+            ex: modName:ObjectName = new <cursor>
+            suggest modules
+             */
+            return getPackagesCompletionItems(context);
+        } else if (newTokenIndex > -1) {
+            /*
+            ex: modName:ObjectName = new modName:
+                ObjectName = new 
+             */
+            Pair<String, String> newWithTypeSign = getFunctionInvocationSignature(initFunction.symbol, typeName,
+                    context);
+            completionItems.add(BFunctionCompletionItemBuilder.build(initFunction.symbol, newWithTypeSign.getRight(),
+                    newWithTypeSign.getLeft(), context));
+            return completionItems;
+        } else if (invocationType > -1) {
+            Either<List<CompletionItem>, List<SymbolInfo>> filteredList =
+                    SymbolFilters.get(DelimiterBasedContentFilter.class).filterItems(context);
+            return this.getCompletionItemList(filteredList, context);
+        }
+        
         CompletionItem newCItem;
         CompletionItem typeCItem;
         if (initFunction == null) {
@@ -468,10 +531,10 @@ public abstract class LSCompletionProvider {
                                                              newWithTypeSign.getRight(),
                                                              newWithTypeSign.getLeft(), context);
         }
-        if (addNewConstructor) {
-            completionItems.add(newCItem);
-        }
+        completionItems.addAll(getVarDefCompletions(context));
+        completionItems.add(newCItem);
         completionItems.add(typeCItem);
+    
         return completionItems;
     }
 
@@ -526,6 +589,9 @@ public abstract class LSCompletionProvider {
     
     protected Optional<SymbolInfo> getPackageSymbolFromAlias(LSContext context, String alias) {
         List<SymbolInfo> visibleSymbols = new ArrayList<>(context.get(CommonKeys.VISIBLE_SYMBOLS_KEY));
+        if (alias.isEmpty()) {
+            return Optional.empty();
+        }
         return visibleSymbols.stream()
                 .filter(symbolInfo -> {
                     BSymbol symbol = symbolInfo.getScopeEntry().symbol;
@@ -552,6 +618,40 @@ public abstract class LSCompletionProvider {
                 .collect(Collectors.toList());
     }
 
+    protected boolean inFunctionReturnParameterContext(LSContext context) {
+        if (context.get(CompletionKeys.LHS_DEFAULT_TOKEN_TYPES_KEY) == null) {
+            return false;
+        }
+        List<Integer> defaultTokens = new ArrayList<>(context.get(CompletionKeys.LHS_DEFAULT_TOKEN_TYPES_KEY));
+        if (defaultTokens.isEmpty()) {
+            return false;
+        }
+        int tokenSize = defaultTokens.size();
+        if (defaultTokens.indexOf(BallerinaParser.ASSIGN) > 0) {
+            // check added to avoid the external function definition
+            // function xyz() returns int = external;
+            return false;
+        }
+        if (defaultTokens.contains(BallerinaParser.RETURNS)
+                && ((defaultTokens.size() - 1) - defaultTokens.indexOf(BallerinaParser.RETURNS) <= 3)) {
+            /*
+            Check for the following cases
+            Eg: function xyz() returns <cursor> {}
+                function xyz() returns in<cursor> {}
+                function xyz() returns in:<cursor> {}
+                function xyz() returns mod1:a<cursor> {}
+             */
+            return true;
+        }
+
+        /*
+         Catches the following case
+         Eg: function xyz() re {}
+         */
+        return tokenSize > 2 && defaultTokens.contains(BallerinaParser.FUNCTION) &&
+                (defaultTokens.get(tokenSize - 1) == BallerinaParser.RIGHT_PARENTHESIS
+                || defaultTokens.get(tokenSize - 2) == BallerinaParser.RIGHT_PARENTHESIS);
+    }
     // Private Methods
 
     /**
@@ -651,7 +751,7 @@ public abstract class LSCompletionProvider {
         signature.append(this.getDynamicParamsSnippet(paramTypes, true, context));
         if (!(returnType.type instanceof BNilType)) {
             signature.append("returns (")
-                    .append(CommonUtil.getBTypeName(returnType.type, context))
+                    .append(CommonUtil.getBTypeName(returnType.type, context, false))
                     .append(") ");
         }
 
@@ -737,7 +837,7 @@ public abstract class LSCompletionProvider {
                     String paramPlaceHolder = "${" + paramIndex + ":" + paramName + paramIndex + "}";
                     if (withType) {
                         BType paramType = paramTypes.get(index).getTypeNode().type;
-                        paramPlaceHolder = CommonUtil.getBTypeName(paramType, context) + " " + paramPlaceHolder;
+                        paramPlaceHolder = CommonUtil.getBTypeName(paramType, context, true) + " " + paramPlaceHolder;
                     }
                     return paramPlaceHolder;
                 })
@@ -778,6 +878,9 @@ public abstract class LSCompletionProvider {
         // Add the check keyword
         CompletionItem checkKeyword = Snippet.KW_CHECK.get().build(context);
         completionItems.add(checkKeyword);
+        // Add the checkpanic keyword
+        CompletionItem checkPanicKeyword = Snippet.KW_CHECK_PANIC.get().build(context);
+        completionItems.add(checkPanicKeyword);
         // Add the wait keyword
         CompletionItem waitKeyword = Snippet.KW_WAIT.get().build(context);
         completionItems.add(waitKeyword);

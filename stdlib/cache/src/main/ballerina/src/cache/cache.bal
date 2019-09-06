@@ -50,14 +50,14 @@ public type Cache object {
 
     private int capacity;
     map<CacheEntry> entries = {};
-    int expiryTimeMillis;
+    int expiryTimeInMillis;
     private float evictionFactor;
     private string uuid;
 
-    public function __init(int expiryTimeMillis = 900000, int capacity = 100, float evictionFactor = 0.25) {
+    public function __init(public int expiryTimeInMillis = 900000, public int capacity = 100, public float evictionFactor = 0.25) {
 
         // Cache expiry time must be a positive value.
-        if (expiryTimeMillis <= 0) {
+        if (expiryTimeInMillis <= 0) {
             Error e = error(CACHE_ERROR, message = "Expiry time must be greater than 0.");
             panic e;
         }
@@ -76,7 +76,7 @@ public type Cache object {
         // track of the UUID.
         self.uuid = system:uuid();
         cacheMap[self.uuid] = self;
-        self.expiryTimeMillis = expiryTimeMillis;
+        self.expiryTimeInMillis = expiryTimeInMillis;
         self.capacity = capacity;
         self.evictionFactor = evictionFactor;
 
@@ -99,13 +99,12 @@ public type Cache object {
                     timerStarted = true;
                 }
             }
-
         }
-
     }
 
     # Checks whether the given key has an accociated cache value.
     #
+    # + key - the key to be checked
     # + return - True if the given key has an associated value, false otherwise.
     public function hasKey(string key) returns (boolean) {
         return self.entries.hasKey(key);
@@ -123,7 +122,7 @@ public type Cache object {
     # + key - value which should be used as the key
     # + value - value to be cached
     public function put(string key, any value) {
-        // We need to synchronize this process otherwise concurrecy might cause issues.
+        // We need to synchronize this process otherwise concurrency might cause issues.
          lock {
             int cacheCapacity = self.capacity;
             int cacheSize = self.entries.length();
@@ -177,7 +176,7 @@ public type Cache object {
             // sometimes the cache entry might not have been removed at this point even though it is expired. So this check
             // gurentees that the expired cache entries will not be returened.
             int currentSystemTime = time:currentTime().time;
-            if (currentSystemTime >= cacheEntry.lastAccessedTime + self.expiryTimeMillis) {
+            if (currentSystemTime >= cacheEntry.lastAccessedTime + self.expiryTimeInMillis) {
                 // If it is expired, remove the cache and return nil.
                 self.remove(key);
                 return ();
@@ -210,6 +209,7 @@ public type Cache object {
     # Returns the key of the Least Recently Used cache entry. This is used to remove cache entries if the cache is
     # full.
     #
+    # + numberOfKeysToEvict - the number of keys which should be evicted
     # + return - number of keys to be evicted
     function getLRUCacheKeys(int numberOfKeysToEvict) returns (string[]) {
         // Create new arrays to hold keys to be removed and hold the corresponding timestamps.
@@ -251,7 +251,7 @@ function runCacheExpiry() {
             continue;
         } else {
             // Get the expiry time of the current cache
-            int currentCacheExpiryTime = currentCache.expiryTimeMillis;
+            int currentCacheExpiryTime = currentCache.expiryTimeInMillis;
 
             // Create a new array to store keys of cache entries which needs to be removed.
             string[] cachesToBeRemoved = [];

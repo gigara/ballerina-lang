@@ -17,11 +17,10 @@
  */
 package org.ballerinalang.jvm.values;
 
-import org.ballerinalang.jvm.commons.TypeValuePair;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.types.BTypes;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,7 +41,7 @@ public class HandleValue implements RefValue {
     }
 
     @Override
-    public String stringValue() {
+    public String stringValue(Strand strand) {
         return String.valueOf(value);
     }
 
@@ -54,11 +53,6 @@ public class HandleValue implements RefValue {
     @Override
     public BType getType() {
         return BTypes.typeHandle;
-    }
-
-    @Override
-    public void stamp(BType type, List<TypeValuePair> unresolvedValues) {
-
     }
 
     @Override

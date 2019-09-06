@@ -45,11 +45,11 @@ public class Compiler {
     private final SourceDirectoryManager sourceDirectoryManager;
     private final CompilerDriver compilerDriver;
     private final BinaryFileWriter binaryFileWriter;
-    private final LockFileWriter lockFileWriter;
     private final DependencyTree dependencyTree;
     private final BLangDiagnosticLog dlog;
     private final PackageLoader pkgLoader;
     private final Manifest manifest;
+    private boolean langLibsLoaded;
     private PrintStream outStream;
 
     private Compiler(CompilerContext context) {
@@ -57,12 +57,12 @@ public class Compiler {
         this.sourceDirectoryManager = SourceDirectoryManager.getInstance(context);
         this.compilerDriver = CompilerDriver.getInstance(context);
         this.binaryFileWriter = BinaryFileWriter.getInstance(context);
-        this.lockFileWriter = LockFileWriter.getInstance(context);
         this.dependencyTree = DependencyTree.getInstance(context);
         this.dlog = BLangDiagnosticLog.getInstance(context);
         this.pkgLoader = PackageLoader.getInstance(context);
         this.manifest = ManifestProcessor.getInstance(context).getManifest();
         this.outStream = System.out;
+        this.langLibsLoaded = false;
     }
 
     public static Compiler getInstance(CompilerContext context) {
@@ -110,14 +110,10 @@ public class Compiler {
             this.outStream.println("Generating executables");
         }
         packageList.forEach(this.binaryFileWriter::write);
-        packageList.forEach(bLangPackage -> lockFileWriter.addEntryPkg(bLangPackage.symbol));
-        this.lockFileWriter.writeLockFile(this.manifest);
     }
 
     public void write(BLangPackage bLangPackage, String targetFileName) {
         this.binaryFileWriter.write(bLangPackage, targetFileName);
-        this.lockFileWriter.addEntryPkg(bLangPackage.symbol);
-        this.lockFileWriter.writeLockFile(this.manifest);
     }
 
     public void list() {
@@ -157,8 +153,10 @@ public class Compiler {
     // private methods
 
     private List<BLangPackage> compilePackages(List<PackageID> pkgIdList) {
-
-        this.compilerDriver.loadLangModules(pkgIdList);
+        if (!this.langLibsLoaded) {
+            this.compilerDriver.loadLangModules(pkgIdList);
+            this.langLibsLoaded = true;
+        }
         this.compilerDriver.loadUtilsPackage();
 
         // 1) Load all source packages. i.e. source-code -> BLangPackageNode

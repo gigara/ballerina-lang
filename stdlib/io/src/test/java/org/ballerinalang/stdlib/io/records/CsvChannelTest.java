@@ -22,11 +22,9 @@ import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BError;
 import org.ballerinalang.model.values.BFloat;
 import org.ballerinalang.model.values.BInteger;
-import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.model.values.BValueArray;
-import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.ballerinalang.test.util.BCompileUtil;
 import org.ballerinalang.test.util.BRunUtil;
 import org.ballerinalang.test.util.CompileResult;
@@ -38,6 +36,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static org.ballerinalang.stdlib.io.utils.IOConstants.ErrorCode.EoF;
 
 /**
  * Tests the CSV channel with the specified values.
@@ -84,8 +84,8 @@ public class CsvChannelTest {
         Assert.assertEquals(records.size(), expectedRecordLength);
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "nextRecord");
-        BMap error = (BMap) ((BError) returns[0]).getDetails();
-        Assert.assertEquals(IOConstants.IO_EOF, error.getMap().get("message").toString());
+        BError error = (BError) returns[0];
+        Assert.assertEquals(error.getReason(), EoF.errorCode());
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "hasNextRecord");
         hasNextRecord = (BBoolean) returns[0];
@@ -126,8 +126,8 @@ public class CsvChannelTest {
         Assert.assertEquals(records.size(), expectedRecordLength);
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "nextRecord");
-        BMap error = (BMap) ((BError) returns[0]).getDetails();
-        Assert.assertEquals(IOConstants.IO_EOF, error.getMap().get("message").toString());
+        BError error = (BError) returns[0];
+        Assert.assertEquals(error.getReason(), EoF.errorCode());
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "hasNextRecord");
         hasNextRecord = (BBoolean) returns[0];
@@ -241,8 +241,8 @@ public class CsvChannelTest {
         Assert.assertEquals(records.size(), expectedRecordLength);
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "nextRecord");
-        BMap error = (BMap) ((BError) returns[0]).getDetails();
-        Assert.assertEquals(IOConstants.IO_EOF, error.getMap().get("message").toString());
+        BError error = (BError) returns[0];
+        Assert.assertEquals(error.getReason(), EoF.errorCode());
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "hasNextRecord");
         hasNextRecord = (BBoolean) returns[0];
@@ -283,8 +283,8 @@ public class CsvChannelTest {
         Assert.assertEquals(records.size(), expectedRecordLength);
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "nextRecord");
-        BMap error = (BMap) ((BError) returns[0]).getDetails();
-        Assert.assertEquals(IOConstants.IO_EOF, error.getMap().get("message").toString());
+        BError error = (BError) returns[0];
+        Assert.assertEquals(error.getReason(), EoF.errorCode());
 
         returns = BRunUtil.invoke(csvInputOutputProgramFile, "hasNextRecord");
         hasNextRecord = (BBoolean) returns[0];
@@ -353,6 +353,21 @@ public class CsvChannelTest {
         BString departments = (BString) result[1];
         Assert.assertEquals(names.toString(), "Person1Person2Person3");
         Assert.assertEquals(departments.toString(), "EngMrk-1");
+    }
+
+    @Test(description = "Test successful data load will nill values")
+    public void getTableWithHeader() throws URISyntaxException {
+        String resourceToRead = "datafiles/io/records/sample7.csv";
+        BValue[] args = { new BString(getAbsoluteFilePath(resourceToRead)) };
+        final BValue[] result = BRunUtil.invoke(csvInputOutputProgramFile, "getTableWithHeader", args);
+        BValueArray values = (BValueArray) result[0];
+        Assert.assertEquals(values.size(), 7);
+        String[] expectedOutput = {
+                "Common App ID", "11111111", "22222222", "33333333", "44444444", "55555555", "55555556"
+        };
+        for (int i = 0; i < expectedOutput.length; i++) {
+            Assert.assertEquals(values.getStringArray()[i], expectedOutput[i]);
+        }
     }
 
     private String getAbsoluteFilePath(String relativePath) throws URISyntaxException {

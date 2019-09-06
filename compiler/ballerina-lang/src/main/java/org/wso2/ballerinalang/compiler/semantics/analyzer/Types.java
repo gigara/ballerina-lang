@@ -670,6 +670,10 @@ public class Types {
             return isTupleTypeAssignableToArrayType((BTupleType) source, (BArrayType) target, unresolvedTypes);
         }
 
+        if (source.tag == TypeTags.ARRAY && target.tag == TypeTags.TUPLE) {
+            return isArrayTypeAssignableToTupleType((BArrayType) source, (BTupleType) target, unresolvedTypes);
+        }
+
         if (source.tag == TypeTags.TUPLE || target.tag == TypeTags.TUPLE) {
             return isTupleTypeAssignable(source, target, unresolvedTypes);
         }
@@ -734,12 +738,45 @@ public class Types {
 
     private boolean isTupleTypeAssignableToArrayType(BTupleType source, BArrayType target,
                                                      List<TypePair> unresolvedTypes) {
+        if (target.state != BArrayState.UNSEALED
+                && (source.restType != null || source.tupleTypes.size() != target.size)) {
+            return false;
+        }
+
         List<BType> sourceTypes = new ArrayList<>(source.tupleTypes);
         if (source.restType != null) {
             sourceTypes.add(source.restType);
         }
         return sourceTypes.stream()
                 .allMatch(tupleElemType -> isAssignable(tupleElemType, target.eType, unresolvedTypes));
+    }
+
+    private boolean isArrayTypeAssignableToTupleType(BArrayType source, BTupleType target,
+                                                     List<TypePair> unresolvedTypes) {
+        if (!target.tupleTypes.isEmpty()) {
+            if (source.state == BArrayState.UNSEALED) {
+                // [int, int, int...] = int[] || [int, int] = int[]
+                return false;
+            }
+
+            if (target.restType != null && target.tupleTypes.size() > source.size) {
+                // [int, int, int...] = int[1]
+                return false;
+            }
+
+            if (target.restType == null && target.tupleTypes.size() != source.size) {
+                // [int, int] = int[1], [int, int] = int[3]
+                return false;
+            }
+
+        }
+
+        List<BType> targetTypes = new ArrayList<>(target.tupleTypes);
+        if (target.restType != null) {
+            targetTypes.add(target.restType);
+        }
+        return targetTypes.stream()
+                .allMatch(tupleElemType -> isAssignable(source.eType, tupleElemType, unresolvedTypes));
     }
 
     public boolean isArrayTypesAssignable(BType source, BType target, List<TypePair> unresolvedTypes) {
@@ -1141,8 +1178,17 @@ public class Types {
                     return symbol;
             }
             symbol = createCastOperatorSymbol(symTable.anyType, expType, true, code);
+        } else if (expType.tag == TypeTags.ERROR
+                && (actualType.tag == TypeTags.UNION
+                && isAllErrorMembers((BUnionType) actualType))) {
+            symbol = createCastOperatorSymbol(symTable.anyType, symTable.errorType, true, InstructionCodes.ANY2E);
+
         }
         return symbol;
+    }
+
+    private boolean isAllErrorMembers(BUnionType actualType) {
+        return actualType.getMemberTypes().stream().allMatch(t -> isAssignable(t, symTable.errorType));
     }
 
     public void setImplicitCastExpr(BLangExpression expr, BType actualType, BType expType) {
@@ -1269,9 +1315,9 @@ public class Types {
         if (type.tag != TypeTags.OBJECT) {
             return false;
         }
-        final BSymbol bSymbol = symTable.langObjectModuleSymbol.scope.lookup(Names.ABSTRACT_LISTENER).symbol;
+        final BSymbol bSymbol = symTable.langObjectModuleSymbol.scope.lookup(Names.LISTENER).symbol;
         if (bSymbol == symTable.notFoundSymbol || bSymbol.type.tag != TypeTags.OBJECT) {
-            throw new AssertionError("AbstractListener object not defined.");
+            throw new AssertionError("Listener object not defined.");
         }
         BObjectType rhsType = (BObjectType) type;
         BObjectType lhsType = (BObjectType) bSymbol.type;
@@ -1718,7 +1764,15 @@ public class Types {
 
         @Override
         public Boolean visit(BObjectType t, BType s) {
-            return t == s;
+            if (t == s) {
+                return true;
+            }
+
+            if (s.tag != TypeTags.OBJECT) {
+                return false;
+            }
+
+            return t.tsymbol.pkgID.equals(s.tsymbol.pkgID) && t.tsymbol.name.equals(s.tsymbol.name);
         }
 
         @Override
@@ -1759,14 +1813,6 @@ public class Types {
         }
 
         public Boolean visit(BTupleType t, BType s) {
-            // tuples of [string...], [string, string...] can be treated as string[]
-            if (s.tag == TypeTags.ARRAY && t.restType != null) {
-                Set<BType> types = new HashSet<>(t.tupleTypes);
-                types.add(t.restType);
-                if (types.size() == 1 && types.contains(((BArrayType) s).eType)) {
-                    return true;
-                }
-            }
             if (s.tag != TypeTags.TUPLE) {
                 return false;
             }
@@ -1909,7 +1955,8 @@ public class Types {
 
     private boolean isInSameVisibilityRegion(BSymbol lhsSym, BSymbol rhsSym) {
         if (Symbols.isPrivate(lhsSym)) {
-            return Symbols.isPrivate(rhsSym) && lhsSym.pkgID.equals(rhsSym.pkgID) && lhsSym.name.equals(rhsSym.name);
+            return Symbols.isPrivate(rhsSym) && lhsSym.pkgID.equals(rhsSym.pkgID)
+                    && lhsSym.owner.name.equals(rhsSym.owner.name);
         } else if (Symbols.isPublic(lhsSym)) {
             return Symbols.isPublic(rhsSym);
         }

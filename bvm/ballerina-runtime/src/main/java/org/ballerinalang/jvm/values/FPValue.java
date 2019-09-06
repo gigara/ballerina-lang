@@ -17,13 +17,11 @@
  */
 package org.ballerinalang.jvm.values;
 
-import org.ballerinalang.jvm.commons.TypeValuePair;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.util.BLangConstants;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -68,19 +66,13 @@ public class FPValue<T, R> implements RefValue {
     }
 
     @Override
-    public String stringValue() {
-        return Optional.ofNullable(getType()).map(BType::toString).filter(str -> str.startsWith("function")).orElse(
-                "function " + type.toString());
+    public String stringValue(Strand strand) {
+        return "function " + type;
     }
 
     @Override
     public BType getType() {
         return type;
-    }
-
-    @Override
-    public void stamp(BType type, List<TypeValuePair> unresolvedValues) {
-
     }
 
     @Override

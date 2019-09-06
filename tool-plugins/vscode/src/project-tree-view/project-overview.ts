@@ -31,21 +31,15 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeE
         this.ballerinaExtInstance = balExt;
         this.langClient = balExt.langClient;
 
-        vscode.window.onDidChangeActiveTextEditor((activatedTextEditor) => {
-            if (!activatedTextEditor) {
-                setTimeout(() => {
-                    // The active state is only updated in the next event loop. We need a setTimeout
-                    if (balExt.getWebviewPanels()["overview"].active) {
-                        // keep the tree view as is
-                        return;
-                    }
-
-                    this.refresh();
-                }, 0);
-                return;
+        vscode.window.onDidChangeVisibleTextEditors(visibleEditors => {
+            // this is so that project tree view is cleared when no editors are there
+            if (visibleEditors.length === 0) {
+                this.refresh();
             }
+        });
 
-            if (activatedTextEditor.document.languageId !== "ballerina") {
+        vscode.window.onDidChangeActiveTextEditor((activatedTextEditor) => {
+            if (!activatedTextEditor || activatedTextEditor.document.languageId !== "ballerina") {
                 this.refresh();
                 return;
             }
@@ -65,10 +59,29 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeE
     }
 
     private refresh(document?: vscode.TextDocument): void {
-		this.currentFilePath = document ? document.fileName: undefined;
-        this.sourceRoot = this.currentFilePath? this.getSourceRoot(this.currentFilePath, path.parse(this.currentFilePath).root) : undefined;
+        setTimeout(() => {
+            // The active state of the webview changes only in the next event loop cycle
+            // so we check it inside a setTimeout
+            const overviewPanel = this.ballerinaExtInstance.getWebviewPanels()["overview"];
+            if (overviewPanel && overviewPanel.active) {
+                return;
+            }
 
-        this._onDidChangeTreeData.fire();
+            this.sourceRoot = undefined;
+            const openFolders = vscode.workspace.workspaceFolders;
+            if (openFolders) {
+                if (fs.existsSync(path.join(openFolders[0].uri.path, "Ballerina.toml"))) {
+                    this.sourceRoot = openFolders[0].uri.path;
+                }
+            }
+    
+            if (!this.sourceRoot) {
+                this.currentFilePath = document ? document.fileName: undefined;
+                this.sourceRoot = this.currentFilePath? this.getSourceRoot(this.currentFilePath, path.parse(this.currentFilePath).root) : undefined;
+            }
+
+            this._onDidChangeTreeData.fire();
+        }, 0);
 	}
 
     getTreeItem(element: ProjectTreeElement): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -87,6 +100,13 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeE
         return new Promise<any>((resolve, reject) => {
             this.ballerinaExtInstance.onReady().then(() => {
                 if (this.langClient) {
+                    const openFolders = vscode.workspace.workspaceFolders;
+                    if (openFolders) {
+                        if (fs.existsSync(path.join(openFolders[0].uri.path, "Ballerina.toml"))) {
+                            this.sourceRoot = openFolders[0].uri.path;
+                        }
+                    }
+
                     if(this.sourceRoot) {
                         this.langClient.getProjectAST(vscode.Uri.file(this.sourceRoot).toString()).then((result: any) => {
                             if (result.modules && (Object.keys(result.modules).length > 0)) {
@@ -253,6 +273,13 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeE
         }
     
         return this.getSourceRoot(path.dirname(currentPath), root);
+    }
+    
+    getParent(element: ProjectTreeElement): vscode.ProviderResult<ProjectTreeElement> {
+        // This is implemented in-order to make treeView#reveal api work.
+        // returns undefined for the moment, indicates no parent. It won't be a problem
+        // as we only use reveal api to reveal root element
+        return undefined;
     }
     
 }

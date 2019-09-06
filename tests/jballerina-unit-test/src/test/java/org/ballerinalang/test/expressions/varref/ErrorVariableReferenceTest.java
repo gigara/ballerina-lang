@@ -179,6 +179,12 @@ public class ErrorVariableReferenceTest {
         Assert.assertNull(returns[1]);
     }
 
+    @Test(description = "Test error ref binding pattern when no error reason ref is given")
+    public void testNoErrorReasonGiven() {
+        BValue[] returns = BRunUtil.invoke(result, "testNoErrorReasonGiven");
+        Assert.assertEquals(returns[0].stringValue(), "message");
+    }
+
     @Test(description = "Test simple indirect error ref pattern with mandatory detail fields")
     public void testIndirectErrorRefMandatoryFields() {
         BValue[] returns = BRunUtil.invoke(result, "testIndirectErrorRefMandatoryFields");
@@ -187,10 +193,8 @@ public class ErrorVariableReferenceTest {
         Assert.assertEquals(returns[i++].stringValue(), "/usr/bhah/a.log");
         Assert.assertEquals(returns[i++].stringValue(), "45221");
         Assert.assertEquals(returns[i++].stringValue(), "128");
-        Assert.assertEquals(returns[i++].stringValue(), "FILE-OPEN");
         Assert.assertEquals(returns[i++].stringValue(), "{\"message\":\"file open failed\", " +
                 "\"targetFileName\":\"/usr/bhah/a.log\", \"errorCode\":45221, \"flags\":128, \"cause\":c {}}");
-        Assert.assertEquals(returns[i++].stringValue(), "FILE-OPEN");
         Assert.assertEquals(returns[i++].stringValue(), "file open failed");
         Assert.assertEquals(returns[i++].stringValue(), "{\"targetFileName\":\"/usr/bhah/a.log\", " +
                 "\"errorCode\":45221, \"flags\":128, \"cause\":c {}}");
@@ -200,7 +204,7 @@ public class ErrorVariableReferenceTest {
     public void testNegativeErrorVariables() {
         CompileResult resultNegative = BCompileUtil.compile(
                 "test-src/expressions/varref/error_variable_reference_negative.bal");
-        Assert.assertEquals(resultNegative.getErrorCount(), 13);
+        Assert.assertEquals(resultNegative.getErrorCount(), 18);
         int i = -1;
         String incompatibleTypes = "incompatible types: ";
         BAssertUtil.validateError(resultNegative, ++i,
@@ -224,11 +228,23 @@ public class ErrorVariableReferenceTest {
                 "found 'record {| string message?; $error0 cause?; (anydata|error)...; |}'", 93, 32);
         BAssertUtil.validateError(resultNegative, ++i,
                 incompatibleTypes + "expected 'boolean', found 'string'", 94, 20);
+        BAssertUtil.validateError(resultNegative, ++i, "invalid binding pattern, variable reference " +
+                "'results[res1][reason]' cannot be used with binding pattern", 111, 12);
+        BAssertUtil.validateError(resultNegative, ++i, "invalid binding pattern, variable reference " +
+                "'results[res2][reason]' cannot be used with binding pattern", 112, 12);
         BAssertUtil.validateError(resultNegative, ++i,
-                                  "error binding pattern does not support index based assignment", 112, 39);
+                                  "invalid binding pattern, variable reference 'results[detail][message]' cannot be " +
+                                          "used with binding pattern", 112, 49);
         BAssertUtil.validateError(resultNegative, ++i,
-                                  "error binding pattern does not support index based assignment", 112, 79);
+                                  "invalid binding pattern, variable reference 'results[detail][fatal]' cannot be " +
+                                          "used with binding pattern", 112, 87);
         BAssertUtil.validateError(resultNegative, ++i,
-                                  "incompatible types: expected 'map', found 'map<(error|string|int)>'", 135, 48);
+                                  "incompatible types: expected 'map', found 'map<(error|string|int)>'", 135, 32);
+        BAssertUtil.validateError(resultNegative, ++i,
+                "incompatible types: expected 'string', found 'string?'", 145, 19);
+        BAssertUtil.validateError(resultNegative, ++i,
+                "variables in a binding pattern must be distinct; found duplicate variable 's'", 151, 24);
+        BAssertUtil.validateError(resultNegative, ++i,
+                "variables in a binding pattern must be distinct; found duplicate variable 's'", 151, 36);
     }
 }

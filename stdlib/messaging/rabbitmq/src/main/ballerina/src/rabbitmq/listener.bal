@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/'lang\.object as lang;
+import ballerina/lang.'object as lang;
 
 # Public Ballerina API - Ballerina RabbitMQ Message Listener.
 # To provide a listener to consume messages from RabbitMQ.
@@ -22,7 +22,7 @@ import ballerina/'lang\.object as lang;
 # + amqpChannel - Reference to a Ballerina RabbitMQ Channel.
 public type Listener object {
 
-    *lang:AbstractListener;
+    *lang:Listener;
 
     private Channel? amqpChannel;
 
@@ -68,6 +68,9 @@ public type Listener object {
     # + return - () or error upon failure to register listener.
     public function __attach(service s, string? name = ()) returns error? {
        return self.registerListener(s);
+    }
+
+    public function __detach(service s) returns error? {
     }
 
     # Retrieve the Channel which initializes this listener.

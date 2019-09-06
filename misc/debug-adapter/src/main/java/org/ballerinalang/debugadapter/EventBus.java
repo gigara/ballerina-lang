@@ -30,7 +30,10 @@ import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.request.BreakpointRequest;
+import com.sun.jdi.request.EventRequest;
+import com.sun.jdi.request.StepRequest;
 import org.eclipse.lsp4j.debug.Breakpoint;
+import org.eclipse.lsp4j.debug.ContinuedEventArguments;
 import org.eclipse.lsp4j.debug.ExitedEventArguments;
 import org.eclipse.lsp4j.debug.StoppedEventArguments;
 import org.eclipse.lsp4j.debug.StoppedEventArgumentsReason;
@@ -40,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -55,9 +59,10 @@ import static org.ballerinalang.debugadapter.PackageUtils.findProjectRoot;
 public class EventBus {
     private final Context context;
     private static final Logger LOGGER = LoggerFactory.getLogger(JBallerinaDebugServer.class);
-    private Breakpoint[] breakpointsList = new Breakpoint[0];
+    private Map<String, Breakpoint[]> breakpointsList = new HashMap<>();
     private Map<Long, ThreadReference> threadsMap = new HashMap<>();
     AtomicInteger nextVariableReference = new AtomicInteger();
+    private List<EventRequest> stepEventRequests = new ArrayList<>();
 
     private Path projectRoot;
 
@@ -65,21 +70,33 @@ public class EventBus {
         this.context = context;
     }
 
-    public void setBreakpointsList(Breakpoint[] breakpointsList) {
-        this.breakpointsList = breakpointsList.clone();
-        if (this.breakpointsList.length > 0) {
-            Breakpoint breakpoint = this.breakpointsList[0];
-            projectRoot = findProjectRoot(Paths.get(breakpoint.getSource().getPath()));
-            if (projectRoot == null) {
-                // calculate projectRoot for single file
-                File file = new File(breakpoint.getSource().getPath());
-                File parentDir = file.getParentFile();
-                projectRoot = parentDir.toPath();
-            }
+    public void setBreakpointsList(String path, Breakpoint[] breakpointsList) {
+        Breakpoint[] breakpoints = breakpointsList.clone();
+        this.breakpointsList.put(path, breakpoints);
+
+        if (this.context.getDebuggee() != null) {
+            // Setting breakpoints to a already running debug session.
+            context.getDebuggee().eventRequestManager().deleteAllBreakpoints();
+            Arrays.stream(breakpointsList).forEach(breakpoint -> {
+                this.context.getDebuggee().allClasses().forEach(referenceType -> {
+                    this.addBreakpoint(referenceType, breakpoint);
+                });
+            });
+        }
+
+        projectRoot = findProjectRoot(Paths.get(path));
+        if (projectRoot == null) {
+            // calculate projectRoot for single file
+            File file = new File(path);
+            File parentDir = file.getParentFile();
+            projectRoot = parentDir.toPath();
         }
     }
 
     public Map<Long, ThreadReference> getThreadsMap() {
+        if (context.getDebuggee() == null) {
+            return null;
+        }
         List<ThreadReference> threadReferences = context.getDebuggee().allThreads();
         threadReferences.stream().forEach(threadReference -> {
             threadsMap.put(threadReference.uniqueID(), threadReference);
@@ -111,9 +128,8 @@ public class EventBus {
                         if (event instanceof ClassPrepareEvent) {
                             ClassPrepareEvent evt = (ClassPrepareEvent) event;
 
-                            Arrays.stream(this.breakpointsList).forEach(breakpoint -> {
-                                addBreakpoint(evt.referenceType(), breakpoint);
-                            });
+                            this.breakpointsList.forEach((path, breakpoints) -> Arrays.stream(breakpoints)
+                                    .forEach(breakpoint -> addBreakpoint(evt.referenceType(), breakpoint)));
                         }
 
                         /*
@@ -126,13 +142,21 @@ public class EventBus {
                             stoppedEventArguments.setThreadId(((BreakpointEvent) event).thread().uniqueID());
                             stoppedEventArguments.setAllThreadsStopped(true);
                             context.getClient().stopped(stoppedEventArguments);
+                            List<EventRequest> stepEventRequests = new ArrayList<>();
+                            context.getDebuggee().eventRequestManager().deleteEventRequests(stepEventRequests);
                         } else if (event instanceof StepEvent) {
                             populateMaps();
-                            StoppedEventArguments stoppedEventArguments = new StoppedEventArguments();
-                            stoppedEventArguments.setReason(StoppedEventArgumentsReason.STEP);
-                            stoppedEventArguments.setThreadId(((StepEvent) event).thread().uniqueID());
-                            stoppedEventArguments.setAllThreadsStopped(true);
-                            context.getClient().stopped(stoppedEventArguments);
+                            if (((StepEvent) event).location().lineNumber() > 0) {
+                                context.getDebuggee().eventRequestManager().deleteEventRequests(stepEventRequests);
+                                StoppedEventArguments stoppedEventArguments = new StoppedEventArguments();
+                                stoppedEventArguments.setReason(StoppedEventArgumentsReason.STEP);
+                                stoppedEventArguments.setThreadId(((StepEvent) event).thread().uniqueID());
+                                stoppedEventArguments.setAllThreadsStopped(true);
+                                context.getClient().stopped(stoppedEventArguments);
+                            } else {
+                                long threadId = ((StepEvent) event).thread().uniqueID();
+                                this.createStepRequest(threadId, StepRequest.STEP_OVER);
+                            }
                         } else if (event instanceof VMDisconnectEvent
                                 || event instanceof VMDeathEvent
                                 || event instanceof VMDisconnectedException) {
@@ -178,5 +202,33 @@ public class EventBus {
         } catch (AbsentInformationException e) {
 
         }
+    }
+
+    public void createStepRequest(long threadId, int stepType) {
+        // Make sure there are no existing step events
+        context.getDebuggee().eventRequestManager().deleteEventRequests(stepEventRequests);
+
+        ThreadReference threadReference = getThreadsMap().get(threadId);
+        StepRequest request = context.getDebuggee().eventRequestManager().createStepRequest(threadReference,
+                StepRequest.STEP_LINE, stepType);
+        request.setSuspendPolicy(StepRequest.SUSPEND_ALL);
+
+        // TODO change this to a class inclusion filter
+        request.addClassExclusionFilter("io.*");
+        request.addClassExclusionFilter("com.*");
+        request.addClassExclusionFilter("org.*");
+        request.addClassExclusionFilter("ballerina.*");
+        request.addClassExclusionFilter("java.*");
+        request.addClassExclusionFilter("$lambda$main$");
+
+        stepEventRequests.add(request);
+        request.addCountFilter(1); // next step only
+        request.enable();
+        context.getDebuggee().resume();
+
+        // We are resuming all threads, we need to notify debug client about this.
+        ContinuedEventArguments continuedEventArguments = new ContinuedEventArguments();
+        continuedEventArguments.setAllThreadsContinued(true);
+        context.getClient().continued(continuedEventArguments);
     }
 }

@@ -17,13 +17,11 @@
   */
  package org.ballerinalang.jvm.values;
 
- import org.ballerinalang.jvm.commons.TypeValuePair;
  import org.ballerinalang.jvm.scheduling.Strand;
+ import org.ballerinalang.jvm.types.BFutureType;
  import org.ballerinalang.jvm.types.BType;
- import org.ballerinalang.jvm.types.BTypes;
  import org.ballerinalang.jvm.values.connector.CallableUnitCallback;
 
- import java.util.List;
  import java.util.Map;
  import java.util.StringJoiner;
 
@@ -44,13 +42,16 @@
 
      public CallableUnitCallback callback;
 
-     public FutureValue(Strand strand, CallableUnitCallback callback) {
+     BType type;
+
+     public FutureValue(Strand strand, CallableUnitCallback callback, BType constraint) {
          this.strand = strand;
          this.callback = callback;
+         this.type = new BFutureType(constraint);
      }
 
      @Override
-     public String stringValue() {
+     public String stringValue(Strand strand) {
          StringJoiner sj = new StringJoiner(",", "{", "}");
          sj.add("isDone:" + isDone);
          if (isDone) {
@@ -64,12 +65,7 @@
 
      @Override
      public BType getType() {
-         return BTypes.typeFuture;
-     }
-
-     @Override
-     public void stamp(BType type, List<TypeValuePair> unresolvedValues) {
-
+         return this.type;
      }
 
      @Override

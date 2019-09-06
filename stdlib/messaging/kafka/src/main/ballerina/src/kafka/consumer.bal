@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/'lang\.object as lang;
+import ballerina/lang.'object as lang;
 
 # Configuration related to consumer endpoint.
 #
@@ -124,7 +124,7 @@ public type ConsumerRecord record {|
 #
 # + consumerConfig - Used to store configurations related to a Kafka connection.
 public type Consumer client object {
-    *lang:AbstractListener;
+    *lang:Listener;
 
     public ConsumerConfig? consumerConfig = ();
 
@@ -150,6 +150,9 @@ public type Consumer client object {
 
     public function __attach(service s, string? name = ()) returns error? {
         return self.register(s, name);
+    }
+
+    public function __detach(service s) returns error? {
     }
 
     function init(ConsumerConfig config) returns ConsumerError? {
@@ -314,6 +317,8 @@ public type Consumer client object {
     public remote function subscribeToPattern(string regex) returns ConsumerError? = external;
 
     # Subscribes to consumer to the provided set of topics with rebalance listening is enabled.
+    # This function can be used inside a service, to subscribe to a set of topics, while rebalancing the patition
+    # assignment of the consumers.
     #
     # + topics - Array of topics to be subscribed.
     # + onPartitionsRevoked - Function which will be executed if partitions are revoked from this consumer.

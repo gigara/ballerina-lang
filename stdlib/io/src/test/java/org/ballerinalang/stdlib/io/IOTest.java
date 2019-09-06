@@ -17,16 +17,16 @@
 
 package org.ballerinalang.stdlib.io;
 
+import org.apache.axiom.om.OMNode;
+import org.ballerinalang.jvm.XMLFactory;
 import org.ballerinalang.model.util.JsonParser;
 import org.ballerinalang.model.values.BBoolean;
 import org.ballerinalang.model.values.BError;
 import org.ballerinalang.model.values.BInteger;
-import org.ballerinalang.model.values.BMap;
 import org.ballerinalang.model.values.BString;
 import org.ballerinalang.model.values.BValue;
 import org.ballerinalang.model.values.BValueArray;
 import org.ballerinalang.model.values.BXMLItem;
-import org.ballerinalang.stdlib.io.utils.IOConstants;
 import org.ballerinalang.test.util.BCompileUtil;
 import org.ballerinalang.test.util.BRunUtil;
 import org.ballerinalang.test.util.CompileResult;
@@ -44,6 +44,7 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import static org.ballerinalang.stdlib.common.CommonTestUtils.getAbsoluteFilePath;
+import static org.ballerinalang.stdlib.io.utils.IOConstants.ErrorCode.EoF;
 
 /**
  * Tests I/O related functions.
@@ -201,7 +202,7 @@ public class IOTest {
 
         returns = BRunUtil.invoke(recordsInputOutputProgramFile, "nextRecord");
         BError error = (BError) returns[0];
-        Assert.assertTrue(IOConstants.IO_EOF.equals(((BMap) error.getDetails()).getMap().get("message").toString()));
+        Assert.assertEquals(error.getReason(), EoF.errorCode());
         returns = BRunUtil.invoke(recordsInputOutputProgramFile, "hasNextRecord");
         hasNextRecord = (BBoolean) returns[0];
         Assert.assertFalse(hasNextRecord.booleanValue(), "Not expecting anymore records");
@@ -343,7 +344,7 @@ public class IOTest {
 
     @Test(description = "Test 'writeXml' function in ballerina/io package")
     public void testWriteXmlCharacters() {
-        String content = "\t<test>\n" +
+        String content = "<test>\n" +
                 "\t\t<name>Foo</name>\n" +
                 "\t</test>";
 
@@ -352,8 +353,8 @@ public class IOTest {
         //Will initialize the channel
         BValue[] args = {new BString(sourceToWrite), new BString("UTF-8")};
         BRunUtil.invoke(characterInputOutputProgramFile, "initWritableChannel", args);
-
-        args = new BValue[]{new BXMLItem(content)};
+        OMNode omNode = (OMNode) XMLFactory.parse(content).value();
+        args = new BValue[] { new BXMLItem(omNode) };
         BValue[] result = BRunUtil.invoke(characterInputOutputProgramFile, "writeXml", args);
 
         //Assert if there's no error return

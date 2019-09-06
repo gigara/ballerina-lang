@@ -1486,22 +1486,6 @@
                 <type>zip</type>
             </dependency>
 
-            <!-- Siddhi Stream Dependencies -->
-            <dependency>
-                <groupId>org.wso2.orbit.com.lmax</groupId>
-                <artifactId>disruptor</artifactId>
-                <version>${disruptor.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>${guava.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-core</artifactId>
-                <version>${metrics.version}</version>
-            </dependency>
             <!-- Compile time dependencies -->
             <dependency>
                 <groupId>org.mvel</groupId>
@@ -1510,26 +1494,6 @@
                 <version>${mvel2.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>siddhi-core</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>siddhi-query-api</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>siddhi-query-compiler</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ballerinalang</groupId>
-                <artifactId>siddhi-annotations</artifactId>
-                <version>${ballerina.version}</version>
-            </dependency>
             <dependency>
                 <groupId>io.ballerina.messaging</groupId>
                 <artifactId>broker-common</artifactId>
@@ -1828,7 +1792,7 @@
                 <module>bvm/ballerina-config</module>
                 <module>bvm/ballerina-core</module>
                 <module>bvm/ballerina-runtime</module>
-                <module>bvm/ballerina-streaming</module>
+
                 <module>bvm/ballerina-logging</module>
                 <module>cli/ballerina-launcher</module>
                 <module>cli/ballerina-packerina</module>
@@ -1926,7 +1890,7 @@
                 <module>bvm/ballerina-config</module>
                 <module>bvm/ballerina-core</module>
                 <module>bvm/ballerina-runtime</module>
-                <module>bvm/ballerina-streaming</module>
+
                 <module>bvm/ballerina-logging</module>
                 <module>cli/ballerina-launcher</module>
                 <module>cli/ballerina-packerina</module>
@@ -2018,7 +1982,6 @@
                 <module>bvm/ballerina-config</module>
                 <module>bvm/ballerina-core</module>
                 <module>bvm/ballerina-runtime</module>
-                <module>bvm/ballerina-streaming</module>
                 <module>bvm/ballerina-logging</module>
                 <module>cli/ballerina-launcher</module>
                 <module>cli/ballerina-packerina</module>
@@ -2118,7 +2081,6 @@
                 <module>bvm/ballerina-config</module>
                 <module>bvm/ballerina-core</module>
                 <module>bvm/ballerina-runtime</module>
-                <module>bvm/ballerina-streaming</module>
                 <module>bvm/ballerina-logging</module>
                 <module>cli/ballerina-launcher</module>
                 <module>cli/ballerina-packerina</module>
@@ -2517,7 +2479,7 @@
         <jacoco.agent.version>0.8.3</jacoco.agent.version>
         <mockito.version>1.10.19</mockito.version>
         <javassist.version>3.24.1-GA</javassist.version>
-        <netty.version>4.1.34.Final</netty.version>
+        <netty.version>4.1.39.Final</netty.version>
         <jzlib.version>1.1.3</jzlib.version>
         <commons.pool.version>1.5.6.wso2v1</commons.pool.version>
         <org.snakeyaml.version>1.16.0.wso2v1</org.snakeyaml.version>
@@ -2591,9 +2553,6 @@
         <os.maven.plugin.version>1.5.0.Final</os.maven.plugin.version>
 
         <mvel2.version>2.4.4.Final</mvel2.version>
-        <disruptor.version>3.3.2.wso2v2</disruptor.version>
-        <guava.version>23.0</guava.version>
-        <metrics.version>3.1.0</metrics.version>
 
         <!-- Observability -->
         <open.tracing.version>0.31.0</open.tracing.version>

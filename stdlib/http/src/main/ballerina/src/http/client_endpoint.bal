@@ -15,8 +15,7 @@
 // under the License.
 
 import ballerina/crypto;
-import ballerina/io;
-import ballerina/internal;
+import ballerina/time;
 
 ////////////////////////////////
 ///// HTTP Client Endpoint /////
@@ -224,7 +223,6 @@ public type TargetService record {|
 # + forwarded - The choice of setting `forwarded`/`x-forwarded` header
 # + followRedirects - Configurations associated with Redirection
 # + poolConfig - Configurations associated with request pooling
-# + proxy - Proxy server related options
 # + secureSocket - SSL/TLS related options
 # + cache - HTTP caching related configurations
 # + compression - Specifies the way of handling compression (`accept-encoding`) header
@@ -238,7 +236,6 @@ public type ClientEndpointConfig record {|
     int timeoutInMillis = 60000;
     string forwarded = "disable";
     FollowRedirects? followRedirects = ();
-    ProxyConfig? proxy = ();
     PoolConfiguration? poolConfig = ();
     ClientSecureSocket? secureSocket = ();
     CacheConfig cache = {};
@@ -252,9 +249,11 @@ public type ClientEndpointConfig record {|
 #
 # + keepAlive - Specifies whether to reuse a connection for multiple requests
 # + chunking - The chunking behaviour of the request
+# + proxy - Proxy server related options
 public type ClientHttp1Settings record {|
     KeepAlive keepAlive = KEEPALIVE_AUTO;
     Chunking chunking = CHUNKING_AUTO;
+    ProxyConfig? proxy = ();
 |};
 
 function createSimpleHttpClient(HttpClient caller, PoolConfiguration globalPoolConfig) = external;
@@ -349,13 +348,13 @@ public type OutboundAuthConfig record {|
 function initialize(string serviceUrl, ClientEndpointConfig config) returns HttpClient|error {
     boolean httpClientRequired = false;
     string url = serviceUrl;
-    if (internal:hasSuffix(url, "/")) {
+    if (url.endsWith("/")) {
         int lastIndex = url.length() - 1;
         url = url.substring(0, lastIndex);
     }
     var cbConfig = config.circuitBreaker;
     if (cbConfig is CircuitBreakerConfig) {
-        if (internal:hasSuffix(url, "/")) {
+        if (url.endsWith("/")) {
             int lastIndex = url.length() - 1;
             url = url.substring(0, lastIndex);
         }

@@ -38,15 +38,15 @@ public listener Listener uninitializedPublicModuleListener;
 
 public type Listener object {
 
-    *AbstractListener;
+    *Listener;
 
     public function __init() {
 
     }
 
-    public function __attach(service s, string? name = ()) returns error? {
+    public function __attach(service s, string? name = ()) returns error? { }
 
-    }
+    public function __detach(service s) returns error? { }
 
     public function __start() returns error? {
 

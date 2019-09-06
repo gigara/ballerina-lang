@@ -18,13 +18,11 @@
 
 package org.ballerinalang.jvm.values;
 
-import org.ballerinalang.jvm.commons.TypeValuePair;
 import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.streams.StreamSubscriptionManager;
 import org.ballerinalang.jvm.types.BStreamType;
 import org.ballerinalang.jvm.types.BType;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -56,18 +54,13 @@ public class StreamValue implements RefValue {
         return streamId;
     }
 
-    public String stringValue() {
+    public String stringValue(Strand strand) {
         return "stream " + streamId + " " + getType().toString();
     }
 
     @Override
     public BType getType() {
         return this.type;
-    }
-
-    @Override
-    public void stamp(BType type, List<TypeValuePair> unresolvedValues) {
-
     }
 
     @Override

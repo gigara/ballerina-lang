@@ -21,6 +21,7 @@ package org.ballerinalang.tool;
 import org.ballerinalang.compiler.BLangCompilerException;
 import org.ballerinalang.config.cipher.AESCipherTool;
 import org.ballerinalang.config.cipher.AESCipherToolException;
+import org.ballerinalang.jvm.util.RuntimeUtils;
 import org.ballerinalang.tool.util.BCompileUtil;
 import org.ballerinalang.tool.util.ToolUtil;
 import org.ballerinalang.util.exceptions.BLangRuntimeException;
@@ -53,6 +54,7 @@ public class Main {
 
     public static void main(String... args) {
         try {
+            ToolUtil.checkForUpdate(outStream, args);
             Optional<BLauncherCmd> optionalInvokedCmd = getInvokedCmd(args);
             optionalInvokedCmd.ifPresent(BLauncherCmd::execute);
         } catch (BLangRuntimeException e) {
@@ -69,7 +71,7 @@ public class Main {
             Runtime.getRuntime().exit(1);
         } catch (Throwable e) {
             errStream.println(getMessageForInternalErrors());
-            breLog.error(e.getMessage(), e);
+            RuntimeUtils.silentlyLogBadSad(e);
             Runtime.getRuntime().exit(1);
         }
     }
@@ -95,14 +97,27 @@ public class Main {
                 bCmd.setParentCmdParser(cmdParser);
             }
 
+            // set stop at positional to run command
+            cmdParser.getSubcommands().get("run").setStopAtPositional(true);
+
             // Build Version Command
             VersionCmd versionCmd = new VersionCmd();
             cmdParser.addSubcommand(BallerinaCliCommands.VERSION, versionCmd);
             versionCmd.setParentCmdParser(cmdParser);
 
+            // Ballerina Home Command
+            HomeCmd homeCmd = new HomeCmd();
+            cmdParser.addSubcommand(BallerinaCliCommands.HOME, homeCmd);
+            homeCmd.setParentCmdParser(cmdParser);
+
             EncryptCmd encryptCmd = new EncryptCmd();
             cmdParser.addSubcommand(BallerinaCliCommands.ENCRYPT, encryptCmd);
             encryptCmd.setParentCmdParser(cmdParser);
+
+            // Ballerina Self Update Command
+            SelfUpdateCmd selfUpdateCmd = new SelfUpdateCmd();
+            cmdParser.addSubcommand(BallerinaCliCommands.SELF_UPDATE, selfUpdateCmd);
+            selfUpdateCmd.setParentCmdParser(cmdParser);
 
             //DistCmd Command
             DistCmd distCmd = new DistCmd();
@@ -187,7 +202,14 @@ public class Main {
         }
     }
 
-
+    private static void printBallerinaDistPath() {
+        String balHome = System.getProperty("ballerina.home");
+        if (balHome != null) {
+            outStream.print(balHome + "\n");
+        } else {
+            throw LauncherUtils.createUsageExceptionWithHelp("home info not available");
+        }
+    }
 
     private static String getMessageForInternalErrors() {
         String errorMsg;
@@ -307,6 +329,119 @@ public class Main {
         @Override
         public void printUsage(StringBuilder out) {
             out.append("  ballerina version\n");
+        }
+
+        @Override
+        public void setParentCmdParser(CommandLine parentCmdParser) {
+            this.parentCmdParser = parentCmdParser;
+        }
+    }
+
+    /**
+     * This class represents the "home" command and it holds arguments and flags specified by the user.
+     *
+     * @since 1.0.0
+     */
+    @CommandLine.Command(name = "home", description = "Prints the path of current Ballerina dist")
+    private static class HomeCmd implements BLauncherCmd {
+
+        @CommandLine.Parameters(description = "Command name")
+        private List<String> homeCommands;
+
+        @CommandLine.Option(names = {"--help", "-h", "?"}, hidden = true)
+        private boolean helpFlag;
+
+        private CommandLine parentCmdParser;
+
+        public void execute() {
+            if (helpFlag) {
+                printUsageInfo(BallerinaCliCommands.HOME);
+                return;
+            }
+
+            if (homeCommands == null) {
+                printBallerinaDistPath();
+                return;
+            } else if (homeCommands.size() > 1) {
+                throw LauncherUtils.createUsageExceptionWithHelp("too many arguments given");
+            }
+
+            String userCommand = homeCommands.get(0);
+            if (parentCmdParser.getSubcommands().get(userCommand) == null) {
+                throw LauncherUtils.createUsageExceptionWithHelp("unknown command `" + userCommand + "`");
+            }
+        }
+
+        @Override
+        public String getName() {
+            return BallerinaCliCommands.HOME;
+        }
+
+        @Override
+        public void printLongDesc(StringBuilder out) {
+
+        }
+
+        @Override
+        public void printUsage(StringBuilder out) {
+            out.append("  ballerina home\n");
+        }
+
+        @Override
+        public void setParentCmdParser(CommandLine parentCmdParser) {
+            this.parentCmdParser = parentCmdParser;
+        }
+    }
+
+
+    /**
+     * This class represents the "self-update" command and it holds arguments and flags specified by the user.
+     *
+     * @since 1.0.0
+     */
+    @CommandLine.Command(name = "self-update", description = "Updates Ballerina tool itself")
+    private static class SelfUpdateCmd implements BLauncherCmd {
+
+        @CommandLine.Parameters(description = "Command name")
+        private List<String> selfUpdateCommands;
+
+        @CommandLine.Option(names = {"--help", "-h", "?"}, hidden = true)
+        private boolean helpFlag;
+
+        private CommandLine parentCmdParser;
+
+        public void execute() {
+            if (helpFlag) {
+                printUsageInfo(BallerinaCliCommands.SELF_UPDATE);
+                return;
+            }
+
+            if (selfUpdateCommands == null) {
+                ToolUtil.selfUpdate(outStream);
+                return;
+            } else if (selfUpdateCommands.size() > 1) {
+                throw LauncherUtils.createUsageExceptionWithHelp("too many arguments given");
+            }
+
+            String userCommand = selfUpdateCommands.get(0);
+            if (parentCmdParser.getSubcommands().get(userCommand) == null) {
+                throw LauncherUtils.createUsageExceptionWithHelp("unknown command `" + userCommand + "`");
+            }
+        }
+
+        @Override
+        public String getName() {
+            return BallerinaCliCommands.SELF_UPDATE;
+        }
+
+        @Override
+        public void printLongDesc(StringBuilder out) {
+
+        }
+
+        @Override
+        public void printUsage(StringBuilder out) {
+            out.append("  ballerina self-update\n");
         }
 
         @Override
@@ -496,7 +631,7 @@ public class Main {
 
         @Override
         public void printUsage(StringBuilder out) {
-            out.append("  ballerina list\n");
+            out.append("  ballerina dist list\n");
         }
 
         @Override
@@ -554,7 +689,7 @@ public class Main {
 
         @Override
         public void printUsage(StringBuilder out) {
-            out.append("  install update\n");
+            out.append("  ballerina dist pull\n");
         }
 
         @Override
@@ -612,7 +747,7 @@ public class Main {
 
         @Override
         public void printUsage(StringBuilder out) {
-            out.append("  install update\n");
+            out.append("  ballerina dist use\n");
         }
 
         @Override
@@ -644,7 +779,7 @@ public class Main {
             }
 
             if (updateCommands == null) {
-                ToolUtil.update(outStream, BallerinaCliCommands.VERSION);
+                ToolUtil.update(outStream);
                 return;
             } else if (updateCommands.size() > 1) {
                 throw LauncherUtils.createUsageExceptionWithHelp("too many arguments given");
@@ -668,7 +803,7 @@ public class Main {
 
         @Override
         public void printUsage(StringBuilder out) {
-            out.append("  ballerina update\n");
+            out.append("  ballerina dist update\n");
         }
 
         @Override
@@ -726,7 +861,7 @@ public class Main {
 
         @Override
         public void printUsage(StringBuilder out) {
-            out.append("  ballerina remove\n");
+            out.append("  ballerina dist remove\n");
         }
 
         @Override
@@ -754,17 +889,12 @@ public class Main {
 
         @Override
         public void execute() {
-            if (helpFlag) {
-                printUsageInfo(BallerinaCliCommands.HELP);
-                return;
-            }
-
             if (versionFlag) {
                 printVersionInfo();
                 return;
             }
 
-            printUsageInfo(BallerinaCliCommands.DEFAULT);
+            printUsageInfo(BallerinaCliCommands.HELP);
         }
 
         @Override

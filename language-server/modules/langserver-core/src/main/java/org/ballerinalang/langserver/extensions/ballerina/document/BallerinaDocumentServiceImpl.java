@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import org.ballerinalang.ballerina.openapi.convertor.service.OpenApiConverterUtils;
 import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.langserver.BallerinaLanguageServer;
+import org.ballerinalang.langserver.LSContextOperation;
 import org.ballerinalang.langserver.LSGlobalContext;
 import org.ballerinalang.langserver.LSGlobalContextKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
@@ -146,7 +147,7 @@ public class BallerinaDocumentServiceImpl implements BallerinaDocumentService {
             File tempOasJsonFile = getOpenApiFile(params.getOASDefinition());
             CodeGenerator generator = new CodeGenerator();
             List<GenSrcFile> oasSources = generator.generateBalSource(GeneratorConstants.GenType.GEN_SERVICE,
-                    tempOasJsonFile.getPath(), null);
+                    tempOasJsonFile.getPath(), "", null);
 
             Optional<GenSrcFile> oasServiceFile = oasSources.stream()
                     .filter(genSrcFile -> genSrcFile.getType().equals(GenSrcFile.GenFileType.GEN_SRC)).findAny();
@@ -266,10 +267,9 @@ public class BallerinaDocumentServiceImpl implements BallerinaDocumentService {
         Path compilationPath = getUntitledFilePath(filePath.get().toString()).orElse(filePath.get());
         Optional<Lock> lock = documentManager.lockFile(compilationPath);
         try {
-            LSContext astContext = new LSServiceOperationContext();
+            LSContext astContext = new LSServiceOperationContext(LSContextOperation.DOC_SERVICE_AST);
             astContext.put(DocumentServiceKeys.FILE_URI_KEY, fileUri);
-            LSModuleCompiler.getBLangPackage(astContext, this.documentManager, true, LSCustomErrorStrategy.class,
-                    false);
+            LSModuleCompiler.getBLangPackage(astContext, this.documentManager, LSCustomErrorStrategy.class, false);
             reply.setAst(getTreeForContent(astContext));
             reply.setParseSuccess(true);
         } catch (CompilationFailedException | JSONGenerationException e) {

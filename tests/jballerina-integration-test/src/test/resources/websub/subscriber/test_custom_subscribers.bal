@@ -14,10 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/http;
 import ballerina/io;
+import ballerina/lang.'object as lang;
 import ballerina/websub;
-import ballerina/'lang\.object as lang;
 
 const string MOCK_HEADER = "MockHeader";
 
@@ -106,7 +105,7 @@ service headerAndPayloadWebhook on new WebhookServerForHeaderAndPayload(23787) {
 /////////////////// Specific Webhook for dispatching by key ///////////////////
 public type WebhookServerForPayload object {
 
-    *lang:AbstractListener;
+    *lang:Listener;
 
     private websub:Listener websubListener;
 
@@ -137,6 +136,10 @@ public type WebhookServerForPayload object {
         return self.websubListener.__attach(s, name);
     }
 
+    public function __detach(service s) returns error? {
+        return self.websubListener.__detach(s);
+    }
+
     public function __start() returns error? {
         return self.websubListener.__start();
     }
@@ -153,7 +156,7 @@ public type WebhookServerForPayload object {
 /////////////////// Specific Webhook for dispatching by header ///////////////////
 public type WebhookServerForHeader object {
 
-    *lang:AbstractListener;
+    *lang:Listener;
 
     private websub:Listener websubListener;
 
@@ -179,6 +182,10 @@ public type WebhookServerForHeader object {
         return self.websubListener.__attach(s, name);
     }
 
+    public function __detach(service s) returns error? {
+        return self.websubListener.__detach(s);
+    }
+
     public function __start() returns error? {
         return self.websubListener.__start();
     }
@@ -195,7 +202,7 @@ public type WebhookServerForHeader object {
 /////////////////// Specific Webhook for dispatching by header and payload ///////////////////
 public type WebhookServerForHeaderAndPayload object {
 
-    *lang:AbstractListener;
+    *lang:Listener;
 
     private websub:Listener websubListener;
 
@@ -240,6 +247,10 @@ public type WebhookServerForHeaderAndPayload object {
 
     public function __attach(service s, string? name = ()) returns error? {
         return self.websubListener.__attach(s, name);
+    }
+
+    public function __detach(service s) returns error? {
+        return self.websubListener.__detach(s);
     }
 
     public function __start() returns error? {

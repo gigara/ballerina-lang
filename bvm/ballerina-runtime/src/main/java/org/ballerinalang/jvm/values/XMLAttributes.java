@@ -17,11 +17,10 @@
 */
 package org.ballerinalang.jvm.values;
 
-import org.ballerinalang.jvm.commons.TypeValuePair;
+import org.ballerinalang.jvm.scheduling.Strand;
 import org.ballerinalang.jvm.types.BType;
 import org.ballerinalang.jvm.types.BTypes;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,17 +48,13 @@ public final class XMLAttributes implements RefValue {
     }
 
     @Override
-    public String stringValue() {
-        return value.stringValue();
+    public String stringValue(Strand strand) {
+        return value.stringValue(strand);
     }
 
     @Override
     public BType getType() {
         return BTypes.typeXMLAttributes;
-    }
-
-    @Override
-    public void stamp(BType type, List<TypeValuePair> unresolvedValues) {
     }
 
     @Override

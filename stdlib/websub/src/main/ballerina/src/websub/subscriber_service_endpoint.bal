@@ -14,10 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/encoding;
 import ballerina/http;
-import ballerina/internal;
-import ballerina/'lang\.int as langint;
-import ballerina/'lang\.object as lang;
+import ballerina/lang.'object as lang;
 import ballerina/log;
 
 //////////////////////////////////////////
@@ -28,7 +27,7 @@ import ballerina/log;
 # + config - The configuration for the endpoint
 public type Listener object {
 
-    *lang:AbstractListener;
+    *lang:Listener;
 
     public SubscriberListenerConfiguration? config = ();
 
@@ -41,6 +40,9 @@ public type Listener object {
     public function __attach(service s, string? name = ()) returns error? {
         // TODO: handle data and return error on error
         self.registerWebSubSubscriberService(s);
+    }
+
+    public function __detach(service s) returns error? {
     }
 
     public function __start() returns error? {
@@ -122,13 +124,13 @@ public type Listener object {
                     var discoveredDetails = retrieveHubAndTopicUrl(resourceUrl, publisherClientConfig);
                     if (discoveredDetails is [string, string]) {
                         var [retHub, retTopic] = discoveredDetails;
-                        var hubDecodeResponse = http:decode(retHub, "UTF-8");
+                        var hubDecodeResponse = encoding:decodeUriComponent(retHub, "UTF-8");
                         if (hubDecodeResponse is string) {
                             retHub = hubDecodeResponse;
                         } else {
                             panic <error> hubDecodeResponse;
                         }
-                        var topicDecodeResponse = http:decode(retTopic, "UTF-8");
+                        var topicDecodeResponse = encoding:decodeUriComponent(retTopic, "UTF-8");
                         if (topicDecodeResponse is string) {
                             retTopic = topicDecodeResponse;
                         } else {
@@ -196,7 +198,7 @@ public type ExtensionConfig record {|
     //    "watch" : ("onWatch", WatchEvent),
     //    "create" : ("onCreate", CreateEvent)
     //  };
-    map<[string, typedesc<record{| json...; |}>]>? headerResourceMap = ();
+    map<[string, typedesc<record {}>]>? headerResourceMap = ();
 
     // e.g.,
     //  payloadKeyResourceMap = {
@@ -205,7 +207,7 @@ public type ExtensionConfig record {|
     //        "branch.deleted":  ("onBranchDelete", BranchDeletedEvent)
     //    }
     //  };
-    map<map<[string, typedesc<record{| json...; |}>]>>? payloadKeyResourceMap = ();
+    map<map<[string, typedesc<record {}>]>>? payloadKeyResourceMap = ();
 
     // e.g.,
     //  headerAndPayloadKeyResourceMap = {
@@ -217,7 +219,7 @@ public type ExtensionConfig record {|
     //        }
     //    }
     //  };
-    map<map<map<[string, typedesc<record{| json...; |}>]>>>? headerAndPayloadKeyResourceMap = ();
+    map<map<map<[string, typedesc<record {}>]>>>? headerAndPayloadKeyResourceMap = ();
 |};
 
 # The function called to discover hub and topic URLs defined by a resource URL.

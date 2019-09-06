@@ -17,7 +17,9 @@
  */
 package org.ballerinalang.test.types.xml;
 
+import org.ballerinalang.jvm.XMLFactory;
 import org.ballerinalang.jvm.values.XMLItem;
+import org.ballerinalang.jvm.values.XMLValue;
 import org.ballerinalang.model.values.BInteger;
 import org.ballerinalang.model.values.BIterator;
 import org.ballerinalang.model.values.BString;
@@ -79,6 +81,9 @@ public class XMLLiteralTest {
         BAssertUtil.validateError(negativeResult, index++,
                                   "incompatible types: expected '(int|float|decimal|string|boolean)', found 'xml'",
                                   28, 51);
+
+        // namespace conflict with block scope namespace
+        BAssertUtil.validateError(negativeResult, index++, "redeclared symbol 'ns0'", 37, 46);
 
         // namespace conflict with package import
         BAssertUtil.validateError(negativeResult, index++, "redeclared symbol 'x'", 42, 5);
@@ -439,5 +444,12 @@ public class XMLLiteralTest {
         xmlItem.serialize(baos);
         Assert.assertEquals(new String(baos.toByteArray()),
                 "<foo xmlns=\"http://wso2.com/\" xmlns:ns1=\"http://ballerina.com/b\">hello</foo>");
+    }
+
+    @Test
+    public void testXMLToString() {
+        XMLValue<?> xml = XMLFactory.parse("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<!DOCTYPE foo [<!ELEMENT foo ANY ><!ENTITY data \"Example\" >]><foo>&data;</foo>");
+        Assert.assertEquals(xml.toString(), "<foo>Example</foo>");
     }
 }

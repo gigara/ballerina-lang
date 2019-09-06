@@ -21,6 +21,9 @@ configurations {
     birJar
     bir
     birJarCompile { transitive false }
+    testCompile.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    testCompile.exclude group: 'org.slf4j', module: 'slf4j-simple'
+    testCompile.exclude group: 'org.ops4j.pax.logging', module: 'pax-logging-api'
 }
 
 dependencies {
@@ -33,7 +36,7 @@ dependencies {
     implementation project(':ballerina-config')
     implementation project(':ballerina-logging')
     implementation project(':ballerina-backend-jvm')
-    implementation project(':ballerina-core')
+    implementation project(':ballerina-runtime')
     implementation project(':ballerina-tool')
     implementation project(':testerina:testerina-core')
     implementation project(':toml-parser')
@@ -79,6 +82,7 @@ test {
     dependsOn configurations.birJar
     dependsOn configurations.birJarCompile
 
+    systemProperty "java.util.logging.manager", "org.ballerinalang.logging.BLogManager"
     useTestNG() {
         suites 'src/test/resources/testng.xml'
     }
