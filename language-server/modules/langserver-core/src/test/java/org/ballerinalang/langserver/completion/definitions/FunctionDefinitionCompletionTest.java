@@ -143,6 +143,8 @@ public class FunctionDefinitionCompletionTest extends CompletionTest {
                 {"assignmentStmt4.json", "function"},
                 {"assignmentStmt5.json", "function"},
                 {"assignmentStmt6.json", "function"},
+                {"varDefStmt1.json", "function"},
+                {"varDefStmt2.json", "function"},
                 {"typeofKWSuggestion.json", "function"},
                 {"typeofKWSuggestion2.json", "function"},
                 {"forkJoinCompletion1.json", "function"},
@@ -160,6 +162,12 @@ public class FunctionDefinitionCompletionTest extends CompletionTest {
                 {"returnParameterContextSuggestion7.json", "function"},
                 {"returnParameterContextSuggestion8.json", "function"},
                 {"returnParameterContextSuggestion9.json", "function"},
+                {"typeDescSuggestions1.json", "function"},
+                {"typeDescSuggestions2.json", "function"},
+//                {"statementWithMissingSemiColon1.json", "function"},
+//                {"statementWithMissingSemiColon2.json", "function"},
+//                {"statementWithMissingSemiColon3.json", "function"},
+//                {"statementWithMissingSemiColon4.json", "function"},
         };
     }
 }
