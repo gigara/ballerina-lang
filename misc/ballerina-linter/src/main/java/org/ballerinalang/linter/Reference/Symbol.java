@@ -41,4 +41,9 @@ public class Symbol {
     public String getPkgOrgName() {
         return pkgOrgName;
     }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode() + type.hashCode() + pkgName.hashCode() + pkgOrgName.hashCode();
+    }
 }

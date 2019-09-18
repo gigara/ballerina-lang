@@ -14,6 +14,7 @@ import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
 import org.wso2.ballerinalang.compiler.tree.BLangPackage;
 import org.wso2.ballerinalang.compiler.util.CompilerContext;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,22 +49,24 @@ public class LinterPlugin extends AbstractCompilerPlugin {
             JsonObject model = modelElement.getAsJsonObject();
 
             LinteringVisitorEntry linteringVisitorEntry = new LinteringVisitorEntry();
-            linteringVisitorEntry.accept(model,compilationUnitNode,dLog);
+            linteringVisitorEntry.accept(model, compilationUnitNode, dLog);
         }
 
         // reference finder
+
         LinteringReferenceVisitor referenceVisitor = new LinteringReferenceVisitor();
         List<BLangCompilationUnit> compilationUnits = ((BLangPackage) packageNode).getCompilationUnits();
         for (BLangCompilationUnit compilationUnit : compilationUnits) {
             referenceVisitor.visit(compilationUnit);
         }
 
-        for (Definition definition : referenceVisitor.getDefinitions()) {
-            boolean mainFunction = definition.getSymbol().getType().equals("FUNCTION") && definition.getSymbol().getName().equals("main");
-            if (!definition.isHasReference() && !mainFunction) {
-                dLog.logDiagnostic(Diagnostic.Kind.WARNING, definition.getPosition(), definition.getSymbol().getName() + " is never used");
-            }
-        }
+        referenceVisitor.getDefinitions().forEach((integer, definition) -> {
+                    boolean mainFunction = definition.getSymbol().getType().equals("FUNCTION") && definition.getSymbol().getName().equals("main");
+                    if (definition.isHasDefinition() && !definition.isHasReference() && !mainFunction) {
+                        dLog.logDiagnostic(Diagnostic.Kind.WARNING, definition.getPosition(), definition.getSymbol().getName() + " is never used");
+                    }
+                }
+        );
     }
 
 }
