@@ -34,7 +34,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
         Symbol symbol1 = new Symbol(symbol.name.value, symbol.kind != null ? symbol.kind.name() : symbol.type.tsymbol.name.value,
                 symbol.pkgID.name.value, symbol.pkgID.orgName.value);
         if (!availableInDefinitions(symbol1)) {
-            Definition definition = new Definition(symbol1, false, true, getPosition(pos, ws, symbol.name.value));
+            Definition definition = new Definition(symbol1, false, true, getPosition(pos, ws, symbol));
             definitions.put(definition.hashCode(), definition);
         } else {
             definitions.get(symbol1.hashCode()).setHasDefinition(true);
@@ -48,7 +48,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
         if (availableInDefinitions(symbol1)) {
             definitions.get(symbol1.hashCode()).setHasReference(true);
         } else {
-            Definition definition = new Definition(symbol1, true, false, getPosition(pos, ws, symbol.name.value));
+            Definition definition = new Definition(symbol1, true, false, getPosition(pos, ws, symbol));
             definitions.put(definition.hashCode(), definition);
         }
     }
@@ -59,74 +59,35 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
     }
 
     // diagnostic log end position
-    private Diagnostic.DiagnosticPosition getPosition(Diagnostic.DiagnosticPosition position, Set<Whitespace> ws, String text) {
+    private Diagnostic.DiagnosticPosition getPosition(Diagnostic.DiagnosticPosition position, Set<Whitespace> ws, BSymbol symbol) {
         if (ws == null) {
             return position;
         }
         position.setEndLine(position.getStartLine());
-        position.setStartColumn(getStartPosition(ws, text));
-        position.setEndColumn(getEndPosition(ws, text));
+        position.setStartColumn(position.getStartColumn() + getStartPosition(ws, symbol));
+        position.setEndColumn(position.getStartColumn() + symbol.name.value.length());
         return position;
     }
 
-    private int getStartPosition(Set<Whitespace> ws, String text) {
-        int count = 1;
-        int to = 0;
+    private int getStartPosition(Set<Whitespace> ws, BSymbol symbol) {
+        int count = 0;
+        String text = symbol.name.value;
+        String type = symbol.type.tsymbol.name.value;
+        count += type.length();
 
-        // find text
+        // find text and count
         Iterator<Whitespace> it = ws.iterator();
         while (it.hasNext()) {
             Whitespace current = it.next();
             if (current.getPrevious().equals(text))
                 break;
-            to++;
-        }
 
-        // count
-        it = ws.iterator();
-        int iteratePos = 0;
-        while (it.hasNext()) {
-            Whitespace current = it.next();
             String WStext = current.getPrevious();
             String WS = current.getWs().replace("\n", "");
             count += WStext.length();
             count += WS.length();
-
-            if (++iteratePos == to)
-                break;
         }
-
         return ++count;
-    }
-
-    private int getEndPosition(Set<Whitespace> ws, String text) {
-        int count = 1;
-        int to = 0;
-
-        // find text
-        Iterator<Whitespace> it = ws.iterator();
-        while (it.hasNext()) {
-            Whitespace current = it.next();
-            if (current.getPrevious().equals(text))
-                break;
-            to++;
-        }
-
-        // count
-        it = ws.iterator();
-        int iteratePos = 0;
-        while (it.hasNext()) {
-            Whitespace current = it.next();
-            String WStext = current.getPrevious();
-            String WS = current.getWs().replace("\n", "");
-            count += WStext.length();
-            count += WS.length();
-
-            if (++iteratePos > to)
-                break;
-        }
-
-        return count;
     }
 
     @Override
