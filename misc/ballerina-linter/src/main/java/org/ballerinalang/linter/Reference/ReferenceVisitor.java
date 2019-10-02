@@ -1,6 +1,5 @@
 package org.ballerinalang.linter.Reference;
 
-import org.ballerinalang.model.Whitespace;
 import org.ballerinalang.model.elements.Flag;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
@@ -15,13 +14,13 @@ import org.wso2.ballerinalang.compiler.tree.types.*;
 
 import java.util.*;
 
-public class LinteringReferenceVisitor extends BLangNodeVisitor {
-    private HashMap<Integer, Definition> definitions = new HashMap<>();
+public class ReferenceVisitor extends BLangNodeVisitor {
+    private HashMap<String, Definition> definitions = new HashMap<>();
 
-    public LinteringReferenceVisitor() {
+    public ReferenceVisitor() {
     }
 
-    public HashMap<Integer, Definition> getDefinitions() {
+    public HashMap<String, Definition> getDefinitions() {
         return definitions;
     }
 
@@ -30,64 +29,28 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
     }
 
     // add definition to the arrayList
-    private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos, Set<Whitespace> ws) {
-        Symbol symbol1 = new Symbol(symbol.name.value, symbol.kind != null ? symbol.kind.name() : symbol.type.tsymbol.name.value,
-                symbol.pkgID.name.value, symbol.pkgID.orgName.value);
-        if (!availableInDefinitions(symbol1)) {
-            Definition definition = new Definition(symbol1, false, true, getPosition(pos, ws, symbol));
-            definitions.put(definition.hashCode(), definition);
+    private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
+        Definition definition = new Definition(symbol, false, true, pos);
+        if (!availableInDefinitions(definition)) {
+            definitions.put(definition.md5(), definition);
         } else {
-            definitions.get(symbol1.hashCode()).setHasDefinition(true);
+            definitions.get(definition.md5()).setHasDefinition(true);
         }
     }
 
     // add reference to the arrayList
-    private void addReference(BSymbol symbol, Diagnostic.DiagnosticPosition pos, Set<Whitespace> ws) {
-        Symbol symbol1 = new Symbol(symbol.name.value, symbol.kind != null ? symbol.kind.name() : symbol.type.tsymbol.name.value,
-                symbol.pkgID.name.value, symbol.pkgID.orgName.value);
-        if (availableInDefinitions(symbol1)) {
-            definitions.get(symbol1.hashCode()).setHasReference(true);
+    private void addReference(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
+        Definition definition = new Definition(symbol, true, false, pos);
+        if (availableInDefinitions(definition)) {
+            definitions.get(definition.md5()).setHasReference(true);
         } else {
-            Definition definition = new Definition(symbol1, true, false, getPosition(pos, ws, symbol));
-            definitions.put(definition.hashCode(), definition);
+            definitions.put(definition.md5(), definition);
         }
     }
 
     // search for the symbol in definitions list
-    private boolean availableInDefinitions(Symbol symbol) {
-        return definitions.containsKey(symbol.hashCode());
-    }
-
-    // diagnostic log end position
-    private Diagnostic.DiagnosticPosition getPosition(Diagnostic.DiagnosticPosition position, Set<Whitespace> ws, BSymbol symbol) {
-        if (ws == null) {
-            return position;
-        }
-        position.setEndLine(position.getStartLine());
-        position.setStartColumn(position.getStartColumn() + getStartPosition(ws, symbol));
-        position.setEndColumn(position.getStartColumn() + symbol.name.value.length());
-        return position;
-    }
-
-    private int getStartPosition(Set<Whitespace> ws, BSymbol symbol) {
-        int count = 0;
-        String text = symbol.name.value;
-        String type = symbol.type.tsymbol.name.value;
-        count += type.length();
-
-        // find text and count
-        Iterator<Whitespace> it = ws.iterator();
-        while (it.hasNext()) {
-            Whitespace current = it.next();
-            if (current.getPrevious().equals(text))
-                break;
-
-            String WStext = current.getPrevious();
-            String WS = current.getWs().replace("\n", "");
-            count += WStext.length();
-            count += WS.length();
-        }
-        return ++count;
+    private boolean availableInDefinitions(Definition definition) {
+        return definitions.containsKey(definition.md5());
     }
 
     @Override
@@ -113,12 +76,14 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangXMLNS xmlnsNode) {
-        addDefinition(xmlnsNode.symbol, xmlnsNode.pos, xmlnsNode.getWS());
+        addDefinition(xmlnsNode.symbol, xmlnsNode.namespaceURI.pos);
     }
 
     @Override
     public void visit(BLangFunction funcNode) {
-        addDefinition(funcNode.symbol, funcNode.pos, funcNode.getWS());
+        if (!funcNode.name.value.equals("main")) {
+            addDefinition(funcNode.symbol, funcNode.name.pos);
+        }
         funcNode.annAttachments.forEach(this::acceptNode);
         funcNode.requiredParams.forEach(this::acceptNode);
         funcNode.externalAnnAttachments.forEach(this::acceptNode);
@@ -130,7 +95,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangService serviceNode) {
-        addDefinition(serviceNode.symbol, serviceNode.pos, serviceNode.getWS());
+        addDefinition(serviceNode.symbol, serviceNode.name.pos);
         serviceNode.annAttachments.forEach(this::acceptNode);
         if (serviceNode.attachedExprs != null) {
             serviceNode.attachedExprs.forEach(this::acceptNode);
@@ -145,7 +110,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTypeDefinition typeDefinition) {
-        addDefinition(typeDefinition.symbol, typeDefinition.pos, typeDefinition.getWS());
+        addDefinition(typeDefinition.symbol, typeDefinition.name.pos);
         typeDefinition.annAttachments.forEach(this::acceptNode);
         // Visit the type node
         this.acceptNode(typeDefinition.typeNode);
@@ -153,7 +118,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangConstant constant) {
-        addDefinition(constant.symbol, constant.pos, constant.getWS());
+        addDefinition(constant.symbol, constant.name.pos);
     }
 
     @Override
@@ -163,7 +128,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
             // which will be visited from BLangService visitor
             return;
         }
-        addDefinition(varNode.symbol, varNode.pos, varNode.getWS());
+        addDefinition(varNode.symbol, varNode.name.pos);
         varNode.annAttachments.forEach(this::acceptNode);
         this.acceptNode(varNode.expr);
     }
@@ -185,7 +150,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangAnnotation annotationNode) {
-        addDefinition(annotationNode.symbol, annotationNode.pos, annotationNode.getWS());
+        addDefinition(annotationNode.symbol, annotationNode.name.pos);
         annotationNode.annAttachments.forEach(this::acceptNode);
         this.acceptNode(annotationNode.typeNode);
     }
@@ -193,7 +158,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
     @Override
     public void visit(BLangAnnotationAttachment annAttachmentNode) {
         this.acceptNode(annAttachmentNode.expr);
-        addReference(annAttachmentNode.annotationSymbol, annAttachmentNode.pos, annAttachmentNode.getWS());
+        addReference(annAttachmentNode.annotationSymbol, annAttachmentNode.annotationName.pos);
     }
 
     @Override
@@ -214,7 +179,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
     @Override
     public void visit(BLangSimpleVariableDef varDefNode) {
         BLangSimpleVariable variable = varDefNode.var;
-        addDefinition(variable.symbol, varDefNode.pos, varDefNode.getWS());
+        addDefinition(variable.symbol, varDefNode.var.name.pos);
 
         BLangType typeNode = variable.typeNode;
         if (varDefNode.getWS() == null) {
@@ -514,13 +479,13 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangSimpleVarRef varRefExpr) {
-        addReference((BVarSymbol) varRefExpr.symbol, varRefExpr.pos, varRefExpr.getWS());
+        addReference((BVarSymbol) varRefExpr.symbol, varRefExpr.variableName.pos);
     }
 
     @Override
     public void visit(BLangFieldBasedAccess fieldAccessExpr) {
         this.acceptNode(fieldAccessExpr.expr);
-        addReference(fieldAccessExpr.varSymbol, fieldAccessExpr.pos, fieldAccessExpr.getWS());
+        addReference(fieldAccessExpr.varSymbol, fieldAccessExpr.field.pos);
     }
 
     @Override
@@ -536,13 +501,13 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
     public void visit(BLangInvocation invocationExpr) {
         if (invocationExpr.expr != null)
             this.acceptNode(invocationExpr.expr);
-        addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.pos, invocationExpr.getWS());
+        addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.name.pos);
         invocationExpr.argExprs.forEach(this::acceptNode);
     }
 
     @Override
     public void visit(BLangTypeInit typeInit) {
-        addReference(typeInit.initInvocation.symbol, typeInit.pos, typeInit.getWS());
+        addReference(typeInit.initInvocation.symbol, typeInit.userDefinedType.typeName.pos);
         if (typeInit.userDefinedType != null) {
             this.acceptNode(typeInit.userDefinedType);
         }
@@ -798,7 +763,7 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangUserDefinedType userDefinedType) {
-        addReference(userDefinedType.type.tsymbol, userDefinedType.pos, userDefinedType.getWS());
+        addReference(userDefinedType.type.tsymbol, userDefinedType.typeName.pos);
     }
 
     @Override
@@ -1066,6 +1031,6 @@ public class LinteringReferenceVisitor extends BLangNodeVisitor {
             return;
         }
         BObjectType objectType = (BObjectType) bLangType.type;
-        addReference(objectType.tsymbol, bLangType.pos, bLangType.getWS());
+        addReference(objectType.tsymbol, bLangType.pos);
     }
 }

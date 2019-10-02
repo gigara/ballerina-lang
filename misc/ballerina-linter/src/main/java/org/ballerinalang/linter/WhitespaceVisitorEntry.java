@@ -9,11 +9,11 @@ import org.ballerinalang.util.diagnostic.DiagnosticLog;
 
 import java.util.Map;
 
-public class LinteringVisitorEntry {
+public class WhitespaceVisitorEntry {
 
     private LinteringVisitor visitor;
 
-    public LinteringVisitorEntry() {
+    public WhitespaceVisitorEntry() {
         this.visitor = new LinteringVisitor();
 
     }
