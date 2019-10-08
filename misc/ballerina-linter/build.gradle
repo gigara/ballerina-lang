@@ -24,13 +24,13 @@ dependencies {
     implementation project(':ballerina-lang')
     implementation project(':language-server:language-server-compiler')
 
-    //testCompile 'org.testng:testng'
+    testCompile 'org.testng:testng'
 }
 
-//test {
-//    useTestNG() {
-//        suites 'src/test/resources/testng.xml'
-//    }
-//}
+test {
+    useTestNG() {
+        suites 'src/test/resources/testng.xml'
+    }
+}
 
 description = 'Ballerina - Formatting CLI tool'
