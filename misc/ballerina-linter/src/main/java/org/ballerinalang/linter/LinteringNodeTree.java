@@ -8149,9 +8149,9 @@ public class LinteringNodeTree {
      *
      * @param node                {JsonObject} node as json object
      * @param compilationUnitNode {Node} compilation unit node as a Node object
-     * @param messege             {String} error messege as a string
+     * @param message             {String} error message as a string
      */
-    private void logError(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog, String text, String messege) {
+    private void logError(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog, String text, String message) {
         // get error position
         int sLine = node.get("position").getAsJsonObject().get("startLine").getAsInt();
         int eLine = node.get("position").getAsJsonObject().get("endLine").getAsInt();
@@ -8172,12 +8172,8 @@ public class LinteringNodeTree {
         eCol += getEndPosition(node.get(FormattingConstants.WS).getAsJsonArray(), text);
         // set position
         Diagnostic.DiagnosticPosition pos = new DiagnosticPos((BDiagnosticSource) compilationUnitNode.getPosition().getSource(), sLine, eLine, sCol, eCol);
-        pos.setStartLine(sLine);
-        pos.setEndLine(eLine);
-        pos.setStartColumn(sCol);
-        pos.setEndColumn(eCol);
 
-        dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, messege);
+        dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, message);
     }
 
     private int getStartPosition(JsonArray ws, String text) {
@@ -8606,7 +8602,7 @@ public class LinteringNodeTree {
                         ws.get(FormattingConstants.WS).getAsString().contains("\n"))) {
             List<String> tokens = this.tokenizer(ws.get(FormattingConstants.WS).getAsString());
             if (!ws.get(FormattingConstants.WS).getAsString().
-                    equals(indent)) {
+                    equals(this.getTextFromTokens(tokens, indent))) {
                 logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
             }
 
