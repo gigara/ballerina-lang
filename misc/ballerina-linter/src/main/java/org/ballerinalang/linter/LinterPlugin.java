@@ -50,7 +50,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
             linteringVisitorEntry.accept(model, compilationUnitNode, dLog);
             referenceVisitor.visit((BLangCompilationUnit) compilationUnitNode);
-
+            LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
         }
 
         referenceVisitor.getDefinitions().forEach((integer, definition) -> {
