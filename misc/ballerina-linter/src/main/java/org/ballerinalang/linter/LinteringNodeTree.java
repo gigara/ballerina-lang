@@ -11,9 +11,12 @@ import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.wso2.ballerinalang.compiler.util.diagnotic.BDiagnosticSource;
 import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.ballerinalang.linter.LinterPlugin.model;
 
 public class LinteringNodeTree {
     /**
@@ -56,7 +59,7 @@ public class LinteringNodeTree {
                                 : (this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                 indentation);
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                            logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                         }
                     } else if (text.equals(Tokens.CONST)) {
                         if (!isPublic) {
@@ -68,11 +71,11 @@ public class LinteringNodeTree {
                                     : (this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                     .getAsInt()) + indentation);
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     } else if (text.equals(Tokens.ANNOTATION)) {
@@ -85,20 +88,20 @@ public class LinteringNodeTree {
                                     : (this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                     .getAsInt()) + indentation);
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, text, "Irregular whitespace");
+                                logError(compilationUnitNode, dLog, currentWS, "Irregular whitespace");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     } else if (text.equals(Tokens.SEMICOLON) || text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -143,17 +146,17 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentWithParentIndentation)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                             }
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -193,7 +196,7 @@ public class LinteringNodeTree {
                 String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                 if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                        logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                     }
                 }
             }
@@ -229,7 +232,7 @@ public class LinteringNodeTree {
                                 .get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                 + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt())
                                 + indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, "Opening bracket should indented properly.");
+                    logError(compilationUnitNode, dLog, openingBracketWS, "Opening bracket should indented properly.");
                 }
             }
 
@@ -240,7 +243,7 @@ public class LinteringNodeTree {
                 if (text.equals(Tokens.COMMA)
                         && this.noHeightAvailable(wsItem.get(FormattingConstants.WS).getAsString())) {
                     if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                        logError(compilationUnitNode, dLog, wsItem, "Spaces are not allowed before " + text);
                     }
                 }
             }
@@ -250,7 +253,7 @@ public class LinteringNodeTree {
             String text = closingBracketWS.get(FormattingConstants.TEXT).getAsString();
             if (this.noHeightAvailable(closingBracketWS.get(FormattingConstants.WS).getAsString())) {
                 if (!closingBracketWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                    logError(compilationUnitNode, dLog, closingBracketWS, "Spaces are not allowed before " + text);
                 }
             }
 
@@ -301,14 +304,14 @@ public class LinteringNodeTree {
                                                 .get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                                 + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()) + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Opening parenthesis should indented properly");
+                                    logError(compilationUnitNode, dLog, wsItem, "Opening parenthesis should indented properly");
                                 }
                             }
                         } else {
                             // Update rest of the token whitespaces.
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed here");
+                                logError(compilationUnitNode, dLog, wsItem, "No spaces allowed here");
                             }
                         }
                     }
@@ -343,7 +346,7 @@ public class LinteringNodeTree {
                     if (!varWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                     indentation)) {
-                        logError(node, compilationUnitNode, dLog, text, "var should indented properly");
+                        logError(compilationUnitNode, dLog, varWhitespace, "var should indented properly");
                     }
                 }
 
@@ -362,11 +365,11 @@ public class LinteringNodeTree {
                     String text = varWhitespace.get(FormattingConstants.TEXT).getAsString();
                     if (!equalWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Only single whitespace is allowed before " + text);
+                        logError(compilationUnitNode, dLog, equalWhitespace, "Only single whitespace is allowed before " + text);
                     }
                     if (!equalWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before =");
+                        logError(compilationUnitNode, dLog, equalWhitespace, "More than one whitespace is not allowed before =");
                     }
                 }
 
@@ -376,7 +379,7 @@ public class LinteringNodeTree {
                     String text = semicolonWhitespace.get(FormattingConstants.TEXT).getAsString();
                     if (!semicolonWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before ;");
+                        logError(compilationUnitNode, dLog, semicolonWhitespace, "More than one whitespace is not allowed before ;");
                     }
                 }
             } else {
@@ -397,11 +400,11 @@ public class LinteringNodeTree {
                     String text = equalWhitespace.get(FormattingConstants.TEXT).getAsString();
                     if (!equalWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Only single whitespace is allowed before " + text);
+                        logError(compilationUnitNode, dLog, equalWhitespace, "Only single whitespace is allowed before " + text);
                     }
                     if (!equalWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before =");
+                        logError(compilationUnitNode, dLog, equalWhitespace, "More than one whitespace is not allowed before =");
                     }
                 }
 
@@ -411,7 +414,7 @@ public class LinteringNodeTree {
                     String text = semicolonWhitespace.get(FormattingConstants.TEXT).getAsString();
                     if (!semicolonWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before ;");
+                        logError(compilationUnitNode, dLog, semicolonWhitespace, "More than one whitespace is not allowed before ;");
                     }
                 }
             }
@@ -449,28 +452,28 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.OPENING_PARENTHESES)) {
                         if (!arrowExprWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, "Opening parenthesis should indented properly");
+                            logError(compilationUnitNode, dLog, arrowExprWS, "Opening parenthesis should indented properly");
                         }
                     }
 
                     if (text.equals(Tokens.COMMA)) {
                         if (!arrowExprWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces before ',' is not allowed");
+                            logError(compilationUnitNode, dLog, arrowExprWS, "Spaces before ',' is not allowed");
                         }
                     }
 
                     if (text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!arrowExprWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces before ')' is not allowed");
+                            logError(compilationUnitNode, dLog, arrowExprWS, "Spaces before ')' is not allowed");
                         }
                     }
 
                     if (text.equals(Tokens.EQUAL_GT)) {
                         if (!arrowExprWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces before '=>' is not allowed");
+                            logError(compilationUnitNode, dLog, arrowExprWS, "Spaces before '=>' is not allowed");
                         }
                     }
                 }
@@ -537,7 +540,7 @@ public class LinteringNodeTree {
                 String text = operatorSymbolWS.get(FormattingConstants.TEXT).getAsString();
                 if (!operatorSymbolWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Spaces before operator symbol is not allowed");
+                    logError(compilationUnitNode, dLog, operatorSymbolWS, "Spaces before operator symbol is not allowed");
                 }
             }
 
@@ -606,7 +609,7 @@ public class LinteringNodeTree {
                 String text = elseKeywordWS.get(FormattingConstants.TEXT).getAsString();
                 if (!elseKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "More than one space before else keyword is not allowed");
+                    logError(compilationUnitNode, dLog, elseKeywordWS, "More than one space before else keyword is not allowed");
                 }
             }
 
@@ -616,7 +619,7 @@ public class LinteringNodeTree {
                 String text = openingBraceWS.get(FormattingConstants.TEXT).getAsString();
                 if (!openingBraceWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "More than one space before '{' is not allowed");
+                    logError(compilationUnitNode, dLog, openingBraceWS, "More than one space before '{' is not allowed");
                 }
             }
 
@@ -632,7 +635,7 @@ public class LinteringNodeTree {
                                     + FormattingConstants.NEW_LINE +
                                     this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
                                             .get(FormattingConstants.START_COLUMN).getAsInt()))) {
-                        logError(node, compilationUnitNode, dLog, text, "Closing brace should indent properly");
+                        logError(compilationUnitNode, dLog, closingBraceWS, "Closing brace should indent properly");
                     }
                 }
             } else if (this.noHeightAvailable(closingBraceWS.get(FormattingConstants.WS).getAsString())) {
@@ -641,7 +644,7 @@ public class LinteringNodeTree {
                         equals(FormattingConstants.NEW_LINE +
                                 this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
                                         .get(FormattingConstants.START_COLUMN).getAsInt()))) {
-                    logError(node, compilationUnitNode, dLog, text, "Closing brace should indent properly");
+                    logError(compilationUnitNode, dLog, closingBraceWS, "Closing brace should indent properly");
                 }
             }
         }
@@ -672,12 +675,12 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES) || text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -723,7 +726,7 @@ public class LinteringNodeTree {
                 if (!refTypeWhitespace.get(FormattingConstants.WS).getAsString().
                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                 indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, refTypeWhitespace, text + " Should indent properly");
                 }
             }
         }
@@ -762,17 +765,17 @@ public class LinteringNodeTree {
                         if (isExpression) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed here");
                             }
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -816,18 +819,18 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                             .getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -895,14 +898,14 @@ public class LinteringNodeTree {
                         if (!tempLowNode.getAsJsonObject().get(FormattingConstants.WS).getAsJsonArray().get(0)
                                 .getAsJsonObject().get(FormattingConstants.WS).getAsString()
                                 .equals(compWS)) {
-                            logError(node, compilationUnitNode, dLog, tempLowNodeText, tempLowNodeText + " Should indent properly");
+                            logError(compilationUnitNode, dLog, tempLowNode.getAsJsonObject(), tempLowNodeText + " Should indent properly");
                         }
 
                         String tempTopNodeText = tempTopNode.getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
                         if (!tempTopNode.getAsJsonObject().get(FormattingConstants.WS).getAsJsonArray()
                                 .get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString()
                                 .equals(refWS)) {
-                            logError(node, compilationUnitNode, dLog, tempTopNodeText, tempTopNodeText + " Should indent properly");
+                            logError(compilationUnitNode, dLog, tempTopNode.getAsJsonObject(), tempTopNodeText + " Should indent properly");
                         }
 
                         topLevelNodes.set(j, tempTopNode);
@@ -957,16 +960,15 @@ public class LinteringNodeTree {
             if (this.noHeightAvailable(eofWS.get(FormattingConstants.WS).getAsString())) {
                 String text = eofWS.get(FormattingConstants.TEXT).getAsString();
                 if (!eofWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.NEW_LINE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Should started in a new line");
+//                    logError(compilationUnitNode, dLog, currentWS, "Should started in a new line");
                 }
             } else if (this.noNewLine(eofWS.get(FormattingConstants.WS).getAsString()
                     .charAt(eofWS.get(FormattingConstants.WS).getAsString().length() - 1) + "")) {
 
-                String text = eofWS.get(FormattingConstants.TEXT).getAsString();
                 if (!eofWS.get(FormattingConstants.WS).getAsString().
                         equals((eofWS.get(FormattingConstants.WS).getAsString() +
                                 FormattingConstants.NEW_LINE))) {
-                    logError(node, compilationUnitNode, dLog, text, "Should indent properly");
+                    logError(compilationUnitNode, dLog, eofWS, "Should indent properly");
                 }
             }
         }
@@ -994,11 +996,11 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(compoundOperator)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     }
                 }
@@ -1044,31 +1046,31 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.CONST)) {
                         if (isPublic) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -1137,39 +1139,39 @@ public class LinteringNodeTree {
                         if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         } else if (formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt() > 0) {
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         } else {
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed here");
+                                logError(compilationUnitNode, dLog, wsItem, "No spaces allowed here");
                             }
                         }
                     } else if (text.equals(Tokens.LESS_THAN) || text.equals(Tokens.GREATER_THAN)
                             || text.equals(Tokens.CLOSING_BRACE) || text.equals(Tokens.OBJECT)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed here");
+                            logError(compilationUnitNode, dLog, wsItem, "No spaces allowed here");
                         }
                     } else if (text.equals(Tokens.TYPEDESC)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES) && isGrouped) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed here");
+                            logError(compilationUnitNode, dLog, wsItem, "No spaces allowed here");
                         }
                     }
                 }
@@ -1219,7 +1221,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig
                                         .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -1252,7 +1254,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig
                                         .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -1293,7 +1295,7 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.ELVIS)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -1341,13 +1343,13 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.ERROR)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES) || text.equals(Tokens.COMMA)
                             || text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -1391,11 +1393,11 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     }
                 }
@@ -1440,23 +1442,23 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                     } else if (text.equals(Tokens.LESS_THAN) || text.equals(Tokens.COMMA)
                             || text.equals(Tokens.GREATER_THAN) || text.equals(Tokens.QUESTION_MARK)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -1510,66 +1512,66 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                         isVarAvailable = true;
                     } else if (text.equals(Tokens.ERROR)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                         isEllipsisAvailable = false;
                     } else if (text.equals(Tokens.OPENING_PARENTHESES) || text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                         isEllipsisAvailable = false;
                     } else if (text.equals(Tokens.ELLIPSIS)) {
                         isEllipsisAvailable = true;
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COMMA) || text.equals(Tokens.CLOSING_PARENTHESES)
                             || text.equals(Tokens.SEMICOLON)) {
                         isEllipsisAvailable = false;
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     } else {
                         if (reasonWSUpdated) {
                             if (isEllipsisAvailable && isVarAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else if (isEllipsisAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                    logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                                 }
                             }
                         } else {
                             if (isEllipsisAvailable && isVarAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else if (isEllipsisAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                                 reasonWSUpdated = true;
                             }
@@ -1665,16 +1667,16 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES) || text.equals(Tokens.ELLIPSIS)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COMMA) || text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -1745,7 +1747,7 @@ public class LinteringNodeTree {
                 String text = semicolonWhitespace.get(FormattingConstants.TEXT).getAsString();
                 if (!semicolonWhitespace.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before ;");
+                    logError(compilationUnitNode, dLog, semicolonWhitespace, "More than one whitespace is not allowed before ;");
                 }
             }
         }
@@ -1792,7 +1794,7 @@ public class LinteringNodeTree {
                     String text = jsonElement.getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
                     if (!jsonElement.getAsJsonObject().get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text,
+                        logError(compilationUnitNode, dLog, jsonElement.getAsJsonObject(),
                                 "No spaces allowed before " + text);
                     }
                 }
@@ -1821,7 +1823,7 @@ public class LinteringNodeTree {
                 if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals("|")) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -1870,28 +1872,28 @@ public class LinteringNodeTree {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentWithParentIndentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
 
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "No spaces allowed allowed before " + text);
                         }
                     } else if (text.equals(Tokens.IN)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "No spaces allowed allowed before " + text);
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (node.has(FormattingConstants.BODY) &&
@@ -1902,18 +1904,18 @@ public class LinteringNodeTree {
                                     equals(FormattingConstants.NEW_LINE +
                                             indentWithParentIndentation + FormattingConstants.NEW_LINE +
                                             indentWithParentIndentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         } else {
                             if (!wsItem.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE +
                                             indentWithParentIndentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         }
                     } else {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
                 }
@@ -1977,19 +1979,19 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.NEW_LINE + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.NEW_LINE + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + "should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "should indent properly");
                         }
                     }
                 }
@@ -2034,22 +2036,22 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (node.has(FormattingConstants.WORKERS)
                                 && node.getAsJsonArray(FormattingConstants.WORKERS).size() <= 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     }
@@ -2104,7 +2106,7 @@ public class LinteringNodeTree {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (differentFirstKeyword) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             // If annotation or documentation attachments exists add only one new line.
@@ -2119,7 +2121,7 @@ public class LinteringNodeTree {
                                     + indentation);
 
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     }
@@ -2137,12 +2139,12 @@ public class LinteringNodeTree {
                         if (isLambda && !isWorker) {
                             if (!functionWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, wsText, wsText + " Should indent properly");
+                                logError(compilationUnitNode, dLog, functionWS, wsText + " Should indent properly");
                             }
                         } else if (differentFirstKeyword) {
                             if (!functionWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                                logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                             }
                         } else {
                             // If annotation or documentation attachments exists add only one new line.
@@ -2158,47 +2160,47 @@ public class LinteringNodeTree {
 
                             if (!functionWS.get(FormattingConstants.WS).getAsString().
                                     equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, wsText, wsText + " Should indent properly");
+                                logError(compilationUnitNode, dLog, functionWS, wsText + " Should indent properly");
                             }
                         }
                     } else if (wsText.equals(functionName)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.OPENING_PARENTHESES)) {
                         if (!isLambda) {
                             if (!functionWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                                logError(compilationUnitNode, dLog, functionWS, "Spaces are not allowed before " + wsText);
                             }
                         }
                     } else if (wsText.equals(Tokens.COMMA)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Spaces are not allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.EQUAL_GT)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Spaces are not allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.RETURNS)) {
                         // Update whitespace for returns keyword.
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.OPENING_BRACE)) {
                         // Update whitespaces for the opening brace.
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.CLOSING_BRACE)) {
                         // Update whitespaces for closing brace of the function.
@@ -2211,24 +2213,24 @@ public class LinteringNodeTree {
                             if (this.noHeightAvailable(functionWS.get(FormattingConstants.WS).getAsString())) {
                                 if (!functionWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                                    logError(compilationUnitNode, dLog, functionWS, "Spaces are not allowed before " + wsText);
                                 }
                             }
                         } else if (this.noHeightAvailable(functionWS.get(FormattingConstants.WS).getAsString())) {
                             if (!functionWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE + indentWithParentIndentation)) {
-                                logError(node, compilationUnitNode, dLog, wsText, wsText + " Should indent properly");
+                                logError(compilationUnitNode, dLog, functionWS, wsText + " Should indent properly");
                             }
                         }
                     } else if (wsText.equals(Tokens.SEMICOLON)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Spaces are not allowed before " + wsText);
                         }
                     } else if (wsText.equals(Tokens.EQUAL) || wsText.equals(Tokens.EXTERNAL)) {
                         if (!functionWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, wsText, "There should be a one whitespace before " + wsText);
+                            logError(compilationUnitNode, dLog, functionWS, "Only Single whitespace is allowed before " + wsText);
                         }
                     }
                 }
@@ -2345,7 +2347,7 @@ public class LinteringNodeTree {
                 if (!firstKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                 indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, firstKeywordWS, text + " Should indent properly");
                 }
             }
 
@@ -2359,7 +2361,7 @@ public class LinteringNodeTree {
                     String wsText = functionKeywordWS.get(FormattingConstants.TEXT).getAsString();
                     if (!functionKeywordWS.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                        logError(compilationUnitNode, dLog, functionKeywordWS, "Spaces are not allowed before " + wsText);
                     }
                 }
 
@@ -2379,7 +2381,7 @@ public class LinteringNodeTree {
                     String wsText = closeGroupParenWS.get(FormattingConstants.TEXT).getAsString();
                     if (!closeGroupParenWS.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                        logError(compilationUnitNode, dLog, closeGroupParenWS, "Spaces are not allowed before " + wsText);
                     }
                 }
             } else {
@@ -2399,7 +2401,7 @@ public class LinteringNodeTree {
                 String wsText = openingParenthesesWS.get(FormattingConstants.TEXT).getAsString();
                 if (!openingParenthesesWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, wsText, "There should be a one space before " + wsText);
+                    logError(compilationUnitNode, dLog, openingParenthesesWS, "There should be a one space before " + wsText);
                 }
             }
 
@@ -2408,7 +2410,7 @@ public class LinteringNodeTree {
                 String wsText = closingParenthesesWS.get(FormattingConstants.TEXT).getAsString();
                 if (!closingParenthesesWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, wsText, "Spaces are not allowed before " + wsText);
+                    logError(compilationUnitNode, dLog, closingParenthesesWS, "Spaces are not allowed before " + wsText);
                 }
             }
 
@@ -2422,7 +2424,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.COMMA)) {
                         if (!functionTypeWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                            logError(compilationUnitNode, dLog, functionTypeWS, "Spaces are not allowed before " + text);
                         }
                     }
 
@@ -2430,7 +2432,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.RETURNS)) {
                         if (!functionTypeWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "There should be a one space before " + text);
+                            logError(compilationUnitNode, dLog, functionTypeWS, "There should be a one space before " + text);
                         }
                     }
                 }
@@ -2478,11 +2480,11 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.BY)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -2527,18 +2529,18 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                             }
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -2580,7 +2582,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -2619,12 +2621,12 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                         }
                     }
                 }
@@ -2656,7 +2658,7 @@ public class LinteringNodeTree {
             if (node.has("isElseIfBlock") && node.get("isElseIfBlock").getAsBoolean()) {
                 if (!firstKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only one whitespace is allowed before " + text);
+                    logError(compilationUnitNode, dLog, firstKeywordWS, "Only one whitespace is allowed before " + text);
                 }
 
                 // Update if keyword whitespace.
@@ -2664,14 +2666,14 @@ public class LinteringNodeTree {
                 String ifText = firstKeywordWS.get(FormattingConstants.TEXT).getAsString();
                 if (!ifKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, ifText, "Only one whitespace is allowed before " + ifText);
+                    logError(compilationUnitNode, dLog, ifKeywordWS, "Only one whitespace is allowed before " + ifText);
                 }
             } else {
                 if (this.noHeightAvailable(firstKeywordWS.get(FormattingConstants.WS).getAsString())) {
                     if (!firstKeywordWS.get(FormattingConstants.WS).getAsString().
                             equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                     indentWithParentIndentation)) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, firstKeywordWS, text + " Should indent properly");
                     }
                 }
             }
@@ -2681,7 +2683,7 @@ public class LinteringNodeTree {
             String openingBraceText = firstKeywordWS.get(FormattingConstants.TEXT).getAsString();
             if (!openingBraceWS.get(FormattingConstants.WS).getAsString().
                     equals(FormattingConstants.SINGLE_SPACE)) {
-                logError(node, compilationUnitNode, dLog, openingBraceText, "Only one whitespace is allowed before " + openingBraceText);
+                logError(compilationUnitNode, dLog, openingBraceWS, "Only one whitespace is allowed before " + openingBraceText);
             }
             // Update closing brace whitespace
             JsonObject closingBraceWS = ws.get(ws.size() - 1).getAsJsonObject();
@@ -2748,23 +2750,23 @@ public class LinteringNodeTree {
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()) + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.DIV)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before '/' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before '/' is not allowed");
                         }
                         forwardSlashAvailable = true;
                     } else if (packageNames.contains(text)) {
                         if (forwardSlashAvailable || dotAvailable) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed here");
                             }
                             forwardSlashAvailable = false;
                             dotAvailable = false;
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     } else if (text.equals(orgName)
@@ -2772,22 +2774,22 @@ public class LinteringNodeTree {
                             || text.equals(Tokens.VERSION)
                             || text.equals(packageVersion)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     } else if (text.equals(Tokens.SEMICOLON) || text.equals(Tokens.DOT)) {
                         dotAvailable = true;
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space after '" + text + "' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space after '" + text + "' is not allowed");
                         }
                     } else {
                         if (dotAvailable) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed here");
                             }
                             dotAvailable = false;
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     }
@@ -2820,7 +2822,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.OPENING_BRACKET) || text.equals(Tokens.CLOSING_BRACKET)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -2870,7 +2872,7 @@ public class LinteringNodeTree {
             boolean isActionOrFieldInvocation = false;
             boolean annotationAvailable = node.has("annotationAttachments")
                     && node.getAsJsonArray("annotationAttachments").size() > 0;
-            JsonObject identifierWhitespace = null;
+            JsonObject identifier = null;
             String expressionName = null;
 
             // Preserve new lines and comments that already available.
@@ -2924,14 +2926,14 @@ public class LinteringNodeTree {
                                         + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                         .getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                         }
                         isCheck = true;
                     } else if (text.equals(Tokens.START) && !isActionOrFieldInvocation) {
                         if (isCheck || annotationAvailable) {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Only single space is allowed before " + text);
+                                logError(compilationUnitNode, dLog, invocationWS, "Only single space is allowed before " + text);
                             }
                         } else {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
@@ -2939,36 +2941,36 @@ public class LinteringNodeTree {
                                             .get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                             }
                         }
                         isAsync = true;
                     } else if (text.equals(Tokens.DOT) || text.equals(Tokens.RIGHT_ARROW)) {
                         if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                         }
                         isActionOrFieldInvocation = true;
                     } else if (text.equals(Tokens.OPENING_PARENTHESES)) {
                         if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COLON)) {
                         // Handle colon whitespaces.
                         if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                         }
 
                         // Handle package alias.
@@ -2978,7 +2980,7 @@ public class LinteringNodeTree {
                             if (isAsync || isCheck) {
                                 if (!packageAliasWhitespace.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Only single space is allowed before " + text);
+                                    logError(compilationUnitNode, dLog, packageAliasWhitespace, "Only single space is allowed before " + text);
                                 }
                             } else {
                                 if (!packageAliasWhitespace.get(FormattingConstants.WS).getAsString().
@@ -2987,18 +2989,18 @@ public class LinteringNodeTree {
                                                 + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt())
                                                 + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, packageAliasWhitespace, text + " Should indent properly");
                                 }
                             }
                         }
 
                         // Identifier whitespace.
-                        identifierWhitespace = ws.get(i + 1).getAsJsonObject();
-                        String identifierText = invocationWS.get(FormattingConstants.TEXT).getAsString();
-                        if (this.noHeightAvailable(identifierWhitespace.get(FormattingConstants.WS).getAsString())) {
-                            if (!identifierWhitespace.get(FormattingConstants.WS).getAsString().
+                        identifier = ws.get(i + 1).getAsJsonObject();
+                        String identifierText = identifier.get(FormattingConstants.TEXT).getAsString();
+                        if (this.noHeightAvailable(identifier.get(FormattingConstants.WS).getAsString())) {
+                            if (!identifier.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, identifierText, "No spaces allowed before " + identifierText);
+                                logError(compilationUnitNode, dLog, identifier, "No spaces allowed before " + identifierText);
                             }
                         }
                     } else if (text.equals(Tokens.ERROR)) {
@@ -3008,31 +3010,31 @@ public class LinteringNodeTree {
                                     equals(this.getNewLines(formatConfig
                                             .get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                             }
                         } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                             }
                         } else {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                             }
                         }
-                    } else if (identifierWhitespace == null &&
+                    } else if (identifier == null &&
                             !ws.get(i + 1).getAsJsonObject().get(FormattingConstants.TEXT)
                                     .getAsString().equals(Tokens.COLON)) {
                         if (isAsync || isCheck) {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Only single space is allowed before " + text);
+                                logError(compilationUnitNode, dLog, invocationWS, "Only single space is allowed before " + text);
                             }
                         } else if (isActionOrFieldInvocation) {
                             if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (formatConfig
@@ -3041,18 +3043,18 @@ public class LinteringNodeTree {
                                         equals(this.getNewLines(formatConfig
                                                 .get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                                 + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                                 }
                             } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                                 if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, invocationWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!invocationWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, invocationWS, "No spaces allowed before " + text);
                                 }
                             }
                         }
@@ -3258,7 +3260,7 @@ public class LinteringNodeTree {
                             && this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
 
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
 
                     } else {
@@ -3266,7 +3268,7 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                             .getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                         firstKeywordUpdated = true;
@@ -3275,14 +3277,14 @@ public class LinteringNodeTree {
                     if (node.get("unidirectionalAfterJoin").getAsBoolean()
                             && this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (node.get("unidirectionalBeforeJoin").getAsBoolean()) {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                             .getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                         firstKeywordUpdated = true;
@@ -3290,7 +3292,7 @@ public class LinteringNodeTree {
                 } else if (text.equals(Tokens.ON)
                         && this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                        logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                     }
                 }
             }
@@ -3350,11 +3352,11 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -3390,19 +3392,19 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                             .getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt() > 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig
                                             .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.OPENING_BRACKET)) {
                         if (isGrouped) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Spaces are not allowed before " + text);
                             }
                         } else {
                             if (formatConfig.get(FormattingConstants.SPACE_COUNT)
@@ -3410,13 +3412,13 @@ public class LinteringNodeTree {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString()
                                         .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else if (formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt() > 0) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getNewLines(formatConfig
                                                 .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         }
@@ -3424,7 +3426,7 @@ public class LinteringNodeTree {
                             || text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -3472,11 +3474,11 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         modifyBlockClosingBrace(node, compilationUnitNode, dLog, indentation, currentWS, FormattingConstants.BODY, true);
@@ -3518,14 +3520,14 @@ public class LinteringNodeTree {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                         }
                     }
 
                     // Update opening bracket whitespace.
                     if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
 
@@ -3533,7 +3535,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString()
                                 .equals(FormattingConstants.NEW_LINE + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                         }
                     }
                 }
@@ -3591,14 +3593,14 @@ public class LinteringNodeTree {
                     // Update the => whitespace.
                     if (text.equals(Tokens.EQUAL_GT)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
 
                     // Update the opening brace whitespace.
                     if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
 
@@ -3610,18 +3612,18 @@ public class LinteringNodeTree {
                             if (!wsItem.get(FormattingConstants.WS).getAsString()
                                     .equals(FormattingConstants.NEW_LINE + indentation
                                             + FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         } else {
                             if (!wsItem.get(FormattingConstants.WS).getAsString()
                                     .equals(FormattingConstants.NEW_LINE +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                             if (!wsItem.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         }
                     }
@@ -3669,14 +3671,14 @@ public class LinteringNodeTree {
                     // Update the => whitespace.
                     if (text.equals(Tokens.EQUAL_GT)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
 
                     // Update the opening brace whitespace.
                     if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!wsItem.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, wsItem, "More than one space is not allowed before " + text);
                         }
                     }
 
@@ -3688,13 +3690,13 @@ public class LinteringNodeTree {
                             if (!wsItem.get(FormattingConstants.WS).getAsString()
                                     .equals(FormattingConstants.NEW_LINE + indentation
                                             + FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         } else {
                             if (!wsItem.get(FormattingConstants.WS).getAsString()
                                     .equals(FormattingConstants.NEW_LINE +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, wsItem, text + " Should indent properly");
                             }
                         }
                     }
@@ -3733,13 +3735,13 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -3858,7 +3860,7 @@ public class LinteringNodeTree {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (text.equals(Tokens.OPENING_BRACE)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.CLOSING_BRACE)) {
                             if (node.getAsJsonArray(FormattingConstants.FIELDS).size() <= 0
@@ -3866,12 +3868,12 @@ public class LinteringNodeTree {
                                     && !node.has("initFunction")) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString()
                                         .equals(FormattingConstants.NEW_LINE + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         }
@@ -3904,16 +3906,16 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.BY)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -3961,7 +3963,7 @@ public class LinteringNodeTree {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())
                             && text.equals(node.get("typeString").getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -3994,11 +3996,11 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -4031,11 +4033,11 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     }
                 }
@@ -4105,11 +4107,11 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     }
                 }
@@ -4164,12 +4166,12 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig
                                         .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) + indentWithParentIndentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                         }
                     }
                 }
@@ -4182,17 +4184,17 @@ public class LinteringNodeTree {
                                 && node.getAsJsonArray("keyValuePairs").size() <= 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE + indentWithParentIndentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -4202,7 +4204,7 @@ public class LinteringNodeTree {
                         currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.SEMICOLON)) {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Spaces are not allowed before " + text);
                         }
                     } else {
                         this.preserveHeightForWS(currentWS, compilationUnitNode, dLog, currentWS, indentWithParentIndentation
@@ -4260,11 +4262,11 @@ public class LinteringNodeTree {
                 String text = ws.get(0).getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
 
                 if (!ws.get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                    logError(compilationUnitNode, dLog, ws.get(0).getAsJsonObject(), "Space is not allowed before " + text);
                 }
 
                 if (!ws.get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                    logError(compilationUnitNode, dLog, ws.get(0).getAsJsonObject(), "Spaces are not allowed before " + text);
                 }
             }
 
@@ -4317,7 +4319,7 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE + (this.getWhiteSpaceCount(indentation) > 0
                                             ? indentation : indentationOfParent) + FormattingConstants.SPACE_TAB)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                             lineSeparationAvailable = true;
                             break;
@@ -4351,27 +4353,27 @@ public class LinteringNodeTree {
                                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                                 .getAsInt()) + (this.getWhiteSpaceCount(indentation) > 0
                                                 ? indentation : indentationOfParent))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString()
                                         .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                                 }
                             }
                         } else if (text.equals(Tokens.OPENING_BRACE) || text.equals(Tokens.SEAL_OPENING)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.ELLIPSIS)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else if (text.equals(Tokens.CLOSING_BRACE) || text.equals(Tokens.SEAL_CLOSING)) {
                             if (isAnonType) {
@@ -4379,31 +4381,31 @@ public class LinteringNodeTree {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                                             equals(FormattingConstants.NEW_LINE + (this.getWhiteSpaceCount(indentation) > 0
                                                     ? indentation : indentationOfParent))) {
-                                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                        logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                     }
                                 } else {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                        logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                        logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                                     }
                                 }
                             } else {
                                 if (fields.size() <= 0 && !node.has("restFieldType")) {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                                             equals(FormattingConstants.EMPTY_SPACE)) {
-                                        logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                        logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                     }
                                 } else {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString()
                                             .equals(FormattingConstants.NEW_LINE
                                                     + (this.getWhiteSpaceCount(indentation) > 0
                                                     ? indentation : indentationOfParent))) {
-                                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                        logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                     }
                                 }
                             }
                         } else if (text.equals(Tokens.SEMICOLON)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                                logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                             }
                         }
                     }
@@ -4518,7 +4520,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                         .getAsInt()) + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                     frontedWithKeyword = true;
@@ -4532,7 +4534,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.OPENING_BRACE)) {
                         if (frontedWithKeyword || node.has(FormattingConstants.TYPE_NODE)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
@@ -4540,7 +4542,7 @@ public class LinteringNodeTree {
                                             .getAsInt())
                                             + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                             .getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
@@ -4549,23 +4551,23 @@ public class LinteringNodeTree {
                                     && node.getAsJsonArray("variables").size() <= 0) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.NEW_LINE + indentWithParentIndentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -4646,7 +4648,7 @@ public class LinteringNodeTree {
                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.NEW_LINE + (this.getWhiteSpaceCount(indentation) > 0
                                     ? indentation : indentationOfParent) + FormattingConstants.SPACE_TAB)) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                     }
                     lineSeparationAvailable = true;
                     break;
@@ -4683,29 +4685,29 @@ public class LinteringNodeTree {
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                         .getAsInt()) + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.ELLIPSIS)) {
                         if (lineSeparationAvailable) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE + (this.getWhiteSpaceCount(indentation) > 0
                                             ? indentation : indentationOfParent) + FormattingConstants.SPACE_TAB)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (node.has("recordRefFields") && node.has("restParam")
                                 && node.getAsJsonArray("recordRefFields").size() <= 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
@@ -4713,11 +4715,11 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.NEW_LINE + (this.getWhiteSpaceCount(indentation) > 0
                                             ? indentation : indentationOfParent))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                     }
@@ -4795,7 +4797,7 @@ public class LinteringNodeTree {
                         indentation);
 
                 if (!resourceNameWhitespace.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, resourceNameWhitespace, text + " Should indent properly");
                 }
             }
 
@@ -4804,7 +4806,7 @@ public class LinteringNodeTree {
             if (this.noHeightAvailable(openingParenthesesWhitespace.get(FormattingConstants.WS).getAsString())) {
                 String text = openingParenthesesWhitespace.get(FormattingConstants.TEXT).getAsString();
                 if (!openingParenthesesWhitespace.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                    logError(compilationUnitNode, dLog, openingParenthesesWhitespace, "Space is not allowed before " + text);
                 }
             }
 
@@ -4815,7 +4817,7 @@ public class LinteringNodeTree {
             if (this.noHeightAvailable(closingParenthesesWhitespace.get(FormattingConstants.WS).getAsString())) {
                 String text = closingParenthesesWhitespace.get(FormattingConstants.TEXT).getAsString();
                 if (!closingParenthesesWhitespace.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                    logError(compilationUnitNode, dLog, closingParenthesesWhitespace, "Space is not allowed before " + text);
                 }
             }
 
@@ -4824,7 +4826,7 @@ public class LinteringNodeTree {
             if (this.noHeightAvailable(openingBracketWhitespace.get(FormattingConstants.WS).getAsString())) {
                 String text = openingBracketWhitespace.get(FormattingConstants.TEXT).getAsString();
                 if (!openingBracketWhitespace.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only single whitespace is allowed before " + text);
+                    logError(compilationUnitNode, dLog, openingBracketWhitespace, "Only single whitespace is allowed before " + text);
                 }
             }
 
@@ -4840,7 +4842,7 @@ public class LinteringNodeTree {
                     if (!closingBracketWhitespace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.NEW_LINE +
                                     indentation + FormattingConstants.NEW_LINE + indentation)) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, closingBracketWhitespace, text + " Should indent properly");
                     }
                 }
             } else if (this.noHeightAvailable(closingBracketWhitespace.get(FormattingConstants.WS).getAsString())) {
@@ -4849,7 +4851,7 @@ public class LinteringNodeTree {
                         equals(FormattingConstants.NEW_LINE +
                                 this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
                                         .get(FormattingConstants.START_COLUMN).getAsInt()))) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, closingBracketWhitespace, text + " Should indent properly");
                 }
             }
 
@@ -4912,7 +4914,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.ELLIPSIS)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -4958,13 +4960,13 @@ public class LinteringNodeTree {
                     if (!returnKeywordWhitespace.get(FormattingConstants.WS).getAsString()
                             .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                     indentation)) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, returnKeywordWhitespace, text + " Should indent properly");
                     }
                 } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                     String text = returnKeywordWhitespace.get(FormattingConstants.TEXT).getAsString();
                     if (!returnKeywordWhitespace.get(FormattingConstants.WS).getAsString()
                             .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, returnKeywordWhitespace, text + " Should indent properly");
                     }
                 }
             }
@@ -4980,10 +4982,9 @@ public class LinteringNodeTree {
             // Update semicolon whitespace.
             JsonObject semicolonWhitespace = ws.get(1).getAsJsonObject();
             if (this.noHeightAvailable(semicolonWhitespace.get(FormattingConstants.WS).getAsString())) {
-                String text = semicolonWhitespace.get(FormattingConstants.TEXT).getAsString();
                 if (!semicolonWhitespace.get(FormattingConstants.WS).getAsString().
-                        equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "More than one whitespace is not allowed before ;");
+                        equals(FormattingConstants.EMPTY_SPACE)) {
+                    logError(compilationUnitNode, dLog, semicolonWhitespace, "More than one whitespace is not allowed before ;");
                 }
             }
         }
@@ -5012,16 +5013,16 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.STAR)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -5076,7 +5077,7 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -5118,12 +5119,12 @@ public class LinteringNodeTree {
                                     .getAsInt()));
 
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             // Update service identifier whitespaces and on keyword.
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         }
                     }
@@ -5174,17 +5175,17 @@ public class LinteringNodeTree {
                                     + indentation);
 
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(whiteSpace)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (text.equals(Tokens.COMMA)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             // Update service identifier whitespaces and on keyword.
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         }
                     }
@@ -5257,7 +5258,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.SERVICE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     }
                 }
@@ -5305,22 +5306,22 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt() > 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                     } else if (text.equals(Tokens.COLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                         ++colonIndex;
                     } else {
@@ -5328,26 +5329,26 @@ public class LinteringNodeTree {
                             if (packageAliasAvailableBeforeColon) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                    logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                                 }
                             }
                         } else if (colonIndex > 1) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                             }
                         } else {
                             if (ws.size() > 1) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                                 }
                             }
                         }
@@ -5382,26 +5383,26 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -5465,7 +5466,7 @@ public class LinteringNodeTree {
                             String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                             if (text.equals(Tokens.AS)) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             }
                         }
@@ -5502,7 +5503,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -5598,7 +5599,7 @@ public class LinteringNodeTree {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     }
                     // Since template literal start is in a single text formatting it to the correct format
@@ -5608,7 +5609,7 @@ public class LinteringNodeTree {
                         && this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                        logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                     }
                 }
             }
@@ -5651,7 +5652,7 @@ public class LinteringNodeTree {
                     if (!primaryKeyWS.get(FormattingConstants.WS).getAsString().
                             equals(this.getWhiteSpaces(formatConfig
                                     .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                        logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                        logError(compilationUnitNode, dLog, primaryKeyWS, text + "Should indent properly");
                     }
                 }
 
@@ -5660,7 +5661,7 @@ public class LinteringNodeTree {
                     String text = identifierWS.get(FormattingConstants.TEXT).getAsString();
                     if (!identifierWS.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Only single space is allowed before " + text);
+                        logError(compilationUnitNode, dLog, identifierWS, "Only single space is allowed before " + text);
                     }
                 }
             } else {
@@ -5670,7 +5671,7 @@ public class LinteringNodeTree {
                     if (!identifierWS.get(FormattingConstants.WS).getAsString().
                             equals(this.getWhiteSpaces(formatConfig
                                     .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                        logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                        logError(compilationUnitNode, dLog, identifierWS, text + "Should indent properly");
                     }
                 }
             }
@@ -5703,7 +5704,7 @@ public class LinteringNodeTree {
                 if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.TABLE)) {
                     if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -5712,7 +5713,7 @@ public class LinteringNodeTree {
                     if (openBracesCount == 1) {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                             }
                         } else {
                             this.preserveHeightForWS(node, compilationUnitNode, dLog, currentWS, indentation);
@@ -5720,7 +5721,7 @@ public class LinteringNodeTree {
                     } else {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                             }
                         } else {
                             this.preserveHeightForWS(node, compilationUnitNode, dLog, currentWS, indentation + FormattingConstants.SPACE_TAB);
@@ -5734,7 +5735,7 @@ public class LinteringNodeTree {
                     if (openBracesCount > 0) {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             this.preserveHeightForWS(node, compilationUnitNode, dLog, currentWS, indentation);
@@ -5742,7 +5743,7 @@ public class LinteringNodeTree {
                     } else {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         }
                     }
@@ -5760,20 +5761,20 @@ public class LinteringNodeTree {
                                         equals(FormattingConstants.NEW_LINE
                                                 + indentWithParentIndentation + FormattingConstants.NEW_LINE
                                                 + indentWithParentIndentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.NEW_LINE
                                                 + indentWithParentIndentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         }
                     } else {
                         if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespace detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespace detected before " + text);
                             }
                         } else {
                             preserveHeightForWS(node, compilationUnitNode, dLog, currentWS, indentation);
@@ -5788,12 +5789,12 @@ public class LinteringNodeTree {
                                 && node.getAsJsonArray("dataRows").size() <= 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else {
@@ -5863,7 +5864,7 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
                 }
@@ -5953,7 +5954,7 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.QUESTION_MARK) || text.equals(Tokens.COLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -6007,20 +6008,20 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONRETRY)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                         isRetryBody = true;
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
 
@@ -6034,38 +6035,38 @@ public class LinteringNodeTree {
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.WITH)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.RETRIES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONABORT)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
 
                     if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONCOMMIT)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -6108,7 +6109,7 @@ public class LinteringNodeTree {
                 if (text.equals(Tokens.TRAP)) {
                     if (!trapKeywordWS.get(FormattingConstants.WS).getAsString().
                             equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                        logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                        logError(compilationUnitNode, dLog, trapKeywordWS, text + " Should indent properly");
                     }
                 }
             }
@@ -6146,40 +6147,40 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES) || text.equals(Tokens.OPENING_BRACKET)) {
                         if (declaredWithVar) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.ELLIPSIS)) {
                         if (node.has("variableRefs")
                                 && node.getAsJsonArray("variableRefs").size() > 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                             }
                         }
                     } else if (text.equals(Tokens.CLOSING_PARENTHESES) || text.equals(Tokens.SEMICOLON)
                             || text.equals(Tokens.CLOSING_BRACKET) || text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     } else if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                         }
                     }
                 }
@@ -6236,26 +6237,26 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                         }
                     } else if (text.equals(Tokens.OPENING_BRACKET)) {
                         if (isGrouped) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACKET) || text.equals(Tokens.COMMA)
                             || text.equals(Tokens.CLOSING_PARENTHESES) || text.equals(Tokens.ELLIPSIS)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -6332,7 +6333,7 @@ public class LinteringNodeTree {
                             if (!firstKeywordWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, firstKeywordWS, text + " Should indent properly");
                             }
                         }
                     } else {
@@ -6362,7 +6363,7 @@ public class LinteringNodeTree {
                             if (!firstKeywordWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                             .getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, firstKeywordWS, text + " Should indent properly");
                             }
                         }
                     }
@@ -6377,19 +6378,19 @@ public class LinteringNodeTree {
                                     || (node.has(FormattingConstants.IS_VAR_EXISTS)
                                     && node.get(FormattingConstants.IS_VAR_EXISTS).getAsBoolean())) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getWhiteSpaces(formatConfig
                                                 .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         } else if (text.equals(Tokens.CLOSING_BRACKET) || text.equals(Tokens.COMMA)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         }
                     }
@@ -6470,12 +6471,12 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                         + indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(Tokens.GREATER_THAN)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -6523,28 +6524,28 @@ public class LinteringNodeTree {
                         if (!currentWS.get(FormattingConstants.WS).getAsString()
                                 .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else if (text.equals(FormattingConstants.TYPE)) {
                         if (node.has(Tokens.PUBLIC)
                                 && node.get(Tokens.PUBLIC).getAsBoolean()) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.OBJECT) || text.equals(Tokens.RECORD)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                         isEnum = false;
                     } else if (text.equals(Tokens.CLOSING_BRACE)) {
@@ -6553,20 +6554,20 @@ public class LinteringNodeTree {
                                 .getAsJsonArray(FormattingConstants.FIELDS).size() <= 0) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.NEW_LINE + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
                     } else if (text.equals(Tokens.SEMICOLON)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                            logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -6638,21 +6639,21 @@ public class LinteringNodeTree {
                         if (text.equals(Tokens.OBJECT)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                             }
                         } else if (text.equals(Tokens.OPENING_BRACE)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.CLOSING_BRACE)) {
                             if (lineSeparationAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString()
                                         .equals(FormattingConstants.NEW_LINE + indentationOfParent)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                                 }
                             }
                         }
@@ -6691,23 +6692,23 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.NEW)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else if (text.equals(Tokens.OPENING_PARENTHESES)) {
                         if (node.has(FormattingConstants.TYPE)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                             }
                         }
                     } else if (text.equals(Tokens.COMMA) || text.equals(Tokens.CLOSING_PARENTHESES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -6752,7 +6753,7 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.IS)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     }
                 }
@@ -6801,12 +6802,12 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                             }
                         }
                     }
@@ -6865,22 +6866,22 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                             indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, "Unusual whitespaces detected before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Unusual whitespaces detected before " + text);
                             }
                         } else if (text.equals("|")) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.QUESTION_MARK)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else if (currentWS.get(FormattingConstants.TEXT).getAsString()
                                 .equals(Tokens.CLOSING_PARENTHESES)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         }
                     }
@@ -6953,36 +6954,36 @@ public class LinteringNodeTree {
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                             .getAsInt()) + indentation + this.getWhiteSpaces(formatConfig
                                             .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else {
                             if (text.equals(Tokens.COLON)) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                                 isPackageAliasExist = true;
                             } else if (text.equals(Tokens.QUESTION_MARK) || (text.equals(Tokens.CLOSING_PARENTHESES)
                                     && isGrouped)) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (isPackageAliasExist) {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                                             equals(FormattingConstants.EMPTY_SPACE)) {
-                                        logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                        logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                     }
                                     isPackageAliasExist = false;
                                 } else if (isGrouped) {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().
                                             equals(FormattingConstants.EMPTY_SPACE)) {
-                                        logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                        logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                     }
                                 } else {
                                     if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                        logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                        logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                                     }
                                 }
                             }
@@ -7026,11 +7027,11 @@ public class LinteringNodeTree {
                                         .get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                         this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Spaces are not allowed before " + text);
                         }
                     }
                 }
@@ -7068,19 +7069,19 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                             .getAsInt()) + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         }
 
                         if (text.equals(Tokens.EQUAL)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                             }
                         }
 
                         if (text.equals(Tokens.SEMICOLON)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                                logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                             }
                         }
                     }
@@ -7171,40 +7172,40 @@ public class LinteringNodeTree {
                                 || text.equals(Tokens.OBJECT)) {
                             if (updatedFirstKeyword) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else if (text.equals(firstKeywordWS.get(FormattingConstants.TEXT).getAsString())) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                                 .getAsInt()) + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                                 updatedFirstKeyword = true;
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                                    logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                                 }
                             }
                         } else if (text.equals(Tokens.SEMICOLON) || text.equals(Tokens.QUESTION_MARK)
                                 || text.equals(Tokens.COMMA)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                         } else if (text.equals(Tokens.OPENING_BRACE)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.CLOSING_BRACE)) {
                             if (!lineSeparationAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.NEW_LINE + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         } else if (text.equals(Tokens.ELLIPSIS)) {
@@ -7212,44 +7213,44 @@ public class LinteringNodeTree {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getWhiteSpaces(formatConfig
                                                 .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                                 }
                             }
                         } else if (text.equals(Tokens.EQUAL)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No more than one space is allowed before '='");
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before '='");
                             }
                         } else if (text.equals(Tokens.COLON)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().
                                     equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                             }
                             isColonAvailable = true;
                         } else {
                             if (!node.has(FormattingConstants.TYPE_NODE) && firstKeyword.equals(Tokens.ELLIPSIS)) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(FormattingConstants.EMPTY_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                                 }
                             } else if (node.has(FormattingConstants.IS_ANON_TYPE)
                                     && node.get(FormattingConstants.IS_ANON_TYPE).getAsBoolean()) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else if (i == 0 && formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt() > 0
                                     && !node.has(FormattingConstants.TYPE_NODE)) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
                                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT)
                                                 .getAsInt()) + indentation)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else if (isColonAvailable) {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                    logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                                 }
                             } else if ((!node.has(FormattingConstants.TYPE_NODE)
                                     && !hasFirstKeyword)
@@ -7258,7 +7259,7 @@ public class LinteringNodeTree {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString()
                                         .equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt()))) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             } else {
                                 if (!currentWS.get(FormattingConstants.WS).getAsString().
@@ -7267,7 +7268,7 @@ public class LinteringNodeTree {
                                                 ? this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT)
                                                 .getAsInt())
                                                 : FormattingConstants.SINGLE_SPACE)) {
-                                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                    logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                                 }
                             }
                         }
@@ -7393,12 +7394,12 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.WAIT) || text.equals(Tokens.OPENING_BRACE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.CLOSING_BRACE) || text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -7437,7 +7438,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.WHERE)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     }
                 }
@@ -7475,7 +7476,7 @@ public class LinteringNodeTree {
                 if (!whileKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                 indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, whileKeywordWS, text + " Should indent properly");
                 }
             }
 
@@ -7485,7 +7486,7 @@ public class LinteringNodeTree {
                 String text = whileKeywordWS.get(FormattingConstants.TEXT).getAsString();
                 if (!whileKeywordWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only one space is allowed before " + text);
+                    logError(compilationUnitNode, dLog, whileKeywordWS, "Only one space is allowed before " + text);
                 }
             }
 
@@ -7525,7 +7526,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.WINDOW)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     }
                 }
@@ -7572,7 +7573,7 @@ public class LinteringNodeTree {
                 if (!workerKeywordWhitespace.get(FormattingConstants.WS).getAsString().
                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                 + indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, workerKeywordWhitespace, text + " Should indent properly");
                 }
             }
 
@@ -7582,7 +7583,7 @@ public class LinteringNodeTree {
                 String text = workerIdentifier.get(FormattingConstants.TEXT).getAsString();
                 if (!workerIdentifier.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only one space is allowed before " + text);
+                    logError(compilationUnitNode, dLog, workerIdentifier, "Only one space is allowed before " + text);
                 }
             }
 
@@ -7592,7 +7593,7 @@ public class LinteringNodeTree {
                 String text = openingBrace.get(FormattingConstants.TEXT).getAsString();
                 if (!openingBrace.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only one space is allowed before " + text);
+                    logError(compilationUnitNode, dLog, openingBrace, "Only one space is allowed before " + text);
                 }
             }
 
@@ -7608,7 +7609,7 @@ public class LinteringNodeTree {
                     String text = closingBrace.get(FormattingConstants.TEXT).getAsString();
                     if (!closingBrace.get(FormattingConstants.WS).getAsString().
                             equals(FormattingConstants.EMPTY_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "Only one space is allowed before " + text);
+                        logError(compilationUnitNode, dLog, closingBrace, "Only one space is allowed before " + text);
                     }
                 }
             } else if (this.noHeightAvailable(ws.get(ws.size() - 1).getAsJsonObject()
@@ -7616,7 +7617,7 @@ public class LinteringNodeTree {
                 String text = closingBrace.get(FormattingConstants.TEXT).getAsString();
                 if (!closingBrace.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.NEW_LINE + indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, "Only one space is allowed before " + text);
+                    logError(compilationUnitNode, dLog, closingBrace, "Only one space is allowed before " + text);
                 }
             }
         }
@@ -7647,11 +7648,11 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.FLUSH)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -7680,16 +7681,16 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.LEFT_ARROW)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -7723,15 +7724,15 @@ public class LinteringNodeTree {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.RIGHT_ARROW)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                         }
                     } else if (text.equals(Tokens.SEMICOLON) || text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed here");
+                            logError(compilationUnitNode, dLog, currentWS, "More than one space is not allowed here");
                         }
                     }
                 }
@@ -7773,7 +7774,7 @@ public class LinteringNodeTree {
                 String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                 if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                        logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                        logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                     }
                 }
             }
@@ -7809,7 +7810,7 @@ public class LinteringNodeTree {
                     if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -7852,7 +7853,7 @@ public class LinteringNodeTree {
                             || text.equals(Tokens.CLOSING_BRACKET)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "No spaces allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "No spaces allowed before " + text);
                         }
                     }
                 }
@@ -7910,11 +7911,11 @@ public class LinteringNodeTree {
                     if (text.equals(startLiteral)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -7984,19 +7985,19 @@ public class LinteringNodeTree {
                             if (!currentWS.get(FormattingConstants.WS).getAsString()
                                     .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
                                             + indentation)) {
-                                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                                logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                             }
                         } else if (text.equals(Tokens.AS)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(prefix)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.SINGLE_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "More than one space is not allowed before " + text);
+                                logError(compilationUnitNode, dLog, currentWS, "Only Single whitespace is allowed before " + text);
                             }
                         } else if (text.equals(Tokens.SEMICOLON)) {
                             if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                                logError(node, compilationUnitNode, dLog, text, "Space before ';' is not allowed");
+                                logError(compilationUnitNode, dLog, currentWS, "Space before ';' is not allowed");
                             }
                         }
                     }
@@ -8043,11 +8044,11 @@ public class LinteringNodeTree {
                     if (text.equals(startLiteral)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -8093,11 +8094,11 @@ public class LinteringNodeTree {
                     if (i == 0) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -8147,101 +8148,48 @@ public class LinteringNodeTree {
     /**
      * Log error to the ide
      *
-     * @param node                {JsonObject} node as json object
      * @param compilationUnitNode {Node} compilation unit node as a Node object
+     * @param dLog                {DiagnosticLog} Diagnostic log
+     * @param currentWs           {JsonObject} current ws item as json object
      * @param message             {String} error message as a string
      */
-    private void logError(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog, String text, String message) {
-        // get error position
-        int sLine = node.get("position").getAsJsonObject().get("startLine").getAsInt();
-        int eLine = node.get("position").getAsJsonObject().get("endLine").getAsInt();
-        int sCol = node.get("position").getAsJsonObject().get("startColumn").getAsInt();
-        int eCol = node.get("position").getAsJsonObject().get("endColumn").getAsInt();
+    private void logError(Node compilationUnitNode, DiagnosticLog dLog, JsonObject currentWs, String message) {
+        List<JsonObject> ws = FormattingSourceGen.extractWS(model);
+        int line = 1;
+        int sCol = 1;
+        int eCol = 1;
 
-        if (node.has("symbolType")) {
-            sCol += node.get("symbolType").getAsJsonArray().get(0).getAsString().length();
-            eCol = sCol;
-        } else if (node.has("variable")) {
-            sCol += node.get("variable").getAsJsonObject().get("typeNode").getAsJsonObject().get("symbolType").getAsJsonArray().get(0).getAsString().length();
-            eCol = sCol;
-        }
-        if (node.has("initialExpression")) {
-            sCol += getStartPosition(node.get("initialExpression").getAsJsonObject().get(FormattingConstants.WS).getAsJsonArray(), text);
-        }
-        sCol += getStartPosition(node.get(FormattingConstants.WS).getAsJsonArray(), text);
-        eCol += getEndPosition(node.get(FormattingConstants.WS).getAsJsonArray(), text);
-        // set position
-        Diagnostic.DiagnosticPosition pos = new DiagnosticPos((BDiagnosticSource) compilationUnitNode.getPosition().getSource(), sLine, eLine, sCol, eCol);
+        for (JsonObject wsAr : ws) {
+            String wsStr = wsAr.get(FormattingConstants.WS).getAsString();
+            String text = wsAr.get(FormattingConstants.TEXT).getAsString();
 
+            if (wsStr.contains("\n")) {
+                line++;
+                String[] wsSplit = wsStr.split("\n");
+                wsStr = wsSplit.length > 0 ? wsSplit[1] : "";
+
+                for (int i = 1; i < wsSplit.length - 1; i++) {
+                    line++;
+                }
+
+                if (wsSplit.length > 0 && (wsSplit[wsSplit.length - 1].trim().length() == 0)) {
+                    sCol = wsSplit[wsSplit.length - 1].length() + 1;
+                    wsStr = "";
+                } else {
+                    sCol = 1;
+                }
+            }
+
+            if (wsAr.get("i").getAsInt() == currentWs.get("i").getAsInt()) {
+                eCol = sCol + wsStr.length();
+                break;
+            } else {
+                sCol = sCol + wsStr.length() + text.length();
+
+            }
+        }
+        Diagnostic.DiagnosticPosition pos = new DiagnosticPos((BDiagnosticSource) compilationUnitNode.getPosition().getSource(), line, line, sCol, eCol);
         dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, message);
-    }
-
-    private int getStartPosition(JsonArray ws, String text) {
-        int count = 0;
-
-        for (int i = 0; i < ws.size(); i++) {
-            String wsStr = ws.get(i).getAsJsonObject().get(FormattingConstants.WS).getAsString().replace("\n", "");
-            String wstext = ws.get(i).getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
-
-            if (wstext.equals(text))
-                break;
-            count += wstext.length();
-            count += getWhiteSpaceCount(wsStr);
-        }
-        return ++count;
-    }
-
-    private int getEndPosition(JsonArray ws, String text) {
-        int count = 0;
-
-        for (int i = 0; i < ws.size(); i++) {
-            String wsStr = ws.get(i).getAsJsonObject().get(FormattingConstants.WS).getAsString().replace("\n", "");
-            String wstext = ws.get(i).getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
-
-            count += wstext.length();
-            count += getWhiteSpaceCount(wsStr);
-            if (wstext.equals(text))
-                break;
-        }
-        return ++count;
-    }
-
-    private void logError(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog, String messege, int sL, int eL, int sC, int eC) {
-        // get error position
-        int sLine;
-        int eLine;
-        int sCol;
-        int eCol;
-
-        if (sL < 0) {
-            sLine = node.get("position").getAsJsonObject().get("startLine").getAsInt();
-        } else {
-            sLine = sL;
-        }
-        if (eL < 0) {
-            eLine = node.get("position").getAsJsonObject().get("endLine").getAsInt();
-        } else {
-            eLine = eL;
-        }
-        if (sC < 0) {
-            sCol = node.get("position").getAsJsonObject().get("startColumn").getAsInt();
-        } else {
-            sCol = sC;
-        }
-        if (eC < 0) {
-            eCol = node.get("position").getAsJsonObject().get("endColumn").getAsInt();
-        } else {
-            eCol = eC;
-        }
-
-        // set position
-        Diagnostic.DiagnosticPosition pos = new DiagnosticPos((BDiagnosticSource) compilationUnitNode.getPosition().getSource(), sLine, eLine, sCol, eCol);
-        pos.setStartLine(sLine);
-        pos.setEndLine(eLine);
-        pos.setStartColumn(sCol);
-        pos.setEndColumn(eCol);
-
-        dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, messege);
     }
 
     private void modifyXMLLiteralNode(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog) {
@@ -8269,11 +8217,11 @@ public class LinteringNodeTree {
                     if (text.equals(startLiteral)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(this.getWhiteSpaces(formatConfig.get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
-                            logError(node, compilationUnitNode, dLog, text, text + "Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + "Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Space is not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Space is not allowed before " + text);
                         }
                     }
                 }
@@ -8311,11 +8259,11 @@ public class LinteringNodeTree {
                                         .getAsInt()) + this.getWhiteSpaces(formatConfig
                                         .get(FormattingConstants.SPACE_COUNT).getAsInt()) +
                                         indentation)) {
-                            logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                            logError(compilationUnitNode, dLog, currentWS, text + " Should indent properly");
                         }
                     } else {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(FormattingConstants.EMPTY_SPACE)) {
-                            logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                            logError(compilationUnitNode, dLog, currentWS, "Spaces are not allowed before " + text);
                         }
                     }
                 }
@@ -8353,19 +8301,19 @@ public class LinteringNodeTree {
                 if (!closingBraceWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.NEW_LINE + indentation
                                 + FormattingConstants.NEW_LINE + indentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, closingBraceWS, text + " Should indent properly");
                 }
             } else {
                 if (!closingBraceWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                    logError(compilationUnitNode, dLog, closingBraceWS, "Spaces are not allowed before " + text);
                 }
             }
         } else if (this.noHeightAvailable(closingBraceWS.get(FormattingConstants.WS)
                 .getAsString())) {
             if (!closingBraceWS.get(FormattingConstants.WS).getAsString().
                     equals(FormattingConstants.NEW_LINE + indentation)) {
-                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                logError(compilationUnitNode, dLog, closingBraceWS, text + " Should indent properly");
             }
         }
     }
@@ -8389,7 +8337,7 @@ public class LinteringNodeTree {
                 if (!doneWS.get(FormattingConstants.WS).getAsString().
                         equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt()) +
                                 indentWithParentIndentation)) {
-                    logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                    logError(compilationUnitNode, dLog, doneWS, text + " Should indent properly");
                 }
             }
 
@@ -8398,7 +8346,7 @@ public class LinteringNodeTree {
             if (this.noHeightAvailable(semicolonWS.get(FormattingConstants.WS).getAsString())) {
                 if (!semicolonWS.get(FormattingConstants.WS).getAsString().
                         equals(FormattingConstants.EMPTY_SPACE)) {
-                    logError(node, compilationUnitNode, dLog, text, "Spaces are not allowed before " + text);
+                    logError(compilationUnitNode, dLog, semicolonWS, "Spaces are not allowed before " + text);
                 }
             }
         }
@@ -8603,7 +8551,7 @@ public class LinteringNodeTree {
             List<String> tokens = this.tokenizer(ws.get(FormattingConstants.WS).getAsString());
             if (!ws.get(FormattingConstants.WS).getAsString().
                     equals(this.getTextFromTokens(tokens, indent))) {
-                logError(node, compilationUnitNode, dLog, text, text + " Should indent properly");
+                logError(compilationUnitNode, dLog, ws, text + " Should indent properly");
             }
 
         }

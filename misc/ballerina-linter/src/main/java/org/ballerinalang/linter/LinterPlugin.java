@@ -20,6 +20,7 @@ import static org.ballerinalang.langserver.compiler.format.TextDocumentFormatUti
 @SupportedAnnotationPackages(value = {"ballerina/openapi"})
 public class LinterPlugin extends AbstractCompilerPlugin {
     private DiagnosticLog dLog = null;
+    static JsonObject model;
 
     @Override
     public void setCompilerContext(CompilerContext context) {
@@ -33,6 +34,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
     @Override
     public void process(PackageNode packageNode) {
+
         WhitespaceVisitorEntry linteringVisitorEntry = new WhitespaceVisitorEntry();
         ReferenceVisitor referenceVisitor = new ReferenceVisitor();
 
@@ -46,7 +48,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
             } catch (JSONGenerationException e) {
                 e.printStackTrace();
             }
-            JsonObject model = modelElement.getAsJsonObject();
+            model = modelElement.getAsJsonObject();
 
             linteringVisitorEntry.accept(model, compilationUnitNode, dLog);
             referenceVisitor.visit((BLangCompilationUnit) compilationUnitNode);
