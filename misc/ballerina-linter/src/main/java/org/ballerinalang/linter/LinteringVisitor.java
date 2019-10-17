@@ -15,14 +15,14 @@ public class LinteringVisitor {
         return functionToCall.equals(methodName);
     }
 
-    public void beginVisit(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog) {
+    public void beginVisit(JsonObject node, Node compilationUnitNode) {
 
         LinteringNodeTree linteringNodeTree = new LinteringNodeTree();
         Class cls = linteringNodeTree.getClass();Method[] methods = cls.getMethods();for (Method method : methods) {
             if (isFunctionMatch(node, method.getName())) {Method methodcall1 = null;
                 try {
-                    methodcall1 = cls.getDeclaredMethod(method.getName(), node.getClass(), Node.class, DiagnosticLog.class);
-                    methodcall1.invoke(cls.newInstance(), node, compilationUnitNode, dLog);
+                    methodcall1 = cls.getDeclaredMethod(method.getName(), node.getClass(), Node.class);
+                    methodcall1.invoke(cls.newInstance(), node, compilationUnitNode);
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
                         InstantiationException e) {
                     // TODO: Handle exception properly

@@ -18,8 +18,8 @@ public class WhitespaceVisitorEntry {
 
     }
 
-    public void accept(JsonObject node, Node compilationUnitNode, DiagnosticLog dLog) {
-        visitor.beginVisit(node, compilationUnitNode, dLog);
+    public void accept(JsonObject node, Node compilationUnitNode) {
+        visitor.beginVisit(node, compilationUnitNode);
 
         for (Map.Entry<String, JsonElement> child : node.entrySet()) {
             if (!child.getKey().equals("parent") && !child.getKey().equals("position") &&
@@ -27,7 +27,7 @@ public class WhitespaceVisitorEntry {
                 if (child.getValue().isJsonObject() && child.getValue().getAsJsonObject().has("kind")) {
 
                         child.getValue().getAsJsonObject().add("parent", node);
-                        accept(child.getValue().getAsJsonObject(),compilationUnitNode, dLog);
+                    accept(child.getValue().getAsJsonObject(), compilationUnitNode);
 
                 } else if (child.getValue().isJsonArray()) {
                     for (int i = 0; i < child.getValue().getAsJsonArray().size(); i++) {
@@ -35,7 +35,7 @@ public class WhitespaceVisitorEntry {
                         if (childItem.isJsonObject() && childItem.getAsJsonObject().has("kind")) {
 
                                 childItem.getAsJsonObject().add("parent", node);
-                                accept(childItem.getAsJsonObject(),compilationUnitNode, dLog);
+                            accept(childItem.getAsJsonObject(), compilationUnitNode);
 
                         }
                     }
