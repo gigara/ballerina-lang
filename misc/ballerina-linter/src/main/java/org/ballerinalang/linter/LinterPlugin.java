@@ -35,6 +35,8 @@ import org.wso2.ballerinalang.compiler.util.CompilerContext;
 import org.wso2.ballerinalang.compiler.util.diagnotic.BDiagnosticSource;
 import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.List;
 
@@ -101,15 +103,21 @@ public class LinterPlugin extends AbstractCompilerPlugin {
             String text = wsAr.get(FormattingConstants.TEXT).getAsString();
 
             if (wsStr.contains("\n")) {
-                line++;
-                String[] wsSplit = wsStr.split("\n");
-                wsStr = wsSplit.length > 0 ? wsSplit[1] : "";
+                String[] wsSplit = new BufferedReader(new StringReader(wsStr))
+                        .lines()
+                        .toArray(String[]::new);
 
-                for (int i = 1; i < wsSplit.length - 1; i++) {
+                String temp = wsStr.replace("\n", "");
+                int noOfLines = (wsStr.length() - temp.length()) / "\n".length();
+
+                // set line
+                for (int i = 0; i < noOfLines; i++) {
                     line++;
                 }
 
-                if (!found && wsSplit.length > 0 && (wsSplit[wsSplit.length - 1].trim().length() == 0)) {
+                // set column
+                wsStr = wsSplit.length > 0 ? wsSplit[wsSplit.length - 1] : "";
+                if (!found && wsSplit.length > 0) {
                     sCol = wsSplit[wsSplit.length - 1].length() + 1;
                     wsStr = "";
                 } else {
@@ -134,7 +142,10 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         // log diagnostics of the reference finder
         referenceFinder.getDefinitions().forEach((integer, definition) -> {
                                                      if (definition.isHasDefinition() && !definition.isHasReference()) {
-                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING, definition.getPosition(), definition.getSymbol().getName() + " is never used");
+                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
+                                                                            definition.getPosition(),
+                                                                            definition.getSymbol().getName() + " is " +
+                                                                                    "never used");
                                                      }
                                                  }
         );
