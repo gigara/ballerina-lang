@@ -187,7 +187,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
     }
 
     private void acceptNode(BLangNode node) {
-        node.accept(this);
+        if (node != null) {
+            node.accept(this);
+        }
     }
 
     // add definition to the arrayList
@@ -246,23 +248,39 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (!funcNode.name.value.equals("main")) {
             addDefinition(funcNode.symbol, funcNode.name.pos);
         }
-        funcNode.annAttachments.forEach(this::acceptNode);
-        funcNode.requiredParams.forEach(this::acceptNode);
-        funcNode.externalAnnAttachments.forEach(this::acceptNode);
-        funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
-        this.acceptNode(funcNode.returnTypeNode);
-        this.acceptNode(funcNode.body);
+        if (funcNode.annAttachments != null) {
+            funcNode.annAttachments.forEach(this::acceptNode);
+        }
+        if (funcNode.requiredParams != null) {
+            funcNode.requiredParams.forEach(this::acceptNode);
+        }
+        if (funcNode.externalAnnAttachments != null) {
+            funcNode.externalAnnAttachments.forEach(this::acceptNode);
+        }
+        if (funcNode.returnTypeAnnAttachments != null) {
+            funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
+        }
+        if (funcNode.returnTypeNode != null) {
+            this.acceptNode(funcNode.returnTypeNode);
+        }
+        if (funcNode.body != null) {
+            this.acceptNode(funcNode.body);
+        }
 
     }
 
     @Override
     public void visit(BLangService serviceNode) {
         addDefinition(serviceNode.symbol, serviceNode.name.pos);
-        serviceNode.annAttachments.forEach(this::acceptNode);
+        if (serviceNode.annAttachments != null) {
+            serviceNode.annAttachments.forEach(this::acceptNode);
+        }
         if (serviceNode.attachedExprs != null) {
             serviceNode.attachedExprs.forEach(this::acceptNode);
         }
-        serviceNode.resourceFunctions.forEach(this::acceptNode);
+        if (serviceNode.resourceFunctions != null) {
+            serviceNode.resourceFunctions.forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -273,9 +291,13 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangTypeDefinition typeDefinition) {
         addDefinition(typeDefinition.symbol, typeDefinition.name.pos);
-        typeDefinition.annAttachments.forEach(this::acceptNode);
+        if (typeDefinition.annAttachments != null) {
+            typeDefinition.annAttachments.forEach(this::acceptNode);
+        }
         // Visit the type node
-        this.acceptNode(typeDefinition.typeNode);
+        if (typeDefinition.typeNode != null) {
+            this.acceptNode(typeDefinition.typeNode);
+        }
     }
 
     @Override
@@ -291,8 +313,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
             return;
         }
         addDefinition(varNode.symbol, varNode.name.pos);
-        varNode.annAttachments.forEach(this::acceptNode);
-        this.acceptNode(varNode.expr);
+        if (varNode.annAttachments != null) {
+            varNode.annAttachments.forEach(this::acceptNode);
+        }
+        if (varNode.expr != null) {
+            this.acceptNode(varNode.expr);
+        }
     }
 
     @Override
@@ -313,19 +339,27 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangAnnotation annotationNode) {
         addDefinition(annotationNode.symbol, annotationNode.name.pos);
-        annotationNode.annAttachments.forEach(this::acceptNode);
-        this.acceptNode(annotationNode.typeNode);
+        if (annotationNode.annAttachments != null) {
+            annotationNode.annAttachments.forEach(this::acceptNode);
+        }
+        if (annotationNode.typeNode != null) {
+            this.acceptNode(annotationNode.typeNode);
+        }
     }
 
     @Override
     public void visit(BLangAnnotationAttachment annAttachmentNode) {
-        this.acceptNode(annAttachmentNode.expr);
+        if (annAttachmentNode.expr != null) {
+            this.acceptNode(annAttachmentNode.expr);
+        }
         addReference(annAttachmentNode.annotationSymbol, annAttachmentNode.annotationName.pos);
     }
 
     @Override
     public void visit(BLangBlockStmt blockNode) {
-        blockNode.getStatements().forEach(this::acceptNode);
+        if (blockNode.getStatements() != null) {
+            blockNode.getStatements().forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -364,15 +398,23 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangAssignment assignNode) {
-        this.acceptNode(assignNode.varRef);
+        if (assignNode.varRef != null) {
+            this.acceptNode(assignNode.varRef);
+        }
         // Visit the expression
-        this.acceptNode(assignNode.expr);
+        if (assignNode.expr != null) {
+            this.acceptNode(assignNode.expr);
+        }
     }
 
     @Override
     public void visit(BLangCompoundAssignment compoundAssignNode) {
-        this.acceptNode(compoundAssignNode.varRef);
-        this.acceptNode(compoundAssignNode.expr);
+        if (compoundAssignNode.varRef != null) {
+            this.acceptNode(compoundAssignNode.varRef);
+        }
+        if (compoundAssignNode.expr != null) {
+            this.acceptNode(compoundAssignNode.expr);
+        }
     }
 
     @Override
@@ -423,9 +465,13 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangIf ifNode) {
         // Visit the expression
-        this.acceptNode(ifNode.expr);
+        if (ifNode.expr != null) {
+            this.acceptNode(ifNode.expr);
+        }
         // Visit the body
-        this.acceptNode(ifNode.body);
+        if (ifNode.body != null) {
+            this.acceptNode(ifNode.body);
+        }
         if (ifNode.elseStmt != null) {
             this.acceptNode(ifNode.elseStmt);
         }
@@ -433,8 +479,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangMatch matchNode) {
-        this.acceptNode(matchNode.expr);
-        matchNode.patternClauses.forEach(this::acceptNode);
+        if (matchNode.expr != null) {
+            this.acceptNode(matchNode.expr);
+        }
+        if (matchNode.patternClauses != null) {
+            matchNode.patternClauses.forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -444,29 +494,51 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangForeach foreach) {
-        this.acceptNode(foreach.collection);
-        this.acceptNode((BLangNode) foreach.variableDefinitionNode);
-        this.acceptNode(foreach.body);
+        if (foreach.collection != null) {
+            this.acceptNode(foreach.collection);
+        }
+        if (foreach.variableDefinitionNode != null) {
+            this.acceptNode((BLangNode) foreach.variableDefinitionNode);
+        }
+        if (foreach.body != null) {
+            this.acceptNode(foreach.body);
+        }
     }
 
     @Override
     public void visit(BLangWhile whileNode) {
-        this.acceptNode(whileNode.expr);
-        this.acceptNode(whileNode.body);
+        if (whileNode.expr != null) {
+            this.acceptNode(whileNode.expr);
+        }
+        if (whileNode.body != null) {
+            this.acceptNode(whileNode.body);
+        }
     }
 
     @Override
     public void visit(BLangLock lockNode) {
-        this.acceptNode(lockNode.body);
+        if (lockNode.body != null) {
+            this.acceptNode(lockNode.body);
+        }
     }
 
     @Override
     public void visit(BLangTransaction transactionNode) {
-        this.acceptNode(transactionNode.retryCount);
-        this.acceptNode(transactionNode.transactionBody);
-        this.acceptNode(transactionNode.onRetryBody);
-        this.acceptNode(transactionNode.committedBody);
-        this.acceptNode(transactionNode.abortedBody);
+        if (transactionNode.retryCount != null) {
+            this.acceptNode(transactionNode.retryCount);
+        }
+        if (transactionNode.transactionBody != null) {
+            this.acceptNode(transactionNode.transactionBody);
+        }
+        if (transactionNode.onRetryBody != null) {
+            this.acceptNode(transactionNode.onRetryBody);
+        }
+        if (transactionNode.committedBody != null) {
+            this.acceptNode(transactionNode.committedBody);
+        }
+        if (transactionNode.abortedBody != null) {
+            this.acceptNode(transactionNode.abortedBody);
+        }
     }
 
     @Override
@@ -476,14 +548,22 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTupleDestructure stmt) {
-        stmt.varRef.expressions.forEach(this::acceptNode);
-        this.acceptNode(stmt.expr);
+        if (stmt.varRef.expressions != null) {
+            stmt.varRef.expressions.forEach(this::acceptNode);
+        }
+        if (stmt.expr != null) {
+            this.acceptNode(stmt.expr);
+        }
     }
 
     @Override
     public void visit(BLangRecordDestructure stmt) {
-        this.acceptNode(stmt.varRef);
-        this.acceptNode(stmt.expr);
+        if (stmt.varRef != null) {
+            this.acceptNode(stmt.varRef);
+        }
+        if (stmt.expr != null) {
+            this.acceptNode(stmt.expr);
+        }
     }
 
     @Override
@@ -498,7 +578,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangForkJoin forkJoin) {
-        forkJoin.workers.forEach(this::acceptNode);
+        if (forkJoin.workers != null) {
+            forkJoin.workers.forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -588,13 +670,14 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangWorkerSend workerSendNode) {
-        this.acceptNode(workerSendNode.expr);
-        //TODO:COMPLETE
+        if (workerSendNode.expr != null) {
+            this.acceptNode(workerSendNode.expr);
+        }
     }
 
     @Override
     public void visit(BLangWorkerReceive workerReceiveNode) {
-        //TODO:COMPLETE
+        // No implementation needed.
     }
 
     @Override
@@ -619,17 +702,23 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangRecordLiteral recordLiteral) {
-        recordLiteral.keyValuePairs.forEach(bLangRecordKeyValue -> this.acceptNode(bLangRecordKeyValue.valueExpr));
+        if (recordLiteral.keyValuePairs != null) {
+            recordLiteral.keyValuePairs.forEach(bLangRecordKeyValue -> this.acceptNode(bLangRecordKeyValue.valueExpr));
+        }
     }
 
     @Override
     public void visit(BLangTupleVarRef varRefExpr) {
-        varRefExpr.expressions.forEach(this::acceptNode);
+        if (varRefExpr.expressions != null) {
+            varRefExpr.expressions.forEach(this::acceptNode);
+        }
     }
 
     @Override
     public void visit(BLangRecordVarRef varRefExpr) {
-        varRefExpr.recordRefFields.forEach(varRefKeyVal -> this.acceptNode(varRefKeyVal.variableReference));
+        if (varRefExpr.recordRefFields != null) {
+            varRefExpr.recordRefFields.forEach(varRefKeyVal -> this.acceptNode(varRefKeyVal.variableReference));
+        }
         if (varRefExpr.restParam instanceof BLangSimpleVarRef) {
             this.acceptNode((BLangSimpleVarRef) varRefExpr.restParam);
         }
@@ -647,13 +736,17 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangFieldBasedAccess fieldAccessExpr) {
-        this.acceptNode(fieldAccessExpr.expr);
+        if (fieldAccessExpr.expr != null) {
+            this.acceptNode(fieldAccessExpr.expr);
+        }
         addReference(fieldAccessExpr.varSymbol, fieldAccessExpr.field.pos);
     }
 
     @Override
     public void visit(BLangIndexBasedAccess indexAccessExpr) {
-        this.acceptNode(indexAccessExpr.expr);
+        if (indexAccessExpr.expr != null) {
+            this.acceptNode(indexAccessExpr.expr);
+        }
         if (!(indexAccessExpr.indexExpr instanceof BLangLiteral)) {
             // Visit the index expression only if it's not a simple literal since there is no use otherwise
             this.acceptNode(indexAccessExpr.indexExpr);
@@ -665,17 +758,22 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (invocationExpr.expr != null) {
             this.acceptNode(invocationExpr.expr);
         }
+        if (invocationExpr.argExprs != null) {
+            invocationExpr.argExprs.forEach(this::acceptNode);
+        }
         addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.name.pos);
-        invocationExpr.argExprs.forEach(this::acceptNode);
     }
 
     @Override
     public void visit(BLangTypeInit typeInit) {
-        addReference(typeInit.initInvocation.symbol, typeInit.userDefinedType.typeName.pos);
         if (typeInit.userDefinedType != null) {
             this.acceptNode(typeInit.userDefinedType);
         }
-        typeInit.argsExpr.forEach(this::acceptNode);
+        if (typeInit.argsExpr != null) {
+            typeInit.argsExpr.forEach(this::acceptNode);
+        }
+        addReference(typeInit.initInvocation.symbol, typeInit.initInvocation.pos);
+
     }
 
     @Override
@@ -690,14 +788,22 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTernaryExpr ternaryExpr) {
-        this.acceptNode(ternaryExpr.expr);
-        this.acceptNode(ternaryExpr.thenExpr);
-        this.acceptNode(ternaryExpr.elseExpr);
+        if (ternaryExpr.expr != null) {
+            this.acceptNode(ternaryExpr.expr);
+        }
+        if (ternaryExpr.thenExpr != null) {
+            this.acceptNode(ternaryExpr.thenExpr);
+        }
+        if (ternaryExpr.elseExpr != null) {
+            this.acceptNode(ternaryExpr.elseExpr);
+        }
     }
 
     @Override
     public void visit(BLangWaitExpr awaitExpr) {
-        awaitExpr.exprList.forEach(this::acceptNode);
+        if (awaitExpr.exprList != null) {
+            awaitExpr.exprList.forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -707,8 +813,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangBinaryExpr binaryExpr) {
-        this.acceptNode(binaryExpr.lhsExpr);
-        this.acceptNode(binaryExpr.rhsExpr);
+        if (binaryExpr.lhsExpr != null) {
+            this.acceptNode(binaryExpr.lhsExpr);
+        }
+        if (binaryExpr.rhsExpr != null) {
+            this.acceptNode(binaryExpr.rhsExpr);
+        }
     }
 
     @Override
@@ -718,12 +828,16 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangGroupExpr groupExpr) {
-        this.acceptNode(groupExpr.expression);
+        if (groupExpr.expression != null) {
+            this.acceptNode(groupExpr.expression);
+        }
     }
 
     @Override
     public void visit(BLangListConstructorExpr listConstructorExpr) {
-        listConstructorExpr.exprs.forEach(this::acceptNode);
+        if (listConstructorExpr.exprs != null) {
+            listConstructorExpr.exprs.forEach(this::acceptNode);
+        }
     }
 
     @Override
@@ -738,7 +852,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangUnaryExpr unaryExpr) {
-        this.acceptNode(unaryExpr.expr);
+        if (unaryExpr.expr != null) {
+            this.acceptNode(unaryExpr.expr);
+        }
     }
 
     @Override
@@ -748,7 +864,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTypeConversionExpr conversionExpr) {
-        this.acceptNode(conversionExpr.expr);
+        if (conversionExpr.expr != null) {
+            this.acceptNode(conversionExpr.expr);
+        }
     }
 
     @Override
@@ -793,13 +911,27 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangLambdaFunction bLangLambdaFunction) {
-        BLangFunction funcNode = bLangLambdaFunction.function;
-        funcNode.annAttachments.forEach(this::acceptNode);
-        funcNode.requiredParams.forEach(this::acceptNode);
-        funcNode.externalAnnAttachments.forEach(this::acceptNode);
-        funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
-        this.acceptNode(funcNode.returnTypeNode);
-        this.acceptNode(funcNode.body);
+        if (bLangLambdaFunction.function != null) {
+            BLangFunction funcNode = bLangLambdaFunction.function;
+            if (funcNode.annAttachments != null) {
+                funcNode.annAttachments.forEach(this::acceptNode);
+            }
+            if (funcNode.requiredParams != null) {
+                funcNode.requiredParams.forEach(this::acceptNode);
+            }
+            if (funcNode.externalAnnAttachments != null) {
+                funcNode.externalAnnAttachments.forEach(this::acceptNode);
+            }
+            if (funcNode.returnTypeAnnAttachments != null) {
+                funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
+            }
+            if (funcNode.returnTypeNode != null) {
+                this.acceptNode(funcNode.returnTypeNode);
+            }
+            if (funcNode.body != null) {
+                this.acceptNode(funcNode.body);
+            }
+        }
     }
 
     @Override
@@ -809,8 +941,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangXMLAttributeAccess xmlAttributeAccessExpr) {
-        this.acceptNode(xmlAttributeAccessExpr.expr);
-        this.acceptNode(xmlAttributeAccessExpr.indexExpr);
+        if (xmlAttributeAccessExpr.expr != null) {
+            this.acceptNode(xmlAttributeAccessExpr.expr);
+        }
+        if (xmlAttributeAccessExpr.indexExpr != null) {
+            this.acceptNode(xmlAttributeAccessExpr.indexExpr);
+        }
     }
 
     @Override
@@ -830,7 +966,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangNamedArgsExpression bLangNamedArgsExpression) {
-        this.acceptNode(bLangNamedArgsExpression.expr);
+        if (bLangNamedArgsExpression.expr != null) {
+            this.acceptNode(bLangNamedArgsExpression.expr);
+        }
     }
 
     @Override
@@ -870,12 +1008,16 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangCheckedExpr checkedExpr) {
-        this.acceptNode(checkedExpr.expr);
+        if (checkedExpr.expr != null) {
+            this.acceptNode(checkedExpr.expr);
+        }
     }
 
     @Override
     public void visit(BLangCheckPanickedExpr checkPanickedExpr) {
-        this.acceptNode(checkPanickedExpr.expr);
+        if (checkPanickedExpr.expr != null) {
+            this.acceptNode(checkPanickedExpr.expr);
+        }
     }
 
     @Override
@@ -885,8 +1027,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTypeTestExpr typeTestExpr) {
-        this.acceptNode(typeTestExpr.expr);
-        this.acceptNode(typeTestExpr.typeNode);
+        if (typeTestExpr.expr != null) {
+            this.acceptNode(typeTestExpr.expr);
+        }
+        if (typeTestExpr.typeNode != null) {
+            this.acceptNode(typeTestExpr.typeNode);
+        }
     }
 
     @Override
@@ -901,7 +1047,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangAnnotAccessExpr annotAccessExpr) {
-        this.acceptNode(annotAccessExpr.expr);
+        if (annotAccessExpr.expr != null) {
+            this.acceptNode(annotAccessExpr.expr);
+        }
     }
 
     @Override
@@ -911,7 +1059,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangArrayType arrayType) {
-        this.acceptNode(arrayType.elemtype);
+        if (arrayType.elemtype != null) {
+            this.acceptNode(arrayType.elemtype);
+        }
     }
 
     @Override
@@ -921,8 +1071,12 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangConstrainedType constrainedType) {
-        this.acceptNode(constrainedType.type);
-        this.acceptNode(constrainedType.constraint);
+        if (constrainedType.type != null) {
+            this.acceptNode(constrainedType.type);
+        }
+        if (constrainedType.constraint != null) {
+            this.acceptNode(constrainedType.constraint);
+        }
     }
 
     @Override
@@ -937,15 +1091,25 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangUnionTypeNode unionTypeNode) {
-        unionTypeNode.getMemberTypeNodes().forEach(this::acceptNode);
+        if (unionTypeNode.getMemberTypeNodes() != null) {
+            unionTypeNode.getMemberTypeNodes().forEach(this::acceptNode);
+        }
     }
 
     @Override
     public void visit(BLangObjectTypeNode objectTypeNode) {
-        objectTypeNode.typeRefs.forEach(this::addObjectReferenceType);
-        objectTypeNode.fields.forEach(this::acceptNode);
-        objectTypeNode.functions.forEach(this::acceptNode);
-        this.acceptNode(objectTypeNode.initFunction);
+        if (objectTypeNode.typeRefs != null) {
+            objectTypeNode.typeRefs.forEach(this::addObjectReferenceType);
+        }
+        if (objectTypeNode.fields != null) {
+            objectTypeNode.fields.forEach(this::acceptNode);
+        }
+        if (objectTypeNode.functions != null) {
+            objectTypeNode.functions.forEach(this::acceptNode);
+        }
+        if (objectTypeNode.initFunction != null) {
+            this.acceptNode(objectTypeNode.initFunction);
+        }
     }
 
     @Override
@@ -1120,26 +1284,40 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTupleVariable bLangTupleVariable) {
-        bLangTupleVariable.memberVariables.forEach(this::acceptNode);
-        this.acceptNode(bLangTupleVariable.typeNode);
-        this.acceptNode(bLangTupleVariable.expr);
+        if (bLangTupleVariable.memberVariables != null) {
+            bLangTupleVariable.memberVariables.forEach(this::acceptNode);
+        }
+        if (bLangTupleVariable.typeNode != null) {
+            this.acceptNode(bLangTupleVariable.typeNode);
+        }
+        if (bLangTupleVariable.expr != null) {
+            this.acceptNode(bLangTupleVariable.expr);
+        }
     }
 
     @Override
     public void visit(BLangTupleVariableDef bLangTupleVariableDef) {
-        this.acceptNode(bLangTupleVariableDef.var);
+        if (bLangTupleVariableDef.var != null) {
+            this.acceptNode(bLangTupleVariableDef.var);
+        }
     }
 
     @Override
     public void visit(BLangRecordVariable bLangRecordVariable) {
-        bLangRecordVariable.variableList
-                .forEach(variableKeyValue -> this.acceptNode(variableKeyValue.valueBindingPattern));
-        this.acceptNode(bLangRecordVariable.typeNode);
+        if (bLangRecordVariable.variableList != null) {
+            bLangRecordVariable.variableList
+                    .forEach(variableKeyValue -> this.acceptNode(variableKeyValue.valueBindingPattern));
+        }
+        if (bLangRecordVariable.typeNode != null) {
+            this.acceptNode(bLangRecordVariable.typeNode);
+        }
     }
 
     @Override
     public void visit(BLangRecordVariableDef bLangRecordVariableDef) {
-        this.acceptNode(bLangRecordVariableDef.var);
+        if (bLangRecordVariableDef.var != null) {
+            this.acceptNode(bLangRecordVariableDef.var);
+        }
     }
 
     @Override
@@ -1154,13 +1332,19 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangMatch.BLangMatchStaticBindingPatternClause bLangMatchStmtStaticBindingPatternClause) {
-        this.acceptNode(bLangMatchStmtStaticBindingPatternClause.body);
+        if (bLangMatchStmtStaticBindingPatternClause.body != null) {
+            this.acceptNode(bLangMatchStmtStaticBindingPatternClause.body);
+        }
     }
 
     @Override
     public void visit(BLangMatch.BLangMatchStructuredBindingPatternClause structuredBindingPatternClause) {
-        this.acceptNode(structuredBindingPatternClause.bindingPatternVariable);
-        this.acceptNode(structuredBindingPatternClause.body);
+        if (structuredBindingPatternClause.bindingPatternVariable != null) {
+            this.acceptNode(structuredBindingPatternClause.bindingPatternVariable);
+        }
+        if (structuredBindingPatternClause.body != null) {
+            this.acceptNode(structuredBindingPatternClause.body);
+        }
     }
 
     @Override
@@ -1170,8 +1354,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangWorkerSyncSendExpr syncSendExpr) {
-        this.acceptNode(syncSendExpr.expr);
-        //TODO:COMPLETE
+        if (syncSendExpr.expr != null) {
+            this.acceptNode(syncSendExpr.expr);
+        }
     }
 
     @Override
