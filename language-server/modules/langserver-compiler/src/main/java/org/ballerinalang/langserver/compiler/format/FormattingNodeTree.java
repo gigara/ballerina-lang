@@ -4378,6 +4378,12 @@ public class FormattingNodeTree {
                     JsonObject typeNode = node.getAsJsonObject("typeDefinition")
                             .getAsJsonObject(FormattingConstants.TYPE_NODE);
 
+                    JsonObject typeDefFormatConfig = this.getFormattingConfig(0, 1,
+                                                                              this.getWhiteSpaceCount(
+                                                                                      indentationOfParent), true,
+                                                                              this.getWhiteSpaceCount(
+                                                                                      indentationOfParent), false);
+                    typeNode.add(FormattingConstants.FORMATTING_CONFIG, typeDefFormatConfig);
                 }
 
                 // Update whitespaces for resources.

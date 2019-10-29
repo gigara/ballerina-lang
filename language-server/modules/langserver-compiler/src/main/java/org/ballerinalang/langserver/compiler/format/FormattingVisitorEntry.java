@@ -41,7 +41,7 @@ public class FormattingVisitorEntry {
         for (Map.Entry<String, JsonElement> child : node.entrySet()) {
             if (!child.getKey().equals("parent") && !child.getKey().equals("position") &&
                     !child.getKey().equals("ws")) {
-                if (child.getValue().isJsonObject() && child.getValue().getAsJsonObject().has("kind"))  {
+                if (child.getValue().isJsonObject() && child.getValue().getAsJsonObject().has("kind")) {
                     if (!(child.getValue().getAsJsonObject().has("skipFormatting") &&
                             child.getValue().getAsJsonObject().get("skipFormatting").getAsBoolean())) {
                         child.getValue().getAsJsonObject().add("parent", node);
