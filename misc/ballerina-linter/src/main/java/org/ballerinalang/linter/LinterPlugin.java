@@ -80,6 +80,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 e.printStackTrace();
             }
             model = modelElement.getAsJsonObject();
+            FormattingSourceGen.build(model, "CompilationUnit");
 
             whitespaceVisitorEntry.accept(model, compilationUnitNode);
             referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
@@ -87,8 +88,26 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         }
 
         // log diagnostics of whitespace linter
+        pushWhiteSpacesErrors(model, dLog);
+
+        // log diagnostics of the reference finder
+//        referenceFinder.getDefinitions().forEach((integer, definition) -> {
+//                                                     if (definition.isHasDefinition() && !definition.isHasReference
+//                                                     ()) {
+//                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
+//                                                                            definition.getPosition(),
+//                                                                            definition.getSymbol().getName() + " is
+//                                                                            " +
+//                                                                                    "never used");
+//                                                     }
+//                                                 }
+//        );
+    }
+
+    public void pushWhiteSpacesErrors(JsonObject model, DiagnosticLog dLog) {
         List<JsonObject> ws = FormattingSourceGen.extractWS(model);
-        int line = 1;
+        int sLine = 1;
+        int eLine = 1;
         int sCol = 1;
         int eCol = 1;
 
@@ -101,18 +120,18 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
             String wsStr = wsAr.get(FormattingConstants.WS).getAsString();
             String text = wsAr.get(FormattingConstants.TEXT).getAsString();
-
+            String[] wsSplit = new String[0];
             if (wsStr.contains("\n")) {
-                String[] wsSplit = new BufferedReader(new StringReader(wsStr))
+                wsSplit = new BufferedReader(new StringReader(wsStr))
                         .lines()
                         .toArray(String[]::new);
 
                 String temp = wsStr.replace("\n", "");
                 int noOfLines = (wsStr.length() - temp.length()) / "\n".length();
 
-                // set line
+                // set eLine
                 for (int i = 0; i < noOfLines; i++) {
-                    line++;
+                    eLine++;
                 }
 
                 // set column
@@ -123,32 +142,38 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 } else {
                     sCol = 1;
                 }
+
             }
 
             if (found) {
-                eCol = sCol + wsStr.length();
+                // calculate starting line
+                for (int i = wsSplit.length - 1; i >= 0; i--) {
+                    if (wsSplit[i].trim().length() > 0) {
+                        int linesBefore = (wsSplit.length - 1) - i;
+                        sLine = eLine - (linesBefore > 0 ? linesBefore : 1);
+                    }
+                }
+
+                /* calculate dlog ending column
+                 * @source - https://stackoverflow
+                 * .com/questions/22101186/how-to-get-leading-and-trailing-spaces-in-string-java
+                 */
+                int leadingWhitespaceLenth = wsStr.trim().length() == 0 ?
+                        wsStr.length() : wsStr.replaceAll("^(\\s+).+", "$1").length() + 1;
+                eCol = sCol + (leadingWhitespaceLenth == 0 ? text.length() : leadingWhitespaceLenth);
                 LintError error = lintErrors.get(currentIndex);
                 Diagnostic.DiagnosticPosition pos = new DiagnosticPos(
-                        (BDiagnosticSource) error.getCompilationUnitNode().getPosition().getSource(), line, line, sCol,
+                        (BDiagnosticSource) error.getCompilationUnitNode().getPosition().getSource(),
+                        sLine > 1 ? sLine : eLine, eLine, sCol,
                         eCol);
                 dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, error.getMessage());
                 lintErrors.remove(currentIndex);
+                sCol = sCol + wsStr.length() + text.length();
+                sLine = 1;
             } else {
                 sCol = sCol + wsStr.length() + text.length();
 
             }
         }
-
-        // log diagnostics of the reference finder
-        referenceFinder.getDefinitions().forEach((integer, definition) -> {
-                                                     if (definition.isHasDefinition() && !definition.isHasReference()) {
-                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
-                                                                            definition.getPosition(),
-                                                                            definition.getSymbol().getName() + " is " +
-                                                                                    "never used");
-                                                     }
-                                                 }
-        );
     }
-
 }
