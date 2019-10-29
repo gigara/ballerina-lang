@@ -27,7 +27,6 @@ public class FormattingVisitor {
 
     private boolean isFunctionMatch(JsonObject node, String methodName) {
         String functionToCall = String.format("format%sNode", node.get("kind").getAsString());
-        System.out.println(node.get("kind").getAsString());
         return functionToCall.equals(methodName);
     }
 
