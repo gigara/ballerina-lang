@@ -731,7 +731,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangSimpleVarRef varRefExpr) {
-        addReference((BVarSymbol) varRefExpr.symbol, varRefExpr.variableName.pos);
+        if (varRefExpr.symbol != null) {
+            addReference(varRefExpr.symbol, varRefExpr.pos);
+        }
     }
 
     @Override
@@ -739,7 +741,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (fieldAccessExpr.expr != null) {
             this.acceptNode(fieldAccessExpr.expr);
         }
-        addReference(fieldAccessExpr.varSymbol, fieldAccessExpr.field.pos);
+        if (fieldAccessExpr.symbol != null) {
+            addReference(fieldAccessExpr.symbol, fieldAccessExpr.field.pos);
+        }
     }
 
     @Override
@@ -761,7 +765,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (invocationExpr.argExprs != null) {
             invocationExpr.argExprs.forEach(this::acceptNode);
         }
-        addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.name.pos);
+        addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.pos);
     }
 
     @Override
@@ -772,7 +776,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (typeInit.argsExpr != null) {
             typeInit.argsExpr.forEach(this::acceptNode);
         }
-        addReference(typeInit.initInvocation.symbol, typeInit.initInvocation.pos);
+        addReference(typeInit.type.tsymbol, typeInit.initInvocation.pos);
 
     }
 
