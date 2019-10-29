@@ -8,7 +8,7 @@ import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
 import org.ballerinalang.langserver.compiler.common.modal.BallerinaFile;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
 import org.ballerinalang.langserver.compiler.format.JSONGenerationException;
-import org.ballerinalang.linter.Reference.ReferenceVisitor;
+import org.ballerinalang.linter.Reference.ReferenceFinder;
 import org.ballerinalang.model.tree.CompilationUnitNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
@@ -30,7 +30,7 @@ public class LinterTestUtil {
             BLangDiagnosticLog dLog = BLangDiagnosticLog.getInstance(ballerinaFile.getCompilerContext());
 
             WhitespaceVisitorEntry linteringVisitorEntry = new WhitespaceVisitorEntry();
-            ReferenceVisitor referenceVisitor = new ReferenceVisitor();
+            ReferenceFinder referenceFinder = new ReferenceFinder();
             // Collect endpoints throughout the package.
             for (CompilationUnitNode compilationUnitNode : compilationUnits) {
 
@@ -43,12 +43,12 @@ public class LinterTestUtil {
                 }
                 JsonObject model = modelElement.getAsJsonObject();
 
-                linteringVisitorEntry.accept(model, compilationUnitNode, dLog);
-                referenceVisitor.visit((BLangCompilationUnit) compilationUnitNode);
+                linteringVisitorEntry.accept(model, compilationUnitNode);
+                referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
 
             }
 
-            referenceVisitor.getDefinitions().forEach((integer, definition) -> {
+            referenceFinder.getDefinitions().forEach((integer, definition) -> {
                         if (definition.isHasDefinition() && !definition.isHasReference()) {
                             dLog.logDiagnostic(Diagnostic.Kind.WARNING, definition.getPosition(), definition.getSymbol().getName() + " is never used");
                         }

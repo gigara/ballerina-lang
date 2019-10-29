@@ -1,0 +1,6 @@
+abort Should indent properly (3,1-3,19)
+int Should indent properly (8,35-8,38)
+abort Should indent properly (9,20-9,25)
+} Should indent properly (9,26-9,27)
+int Should indent properly (11,1-11,2)
+} Should indent properly (11,12-11,13)

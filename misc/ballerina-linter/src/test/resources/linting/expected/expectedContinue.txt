@@ -1,0 +1,4 @@
+continue Should indent properly (3,20-3,28)
+} Should indent properly (5,1-5,5)
+continue Should indent properly (8,1-8,4)
+} Should indent properly (10,1-10,5)

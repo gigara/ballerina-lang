@@ -1,0 +1,1 @@
+{"ws":[{"ws":"","i":0,"text":"<EOF>","static":true}],"position":{"startColumn":1,"startLine":1,"endColumn":1,"endLine":1},"id":1955246547,"name":"empty.bal","topLevelNodes":[],"kind":"CompilationUnit"}
