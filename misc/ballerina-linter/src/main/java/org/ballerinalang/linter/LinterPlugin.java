@@ -48,7 +48,7 @@ import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
  *
  * @since 1.0.1
  */
-@SupportedAnnotationPackages(value = {"ballerina/openapi"})
+@SupportedAnnotationPackages(value = {"ballerina/linter"})
 public class LinterPlugin extends AbstractCompilerPlugin {
     private DiagnosticLog dLog = null;
     private static JsonObject model;
@@ -91,17 +91,15 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         pushWhiteSpacesErrors(model, dLog);
 
         // log diagnostics of the reference finder
-//        referenceFinder.getDefinitions().forEach((integer, definition) -> {
-//                                                     if (definition.isHasDefinition() && !definition.isHasReference
-//                                                     ()) {
-//                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
-//                                                                            definition.getPosition(),
-//                                                                            definition.getSymbol().getName() + " is
-//                                                                            " +
-//                                                                                    "never used");
-//                                                     }
-//                                                 }
-//        );
+        referenceFinder.getDefinitions().forEach((integer, definition) -> {
+                                                     if (definition.isHasDefinition() && !definition.isHasReference
+                                                             ()) {
+                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
+                                                                            definition.getPosition(),
+                                                                            definition.getSymbol().getName() + " is never used");
+                                                     }
+                                                 }
+        );
     }
 
     public void pushWhiteSpacesErrors(JsonObject model, DiagnosticLog dLog) {
@@ -145,6 +143,20 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
             }
 
+            if (text.contains("\n")) {
+                wsSplit = new BufferedReader(new StringReader(text))
+                        .lines()
+                        .toArray(String[]::new);
+
+                String temp = text.replace("\n", "");
+                int noOfLines = (text.length() - temp.length()) / "\n".length();
+
+                // set eLine
+                for (int i = 0; i < noOfLines; i++) {
+                    eLine++;
+                }
+            }
+
             if (found) {
                 // calculate starting line
                 for (int i = wsSplit.length - 1; i >= 0; i--) {
@@ -155,8 +167,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 }
 
                 /* calculate dlog ending column
-                 * @source - https://stackoverflow
-                 * .com/questions/22101186/how-to-get-leading-and-trailing-spaces-in-string-java
+                 * @source - https://stackoverflow.com/questions/22101186/how-to-get-leading-and-trailing-spaces-in-string-java
                  */
                 int leadingWhitespaceLenth = wsStr.trim().length() == 0 ?
                         wsStr.length() : wsStr.replaceAll("^(\\s+).+", "$1").length() + 1;
