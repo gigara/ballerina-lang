@@ -37,10 +37,6 @@ public class LintError {
         this.compilationUnitNode = compilationUnitNode;
     }
 
-    public JsonObject getCurrentWs() {
-        return currentWs;
-    }
-
     public String getMessage() {
         return message;
     }
