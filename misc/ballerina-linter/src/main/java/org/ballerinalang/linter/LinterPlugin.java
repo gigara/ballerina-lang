@@ -82,6 +82,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
             model = modelElement.getAsJsonObject();
             FormattingSourceGen.build(model, "CompilationUnit");
 
+            lintErrors.clear();
             whitespaceVisitorEntry.accept(model, compilationUnitNode);
             referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
             LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
