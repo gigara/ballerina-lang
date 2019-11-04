@@ -375,7 +375,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangSimpleVariableDef varDefNode) {
         BLangSimpleVariable variable = varDefNode.var;
-        addDefinition(variable.symbol, varDefNode.var.name.pos);
+        addDefinition(variable.symbol, varDefNode.var.name.pos != null ? varDefNode.var.name.pos : varDefNode.pos);
 
         BLangType typeNode = variable.typeNode;
         if (varDefNode.getWS() == null) {
