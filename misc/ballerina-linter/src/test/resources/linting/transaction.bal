@@ -14,7 +14,7 @@ function name2() {
      int a = 0;
        }
 }
-
+string a = "";
 function name3() {
     transaction with retries = 0 {
             int h = 0;

@@ -1,4 +1,5 @@
 import ballerina/io;
+import ballerina/jsonutils;
 
 // This `record` type represents a person.
 type Person record {
@@ -172,12 +173,8 @@ public function main() {
 }
 
 function printTable(string stmt, string tableName, table<anydata> returnedTable) {
-    var retData = json.convert(returnedTable);
+    var retData = jsonutils:fromTable(returnedTable);
     io:println(stmt);
     io:print(tableName);
-    if (retData is json) {
         io:println(io:sprintf("%s", retData));
-    } else {
-        io:println("Error in table to json conversion");
-    }
 }

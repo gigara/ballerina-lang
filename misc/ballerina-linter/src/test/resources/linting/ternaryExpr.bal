@@ -32,7 +32,7 @@ function test5 (int value) returns (string) {
 }
 
 function foo (int a, string b, boolean c) returns (string) {
-    return a  +  b +  c;
+    return a.toString()  +  b +  c.toString();
 }
 
 type Person record {
@@ -49,8 +49,7 @@ function test6 (string s) returns (string) {
 function test7 (string s) returns (int|error) {
     map<any> m = {
     "data" :   s  ==  "one"     ?1   :2 };
-    var y = check int.convert(m.data);
-    return y;
+    return 0;
 }
 
 function test8 (string s) returns (string) {

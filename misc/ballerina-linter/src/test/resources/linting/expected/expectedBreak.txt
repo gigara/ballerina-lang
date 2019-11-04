@@ -1,0 +1,6 @@
+public Should indent properly (1,21-1,27)
+int Should indent properly (6,6-6,10)
+break Should indent properly (11,1-11,14)
+int Should indent properly (13,6-13,10)
+break Should indent properly (16,23-16,28)
+io Should indent properly (17,10-17,18)

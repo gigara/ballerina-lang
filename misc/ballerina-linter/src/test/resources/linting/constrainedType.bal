@@ -19,6 +19,3 @@ function name3() {
     "cherry"});
 }
 
-function  tableReturnFunction ()   returns    (   table<any>  )   {
-    return;
-}

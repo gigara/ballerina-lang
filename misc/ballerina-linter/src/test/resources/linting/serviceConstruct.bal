@@ -1,3 +1,5 @@
+import ballerina/http;
+
 function serviceConstruct() {
     service doOrderOutboundDispatcherETLService =    service{
               resource function onTrigger()     {

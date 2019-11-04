@@ -1,13 +1,13 @@
 type Address record {
     string city = "";
     string country = "";
-}
+};
 
 type Person record {
     string name = "";
     int id = 0;
     Address address = {};
-}
+};
 
 function testFunction() {
     json jw = {    "name": "Ballerina"};

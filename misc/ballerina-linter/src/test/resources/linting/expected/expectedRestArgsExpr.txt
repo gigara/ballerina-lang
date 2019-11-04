@@ -1,6 +1,6 @@
 string Should indent properly (1,25-1,31)
 ... Should indent properly (7,19-7,22)
-Space is not allowed before names (7,22-7,23)
+No spaces allowed before names (7,22-7,23)
 ... Should indent properly (12,1-12,12)
 names Should indent properly (13,1-13,6)
 ) Should indent properly (14,1-14,9)

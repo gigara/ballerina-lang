@@ -29,11 +29,10 @@ function name2() {
 }
 
 function name3() {
-    int result = 0;
+    any result = 0;
     if (result is int) {
     } else {
-        io:println("File copy completed. The copied file could be located in " +
-        dstPath);
+        io:println("File copy completed. The copied file could be located in " );
     }
 }
 
@@ -41,8 +40,5 @@ function name4() {
     string value = "chunked";
     if (value != "chunked" && value != "compress" && value != "deflate"
     && value != "gzip" && value != "identity") {
-           res.statusCode = 400;
-         res.setPayload("Transfer-Encoding contains invalid data");
-         validationErrorFound = true;
-       }
+        }
 }

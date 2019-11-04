@@ -1,28 +1,28 @@
-import ballerina/io;
 
 type Person record {
     string name;
     int age;
     string country;
+    string occupation;
 };
 
 public function main() {
 
     string firstName;
     int personAge;
-    map<anydata|error> otherDetails = {};{ name : io:firstName,   age :personAge   ,...otherDetails}=getPerson() ;
+    map<anydata|error> otherDetails = {};{ name : firstName,   age :personAge   ,...otherDetails}=getPerson() ;
 
     { ...otherDetails } = getPerson();
 
     var  { name,age  } = getPerson();
 
-    { name : io:firstName,
+    { name : firstName,
            age :personAge   ,...otherDetails}=getPerson() ;
 
-    { name : io:firstName, age :personAge   ,
+    { name : firstName, age :personAge   ,
 ...otherDetails}=getPerson() ;
 
-    { name : io:firstName,
+    { name : firstName,
                  age :personAge   ,     ...otherDetails}=getPerson() ;
 }
 

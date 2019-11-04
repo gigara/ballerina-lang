@@ -1,0 +1,5 @@
+check Should indent properly (8,12-8,14)
+check Should indent properly (10,1-10,5)
+parse Should indent properly (10,10-10,13)
+check Should indent properly (12,12-12,17)
+parse Should indent properly (12,17-12,19)
