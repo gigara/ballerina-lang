@@ -194,11 +194,13 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     // add definition to the arrayList
     private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
-        Definition definition = new Definition(symbol, false, true, pos);
-        if (!availableInDefinitions(definition)) {
-            definitions.put(definition.md5(), definition);
-        } else {
-            definitions.get(definition.md5()).setHasDefinition(true);
+        if (!symbol.name.value.contains("$lambda$")) {
+            Definition definition = new Definition(symbol, false, true, pos);
+            if (!availableInDefinitions(definition)) {
+                definitions.put(definition.md5(), definition);
+            } else {
+                definitions.get(definition.md5()).setHasDefinition(true);
+            }
         }
     }
 
@@ -312,7 +314,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
             // which will be visited from BLangService visitor
             return;
         }
-        addDefinition(varNode.symbol, varNode.name.pos);
+        if (varNode.symbol != null) {
+            addDefinition(varNode.symbol, varNode.name.pos);
+        }
         if (varNode.annAttachments != null) {
             varNode.annAttachments.forEach(this::acceptNode);
         }
@@ -765,7 +769,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (invocationExpr.argExprs != null) {
             invocationExpr.argExprs.forEach(this::acceptNode);
         }
-        addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.pos);
+        if (invocationExpr.symbol != null) {
+            addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.pos);
+        }
     }
 
     @Override
@@ -910,7 +916,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangStringTemplateLiteral stringTemplateLiteral) {
-        // No implementation needed.
+        if (stringTemplateLiteral.exprs != null) {
+            stringTemplateLiteral.exprs.forEach(this::acceptNode);
+        }
     }
 
     @Override
