@@ -47,10 +47,6 @@ public class Definition {
         return symbol;
     }
 
-    public void setSymbol(BSymbol symbol) {
-        this.symbol = symbol;
-    }
-
     public boolean isHasReference() {
         return hasReference;
     }
@@ -71,12 +67,11 @@ public class Definition {
         return position;
     }
 
-    public void setPosition(Diagnostic.DiagnosticPosition position) {
-        this.position = position;
-    }
-
     public String md5() {
-        String hash = symbol.name.value + symbol.type.name + symbol.pkgID.name.value + symbol.pkgID.orgName.value;
+        String hash = symbol.name.value + symbol.type.name + symbol.pkgID.name.value + symbol.pkgID.orgName.value
+                +symbol.tag + symbol.owner.tag + symbol.owner.name.value
+                +((symbol.type.tsymbol != null) ? symbol.type.tsymbol.name.value : "")
+                +((symbol.kind != null) ? symbol.kind.name() : "");
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(hash.getBytes());

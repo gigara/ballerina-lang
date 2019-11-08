@@ -194,7 +194,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     // add definition to the arrayList
     private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
-        if (!symbol.name.value.contains("$lambda$")) {
+        if (!symbol.name.value.contains("$lambda$") && !symbol.name.value.contains("$anonService$")) {
             Definition definition = new Definition(symbol, false, true, pos);
             if (!availableInDefinitions(definition)) {
                 definitions.put(definition.md5(), definition);
@@ -458,7 +458,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangXMLNSStatement xmlnsStmtNode) {
-        // No implementation needed.
+        this.acceptNode(xmlnsStmtNode.xmlnsDecl);
     }
 
     @Override

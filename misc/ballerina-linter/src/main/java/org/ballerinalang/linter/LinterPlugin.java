@@ -90,17 +90,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
         // log diagnostics of whitespace linter
         pushWhiteSpacesErrors(model, dLog);
-
-        // log diagnostics of the reference finder
-        referenceFinder.getDefinitions().forEach((integer, definition) -> {
-                                                     if (definition.isHasDefinition() && !definition.isHasReference
-                                                             ()) {
-                                                         dLog.logDiagnostic(Diagnostic.Kind.WARNING,
-                                                                            definition.getPosition(),
-                                                                            definition.getSymbol().getName() + " is never used");
-                                                     }
-                                                 }
-        );
+        pushReferenceErrors(referenceFinder, dLog);
     }
 
     public void pushWhiteSpacesErrors(JsonObject model, DiagnosticLog dLog) {
@@ -187,5 +177,17 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
             }
         }
+    }
+
+    public void pushReferenceErrors(ReferenceFinder referenceFinder, DiagnosticLog dLog) {
+        // log diagnostics of the reference finder
+        referenceFinder.getDefinitions().forEach((integer, definition) -> {
+             if (definition.isHasDefinition() && !definition.isHasReference()) {
+                 dLog.logDiagnostic(Diagnostic.Kind.WARNING,
+                                    definition.getPosition(),
+                                    definition.getSymbol().getName() + " is never used");
+             }
+         }
+        );
     }
 }

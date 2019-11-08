@@ -3,7 +3,12 @@ package org.ballerinalang.linter;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.ballerinalang.compiler.CompilerPhase;
+import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
+import org.ballerinalang.langserver.compiler.common.modal.BallerinaFile;
+import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
 import org.ballerinalang.langserver.compiler.sourcegen.FormattingSourceGen;
+import org.ballerinalang.linter.Reference.ReferenceFinder;
 import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
@@ -33,60 +38,6 @@ public class LinterTest {
     private Path lintingDirectory = Paths.get("src/test/resources");
     private Gson gson = new Gson();
     private JsonObject model;
-
-    @BeforeMethod
-    public void setUp(Object[] testArgs) throws IOException {
-        diagnosticLog.getLog().clear();
-        String testFile = (String) testArgs[0];
-        BDiagnosticSource source = new BDiagnosticSource(packageID, testFile);
-        DiagnosticPos diagnosticPos = new DiagnosticPos(source, 0, 0, 0, 0);
-        compilationUnit.pos = diagnosticPos;
-    }
-
-    @Test(description = "test white space linting functionality", dataProvider = "lintDataProvider")
-    public void whitespaceTest(String testFile, String compUnit, String expected) throws IOException {
-
-        Path expectedFilePath = lintingDirectory.resolve("linting").resolve("expected").resolve(expected);
-        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
-
-        Path compUnitFilePath = lintingDirectory.resolve("linting").resolve("compUnits").resolve(compUnit);
-        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
-        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
-        model = element.getAsJsonObject();
-        FormattingSourceGen.build(model, "CompilationUnit");
-
-        WhitespaceVisitorEntry visitorEntry = new WhitespaceVisitorEntry();
-        visitorEntry.accept(model, compilationUnit);
-
-        LinterPlugin linterPlugin = new LinterPlugin();
-        linterPlugin.pushWhiteSpacesErrors(model, diagnosticLog);
-
-        StringBuilder actual = new StringBuilder();
-        for (String line : diagnosticLog.getLog()) {
-            actual.append(line).append(System.lineSeparator());
-        }
-        System.out.println(actual);
-        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
-    }
-
-    @Test(description = "test line length linting functionality", dataProvider = "lengthDataProvider")
-    public void lineLengthTest(String testFile, String compUnit, String expected) throws IOException {
-
-        Path expectedFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(expected);
-        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
-
-        Path compUnitFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(compUnit);
-        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
-        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
-        model = element.getAsJsonObject();
-
-        LineLengthAnalyzer.lintLineLength(model, compilationUnit, diagnosticLog);
-        StringBuilder actual = new StringBuilder();
-        for (String line : diagnosticLog.getLog()) {
-            actual.append(line).append(System.lineSeparator());
-        }
-        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
-    }
 
     @DataProvider
     public Object[][] lintDataProvider() {
@@ -164,18 +115,58 @@ public class LinterTest {
         };
     }
 
-}
-
-class DiagnosticLogTest implements DiagnosticLog {
-    List<String> log = new ArrayList<>();
-
-    @Override
-    public void logDiagnostic(Diagnostic.Kind kind, Diagnostic.DiagnosticPosition pos, CharSequence message) {
-        log.add(message + " (" + pos.getStartLine() + "," + pos.getStartColumn() + "-" + pos.getEndLine() + "," +
-                        pos.getEndColumn() + ")");
+    @BeforeMethod
+    public void setUp(Object[] testArgs) throws IOException {
+        diagnosticLog.getLog().clear();
+        String testFile = (String) testArgs[0];
+        BDiagnosticSource source = new BDiagnosticSource(packageID, testFile);
+        DiagnosticPos diagnosticPos = new DiagnosticPos(source, 0, 0, 0, 0);
+        compilationUnit.pos = diagnosticPos;
     }
 
-    public List<String> getLog() {
-        return log;
+    @Test(description = "test white space linting functionality", dataProvider = "lintDataProvider")
+    public void whitespaceTest(String testFile, String compUnit, String expected) throws IOException {
+
+        Path expectedFilePath = lintingDirectory.resolve("linting").resolve("expected").resolve(expected);
+        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
+
+        Path compUnitFilePath = lintingDirectory.resolve("linting").resolve("compUnits").resolve(compUnit);
+        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
+        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
+        model = element.getAsJsonObject();
+        FormattingSourceGen.build(model, "CompilationUnit");
+
+        WhitespaceVisitorEntry visitorEntry = new WhitespaceVisitorEntry();
+        visitorEntry.accept(model, compilationUnit);
+
+        LinterPlugin linterPlugin = new LinterPlugin();
+        linterPlugin.pushWhiteSpacesErrors(model, diagnosticLog);
+
+        StringBuilder actual = new StringBuilder();
+        for (String line : diagnosticLog.getLog()) {
+            actual.append(line).append(System.lineSeparator());
+        }
+        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
     }
+
+    @Test(description = "test line length linting functionality", dataProvider = "lengthDataProvider")
+    public void lineLengthTest(String testFile, String compUnit, String expected) throws IOException {
+
+        Path expectedFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(expected);
+        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
+
+        Path compUnitFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(compUnit);
+        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
+        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
+        model = element.getAsJsonObject();
+
+        LineLengthAnalyzer.lintLineLength(model, compilationUnit, diagnosticLog);
+        StringBuilder actual = new StringBuilder();
+        for (String line : diagnosticLog.getLog()) {
+            actual.append(line).append(System.lineSeparator());
+        }
+        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
+    }
+
 }
+

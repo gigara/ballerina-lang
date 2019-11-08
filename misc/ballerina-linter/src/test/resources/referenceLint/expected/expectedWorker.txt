@@ -1,0 +1,4 @@
+y is never used (18,17-18,18)
+m is never used (14,13-14,14)
+w2 is never used (12,5-22,6)
+w1 is never used (4,5-11,6)
