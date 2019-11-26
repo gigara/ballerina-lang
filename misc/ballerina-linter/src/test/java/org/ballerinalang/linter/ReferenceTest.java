@@ -25,7 +25,6 @@ import org.ballerinalang.langserver.compiler.exception.CompilationFailedExceptio
 import org.ballerinalang.linter.Reference.ReferenceFinder;
 import org.ballerinalang.model.tree.CompilationUnitNode;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -55,11 +54,18 @@ public class ReferenceTest {
                 {"function.bal","expectedFunction.txt"},
                 {"variable.bal","expectedVariable.txt"},
                 {"maps.bal","expectedMaps.txt"},
+                {"matchStmt.bal","expectedMatchStmt.txt"},
                 {"object.bal","expectedObject.txt"},
+                {"recordDestructure.bal","expectedRecordDestructure.txt"},
+                {"serviceConstruct.bal","expectedServiceConstruct.txt"},
                 {"stringTemplateLiteral.bal","expectedStringTemplateLiteral.txt"},
+                {"ternaryExpr.bal","expectedTernaryExpr.txt"},
                 {"tuple.bal","expectedTuple.txt"},
+                {"tupleDestructure.bal","expectedTupleDestructure.txt"},
+                {"transaction.bal","expectedTransaction.txt"},
                 {"unionTypes.bal","expectedUnionTypes.txt"},
                 {"worker.bal","expectedWorker.txt"},
+                {"while.bal","expectedWhile.txt"},
                 {"xml.bal","expectedXml.txt"}
         };
     }
