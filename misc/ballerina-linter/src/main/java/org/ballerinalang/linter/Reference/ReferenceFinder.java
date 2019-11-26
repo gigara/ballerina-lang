@@ -194,7 +194,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     // add definition to the arrayList
     private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
-        if (!symbol.name.value.contains("$lambda$") && !symbol.name.value.contains("$anonService$")) {
+        if (!symbol.name.value.contains("$")) {
             Definition definition = new Definition(symbol, false, true, pos);
             if (!availableInDefinitions(definition)) {
                 definitions.put(definition.md5(), definition);
@@ -206,11 +206,13 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     // add reference to the arrayList
     private void addReference(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
-        Definition definition = new Definition(symbol, true, false, pos);
-        if (availableInDefinitions(definition)) {
-            definitions.get(definition.md5()).setHasReference(true);
-        } else {
-            definitions.put(definition.md5(), definition);
+        if (symbol != null) {
+            Definition definition = new Definition(symbol, true, false, pos);
+            if (availableInDefinitions(definition)) {
+                definitions.get(definition.md5()).setHasReference(true);
+            } else {
+                definitions.put(definition.md5(), definition);
+            }
         }
     }
 
