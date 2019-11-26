@@ -620,89 +620,61 @@ public class LinteringNodeTree {
      * @param node {JsonObject} node as json object
      */
     public void lintBlockNode(JsonObject node, Node compilationUnitNode) {
-        JsonObject position = new JsonObject();
+        if (node.has(FormattingConstants.FORMATTING_CONFIG)) {
+            JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
 
-        // TODO: revisit code of how block node is handled.
-        JsonObject formatConfig = node.has(FormattingConstants.FORMATTING_CONFIG)
-                ? node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG) : null;
-
-        // Get the start column of the parent.
-        position.addProperty(FormattingConstants.START_COLUMN, node.get("parent").getAsJsonObject()
-                .get(FormattingConstants.POSITION)
-                .getAsJsonObject().get(FormattingConstants.START_COLUMN).getAsInt());
-
-        // Add block position to be the parent's position.
-        node.add(FormattingConstants.POSITION, position);
-
-        // Update the statements whitespaces.
-        for (int i = 0; i < node.getAsJsonArray(FormattingConstants.STATEMENTS).size(); i++) {
-            JsonElement child = node.getAsJsonArray(FormattingConstants.STATEMENTS).get(i);
-            JsonObject childFormatConfig = formatConfig;
-            if (formatConfig == null) {
-                childFormatConfig = this.getFormattingConfig(1, 0,
-                                                             node.get(FormattingConstants.POSITION).getAsJsonObject()
-                                                                     .get(FormattingConstants.START_COLUMN)
-                                                                     .getAsInt(), true, node.get(
-                                FormattingConstants.POSITION).getAsJsonObject()
-                                                                     .get(FormattingConstants.START_COLUMN).getAsInt(),
-                                                             false);
-            }
-            child.getAsJsonObject().add(FormattingConstants.FORMATTING_CONFIG, childFormatConfig);
-        }
-
-        // If this is a else block continue to following.
-        if (node.has(FormattingConstants.WS) && node.getAsJsonArray(FormattingConstants.WS).get(0).getAsJsonObject()
-                .get(FormattingConstants.TEXT).getAsString().equals(Tokens.ELSE)) {
-
-            JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
-
-            this.preserveHeight(node, compilationUnitNode, ws, this.getWhiteSpaces(node.getAsJsonObject(
-                    FormattingConstants.POSITION)
-                                                                                           .get(FormattingConstants.START_COLUMN)
-                                                                                           .getAsInt()));
-
-            // Update the else keyword whitespace.
-            JsonObject elseKeywordWS = ws.get(0).getAsJsonObject();
-            if (this.noHeightAvailable(elseKeywordWS.get(FormattingConstants.WS).getAsString())) {
-                if (!elseKeywordWS.get(FormattingConstants.WS).getAsString().
-                        equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(compilationUnitNode, elseKeywordWS,
-                             "More than one space before else keyword is not allowed");
-                }
+            // Update the statements whitespaces.
+            for (JsonElement child : node.getAsJsonArray(FormattingConstants.STATEMENTS)) {
+                child.getAsJsonObject().add(FormattingConstants.FORMATTING_CONFIG, formatConfig);
             }
 
-            // Update the opening brace whitespace.
-            JsonObject openingBraceWS = ws.get(ws.size() - 2).getAsJsonObject();
-            if (this.noHeightAvailable(openingBraceWS.get(FormattingConstants.WS).getAsString())) {
-                if (!openingBraceWS.get(FormattingConstants.WS).getAsString().
-                        equals(FormattingConstants.SINGLE_SPACE)) {
-                    logError(compilationUnitNode, openingBraceWS, "More than one space before '{' is not allowed");
-                }
-            }
+            // If this is a else block continue to following.
+            if (node.has(FormattingConstants.WS) && node.getAsJsonArray(FormattingConstants.WS).get(0).getAsJsonObject()
+                    .get(FormattingConstants.TEXT).getAsString().equals(Tokens.ELSE)) {
 
-            // Update the closing brace whitespace.
-            JsonObject closingBraceWS = ws.get(ws.size() - 1).getAsJsonObject();
-            if (node.getAsJsonArray(FormattingConstants.STATEMENTS).size() <= 0) {
-                if (this.noHeightAvailable(closingBraceWS.get(FormattingConstants.WS).getAsString())) {
-                    if (!closingBraceWS.get(FormattingConstants.WS).getAsString().
-                            equals(FormattingConstants.NEW_LINE +
-                                           this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
-                                                                       .get(FormattingConstants.START_COLUMN)
-                                                                       .getAsInt())
-                                           + FormattingConstants.NEW_LINE +
-                                           this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
-                                                                       .get(FormattingConstants.START_COLUMN)
-                                                                       .getAsInt()))) {
-                        logError(compilationUnitNode, closingBraceWS, "Closing brace should indent properly");
+                JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
+
+                // Whitespaces for else block should indent as to the parent's start column.
+                String indentation = this.getWhiteSpaces(formatConfig.get(FormattingConstants.START_COLUMN).getAsInt());
+
+                // Preserve available line breaks.
+                this.preserveHeight(node, compilationUnitNode, ws, indentation);
+
+                // Iterate and lint whitespaces for else node.
+                for (JsonElement wsItem : ws) {
+                    JsonObject currentWS = wsItem.getAsJsonObject();
+                    if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
+                        String text = currentWS.get(FormattingConstants.TEXT).getAsString();
+                        if (text.equals(Tokens.ELSE)) {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                    equals(FormattingConstants.SINGLE_SPACE)) {
+                                logError(compilationUnitNode, currentWS,
+                                         "Only single whitespace is allowed before " + text);
+                            }
+                        } else if (text.equals(Tokens.OPENING_BRACE)) {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                    equals(FormattingConstants.SINGLE_SPACE)) {
+                                logError(compilationUnitNode, currentWS,
+                                         "Only single whitespace is allowed before " + text);
+                            }
+                        } else if (text.equals(Tokens.CLOSING_BRACE)) {
+                            if (node.getAsJsonArray(FormattingConstants.STATEMENTS).size() <= 0) {
+                                if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                        equals(FormattingConstants.NEW_LINE +
+                                                       indentation + FormattingConstants.NEW_LINE + indentation)) {
+                                    logError(compilationUnitNode, currentWS,
+                                             text + " Should indent properly");
+                                }
+                            } else {
+                                if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                        equals(FormattingConstants.NEW_LINE +
+                                                       indentation)) {
+                                    logError(compilationUnitNode, currentWS,
+                                             text + " Should indent properly");
+                                }
+                            }
+                        }
                     }
-                }
-            } else if (this.noHeightAvailable(closingBraceWS.get(FormattingConstants.WS).getAsString())) {
-                if (!closingBraceWS.get(FormattingConstants.WS).getAsString().
-                        equals(FormattingConstants.NEW_LINE +
-                                       this.getWhiteSpaces(node.getAsJsonObject(FormattingConstants.POSITION)
-                                                                   .get(FormattingConstants.START_COLUMN)
-                                                                   .getAsInt()))) {
-                    logError(compilationUnitNode, closingBraceWS, "Closing brace should indent properly");
                 }
             }
         }
@@ -1981,6 +1953,7 @@ public class LinteringNodeTree {
         if (node.has(FormattingConstants.WS) && node.has(FormattingConstants.FORMATTING_CONFIG)) {
             JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
+            String indentation = this.getIndentation(formatConfig, false);
 
             String indentWithParentIndentation = formatConfig.get(FormattingConstants.DO_INDENT).getAsBoolean()
                     ? this.getWhiteSpaces(formatConfig.get(FormattingConstants.INDENTED_START_COLUMN).getAsInt()) +
@@ -2094,6 +2067,11 @@ public class LinteringNodeTree {
                                                                                             this.getWhiteSpaceCount(
                                                                                                     indentWithParentIndentation),
                                                                                             true));
+            }
+
+            if (node.has(FormattingConstants.BODY)) {
+                modifyConstructBody(node.getAsJsonObject(FormattingConstants.BODY),
+                                    indentation, indentWithParentIndentation);
             }
         }
     }
@@ -2486,6 +2464,11 @@ public class LinteringNodeTree {
 
                     externalAnnotationAttachment.add(FormattingConstants.FORMATTING_CONFIG, annotationFormattingConfig);
                 }
+            }
+
+            if (node.has(FormattingConstants.BODY)) {
+                modifyConstructBody(node.getAsJsonObject(FormattingConstants.BODY),
+                                    indentation, indentWithParentIndentation);
             }
         }
     }
@@ -2907,6 +2890,10 @@ public class LinteringNodeTree {
                                                                                         indentWithParentIndentation),
                                                                                 false);
                 elseStatement.add(FormattingConstants.FORMATTING_CONFIG, elseStatementFormatConfig);
+            } else if (node.has("elseStatement")
+                    && node.getAsJsonObject("elseStatement").has("isElseBlock")
+                    && node.getAsJsonObject("elseStatement").get("isElseBlock").getAsBoolean()) {
+                modifyConstructBody(node.getAsJsonObject("elseStatement"), indentation, indentWithParentIndentation);
             }
 
             if (node.has("condition")) {
@@ -2915,6 +2902,11 @@ public class LinteringNodeTree {
                                                                             this.getWhiteSpaceCount(
                                                                                     indentWithParentIndentation), true);
                 conditionWs.add(FormattingConstants.FORMATTING_CONFIG, conditionFormatConfig);
+            }
+
+            if (node.has(FormattingConstants.BODY)) {
+                modifyConstructBody(node.getAsJsonObject(FormattingConstants.BODY),
+                                    indentation, indentWithParentIndentation);
             }
         }
     }
@@ -3850,11 +3842,8 @@ public class LinteringNodeTree {
                 }
             }
 
-            if (node.has("statement") && !withCurlies) {
-                JsonObject statementFormatConfig = this.getFormattingConfig(0, 1, 0, false,
-                                                                            this.getWhiteSpaceCount(indentation),
-                                                                            false);
-                node.getAsJsonObject("statement").add(FormattingConstants.FORMATTING_CONFIG, statementFormatConfig);
+            if (node.has("statement")) {
+                modifyConstructBody(node.getAsJsonObject("statement"), indentation, indentation);
             }
         }
     }
@@ -6412,87 +6401,89 @@ public class LinteringNodeTree {
 
             // Update transaction and retry whitespaces.
             boolean isRetryBody = false;
+            boolean isCommittedBody = false;
+            boolean isAbortedBody = false;
             for (JsonElement wsItem : ws) {
                 JsonObject currentWS = wsItem.getAsJsonObject();
-                String text = currentWS.get(FormattingConstants.TEXT).getAsString();
-
                 if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.TRANSACTION)) {
-                        if (!currentWS.get(FormattingConstants.WS).getAsString()
-                                .equals(this.getNewLines(
-                                        formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
-                                                + indentation)) {
-                            logError(compilationUnitNode, currentWS, text + " Should indent properly");
-                        }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONRETRY)) {
+                    String text = currentWS.get(FormattingConstants.TEXT).getAsString();
+                    if (text.equals(Tokens.TRANSACTION)) {
+                        currentWS.addProperty(FormattingConstants.WS,
+                                              this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
+                                                      + indentation);
+                    } else if (text.equals(Tokens.ONRETRY)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
                         isRetryBody = true;
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.OPENING_BRACE)) {
+                        isAbortedBody = false;
+                        isCommittedBody = false;
+                    } else if (text.equals(Tokens.ABORTED)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.CLOSING_BRACE)) {
+                        isRetryBody = false;
+                        isAbortedBody = true;
+                        isCommittedBody = false;
+                    } else if (text.equals(Tokens.COMMITTED)) {
+                        if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
+                                FormattingConstants.SINGLE_SPACE)) {
+                            logError(compilationUnitNode, currentWS,
+                                     "Only Single whitespace is allowed before " + text);
+                        }
+                        isRetryBody = false;
+                        isAbortedBody = false;
+                        isCommittedBody = true;
+                    } else if (text.equals(Tokens.OPENING_BRACE)) {
+                        if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
+                                FormattingConstants.SINGLE_SPACE)) {
+                            logError(compilationUnitNode, currentWS,
+                                     "Only Single whitespace is allowed before " + text);
+                        }
+                    } else if (text.equals(Tokens.CLOSING_BRACE)) {
                         if (isRetryBody) {
-                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS, "onRetryBody",
-                                                  false);
+                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS, "onRetryBody", false);
+                        } else if (isAbortedBody) {
+                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS, "abortedBody", false);
+                        } else if (isCommittedBody) {
+                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS, "committedBody", false);
                         } else {
-                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS,
-                                                  "transactionBody", false);
+                            lintBlockClosingBrace(node, compilationUnitNode, indentation, currentWS, "transactionBody", false);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.WITH)) {
+                    } else if (text.equals(Tokens.WITH)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.RETRIES)) {
+                    } else if (text.equals(Tokens.RETRIES)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.EQUAL)) {
+                    } else if (text.equals(Tokens.EQUAL)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.COMMA)) {
+                    } else if (text.equals(Tokens.COMMA)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().
                                 equals(FormattingConstants.EMPTY_SPACE)) {
                             logError(compilationUnitNode, currentWS, "No spaces allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONABORT)) {
+                    } else if (text.equals(Tokens.ONABORT)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
                                      "Only Single whitespace is allowed before " + text);
                         }
-                    }
-
-                    if (currentWS.get(FormattingConstants.TEXT).getAsString().equals(Tokens.ONCOMMIT)) {
+                    } else if (text.equals(Tokens.ONCOMMIT)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
                             logError(compilationUnitNode, currentWS,
@@ -6500,6 +6491,22 @@ public class LinteringNodeTree {
                         }
                     }
                 }
+            }
+
+            if (node.has("transactionBody")) {
+                modifyConstructBody(node.getAsJsonObject("transactionBody"), indentation, indentation);
+            }
+
+            if (node.has("onRetryBody")) {
+                modifyConstructBody(node.getAsJsonObject("onRetryBody"), indentation, indentation);
+            }
+
+            if (node.has("committedBody")) {
+                modifyConstructBody(node.getAsJsonObject("committedBody"), indentation, indentation);
+            }
+
+            if (node.has("abortedBody")) {
+                modifyConstructBody(node.getAsJsonObject("abortedBody"), indentation, indentation);
             }
 
             // Update whitespaces for retryCount.
@@ -8039,6 +8046,7 @@ public class LinteringNodeTree {
             JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
             String indentation = this.getIndentation(formatConfig, true);
+            String indentationOfParent = this.getParentIndentation(formatConfig);
 
             node.getAsJsonObject(FormattingConstants.POSITION).addProperty(FormattingConstants.START_COLUMN,
                                                                            this.getWhiteSpaceCount(indentation));
@@ -8079,6 +8087,12 @@ public class LinteringNodeTree {
                                                                                  this.getWhiteSpaceCount(indentation),
                                                                                  true);
                 whileCondition.add(FormattingConstants.FORMATTING_CONFIG, whileConditionFormatConfig);
+            }
+
+
+            if (node.has(FormattingConstants.BODY)) {
+                modifyConstructBody(node.getAsJsonObject(FormattingConstants.BODY),
+                                    indentation, indentationOfParent);
             }
         }
     }
@@ -8781,6 +8795,15 @@ public class LinteringNodeTree {
         lintErrors.put(currentWs.get("i").getAsInt(), lintError);
     }
 
+    private void modifyConstructBody(JsonObject node, String indentation, String indentWithParentIndentation) {
+        node.add(FormattingConstants.FORMATTING_CONFIG,
+                 this.getFormattingConfig(1, 0,
+                                          this.getWhiteSpaceCount(this.getWhiteSpaceCount(indentation) == 0
+                                                                          ? indentWithParentIndentation : indentation), true,
+                                          this.getWhiteSpaceCount(indentWithParentIndentation), false));
+
+    }
+
     private void lintXMLLiteralNode(JsonObject node, Node compilationUnitNode) {
         if (node.has(FormattingConstants.WS) && node.has(FormattingConstants.FORMATTING_CONFIG)) {
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
@@ -9179,8 +9202,6 @@ public class LinteringNodeTree {
             List<String> tokens = this.tokenizer(ws.get(FormattingConstants.WS).getAsString());
             if (!ws.get(FormattingConstants.WS).getAsString().
                     equals(this.getTextFromTokens(tokens, indent))) {
-                String a = ws.get(FormattingConstants.WS).getAsString();
-                String b = this.getTextFromTokens(tokens, indent);
                 logError(compilationUnitNode, ws, msg);
             }
         }
