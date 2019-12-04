@@ -1,50 +1,53 @@
- /*
-  *  Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-  *
-  *  WSO2 Inc. licenses this file to you under the Apache License,
-  *  Version 2.0 (the "License"); you may not use this file except
-  *  in compliance with the License.
-  *  You may obtain a copy of the License at
-  *
-  *    http://www.apache.org/licenses/LICENSE-2.0
-  *
-  *  Unless required by applicable law or agreed to in writing,
-  *  software distributed under the License is distributed on an
-  *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-  *  KIND, either express or implied.  See the License for the
-  *  specific language governing permissions and limitations
-  *  under the License.
-  */
- package org.ballerinalang.jvm.values.api;
+/*
+ *  Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+package org.ballerinalang.jvm.values.api;
 
- import org.apache.axiom.om.OMNode;
- import org.ballerinalang.jvm.BallerinaValues;
- import org.ballerinalang.jvm.DecimalValueKind;
- import org.ballerinalang.jvm.JSONDataSource;
- import org.ballerinalang.jvm.types.BArrayType;
- import org.ballerinalang.jvm.types.BErrorType;
- import org.ballerinalang.jvm.types.BFunctionType;
- import org.ballerinalang.jvm.types.BPackage;
- import org.ballerinalang.jvm.types.BStreamType;
- import org.ballerinalang.jvm.types.BStructureType;
- import org.ballerinalang.jvm.types.BTupleType;
- import org.ballerinalang.jvm.types.BType;
- import org.ballerinalang.jvm.values.ArrayValue;
- import org.ballerinalang.jvm.values.DecimalValue;
- import org.ballerinalang.jvm.values.ErrorValue;
- import org.ballerinalang.jvm.values.FPValue;
- import org.ballerinalang.jvm.values.StreamValue;
- import org.ballerinalang.jvm.values.StreamingJsonValue;
- import org.ballerinalang.jvm.values.TableValue;
- import org.ballerinalang.jvm.values.TypedescValue;
- import org.ballerinalang.jvm.values.XMLItem;
- import org.ballerinalang.jvm.values.XMLQName;
- import org.ballerinalang.jvm.values.XMLSequence;
+import org.apache.axiom.om.OMNode;
+import org.ballerinalang.jvm.BallerinaValues;
+import org.ballerinalang.jvm.DecimalValueKind;
+import org.ballerinalang.jvm.JSONDataSource;
+import org.ballerinalang.jvm.types.BArrayType;
+import org.ballerinalang.jvm.types.BErrorType;
+import org.ballerinalang.jvm.types.BFunctionType;
+import org.ballerinalang.jvm.types.BPackage;
+import org.ballerinalang.jvm.types.BStreamType;
+import org.ballerinalang.jvm.types.BStructureType;
+import org.ballerinalang.jvm.types.BTupleType;
+import org.ballerinalang.jvm.types.BType;
+import org.ballerinalang.jvm.values.ArrayValue;
+import org.ballerinalang.jvm.values.ArrayValueImpl;
+import org.ballerinalang.jvm.values.DecimalValue;
+import org.ballerinalang.jvm.values.ErrorValue;
+import org.ballerinalang.jvm.values.FPValue;
+import org.ballerinalang.jvm.values.MapValue;
+import org.ballerinalang.jvm.values.StreamValue;
+import org.ballerinalang.jvm.values.StreamingJsonValue;
+import org.ballerinalang.jvm.values.TableValue;
+import org.ballerinalang.jvm.values.TupleValueImpl;
+import org.ballerinalang.jvm.values.TypedescValue;
+import org.ballerinalang.jvm.values.XMLItem;
+import org.ballerinalang.jvm.values.XMLQName;
+import org.ballerinalang.jvm.values.XMLSequence;
 
- import java.io.InputStream;
- import java.math.BigDecimal;
- import java.util.Map;
- import java.util.function.Function;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.function.Function;
 
  /**
   * Helper class to create ballerina value instances.
@@ -59,7 +62,7 @@
       * @return the new array
       */
      public static BArray createArrayValue(BArrayType type) {
-         return new ArrayValue(type);
+         return new ArrayValueImpl(type);
      }
 
      /**
@@ -69,7 +72,7 @@
       * @return the new array
       */
      public static BArray createTupleValue(BTupleType type) {
-         return new ArrayValue(type);
+         return new TupleValueImpl(type);
      }
 
      /**
@@ -79,7 +82,7 @@
       * @return integer array
       */
      public static BArray createArrayValue(long[] values) {
-         return new ArrayValue(values);
+         return new ArrayValueImpl(values);
      }
 
      /**
@@ -89,7 +92,7 @@
       * @return boolean array
       */
      public static  BArray createArrayValue(boolean[] values) {
-         return new ArrayValue(values);
+         return new ArrayValueImpl(values);
      }
 
      /**
@@ -99,7 +102,7 @@
       * @return byte array
       */
      public static BArray createArrayValue(byte[] values) {
-         return new ArrayValue(values);
+         return new ArrayValueImpl(values);
      }
 
      /**
@@ -109,7 +112,7 @@
       * @return float array
       */
      public static BArray createArrayValue(double[] values) {
-         return new ArrayValue(values);
+         return new ArrayValueImpl(values);
      }
 
      /**
@@ -119,7 +122,7 @@
       * @return string array
       */
      public static BArray createArrayValue(String[] values) {
-         return new ArrayValue(values);
+         return new ArrayValueImpl(values);
      }
 
      /**
@@ -130,7 +133,7 @@
       * @return ref Value array
       */
      public static BArray createArrayValue(Object[] values, BArrayType type) {
-         return new ArrayValue(values, type);
+         return new ArrayValueImpl(values, type);
      }
 
      /**
@@ -142,7 +145,7 @@
       * @return fixed length ref value array
       */
      public static BArray createArrayValue(Object[] values, BArrayType type, int length) {
-         return new ArrayValue(type, length);
+         return new ArrayValueImpl(type, length);
      }
 
      /**
@@ -423,7 +426,7 @@
       * @return value of the record.
       */
      public static BMap<String, Object> createRecord(BMap<String, Object> record, Object... values) {
-         return (BMap) BallerinaValues.createRecord(record, values);
+         return (BMap) BallerinaValues.createRecord((MapValue<String, Object>) record, values);
      }
 
  }
