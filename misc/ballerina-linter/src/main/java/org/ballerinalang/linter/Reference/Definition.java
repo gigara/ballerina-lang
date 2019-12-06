@@ -20,6 +20,8 @@ package org.ballerinalang.linter.Reference;
 
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BFiniteType;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
@@ -35,12 +37,15 @@ public class Definition {
     private boolean hasReference;
     private boolean hasDefinition;
     private Diagnostic.DiagnosticPosition position;
+    private String kind;
 
-    public Definition(BSymbol symbol, boolean hasReference, boolean hasDefinition, Diagnostic.DiagnosticPosition position) {
+    public Definition(BSymbol symbol, boolean hasReference, boolean hasDefinition,
+                      Diagnostic.DiagnosticPosition position, String kind) {
         this.symbol = symbol;
         this.hasReference = hasReference;
         this.hasDefinition = hasDefinition;
         this.position = position;
+        this.kind = kind;
     }
 
     public BSymbol getSymbol() {
@@ -67,11 +72,15 @@ public class Definition {
         return position;
     }
 
-    public String md5() {
-        String hash = symbol.name.value + symbol.type.name + symbol.pkgID.name.value + symbol.pkgID.orgName.value
-                +symbol.tag + symbol.owner.tag + symbol.owner.name.value
-                +((symbol.type.tsymbol != null) ? symbol.type.tsymbol.name.value : "")
-                +((symbol.kind != null) ? symbol.kind.name() : "");
+    public String getKind() {
+        return kind;
+    }
+
+    public String md5(boolean isConstant) {
+        BType type = symbol.type;
+        String hash = (symbol.name.value.contains("anonType") || (isConstant && type instanceof BFiniteType) ? "" :
+                symbol.name.value) + type.tag + type.flags
+                + ((type.tsymbol != null) ? type.tsymbol.name.value + symbol.type.tsymbol.pkgID.name.value : "");
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(hash.getBytes());

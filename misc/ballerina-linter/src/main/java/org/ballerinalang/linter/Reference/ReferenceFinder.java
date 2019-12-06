@@ -21,6 +21,7 @@ package org.ballerinalang.linter.Reference;
 import org.ballerinalang.model.elements.Flag;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
+import org.wso2.ballerinalang.compiler.semantics.model.symbols.BConstantSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BVarSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
@@ -196,10 +197,10 @@ public class ReferenceFinder extends BLangNodeVisitor {
     private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos, String kind) {
         if (!symbol.name.value.contains("$")) {
             Definition definition = new Definition(symbol, false, true, pos, kind);
-            if (!availableInDefinitions(definition)) {
-                definitions.put(definition.md5(), definition);
+            if (!availableInDefinitions(definition, symbol)) {
+                definitions.put(definition.md5(symbol instanceof BConstantSymbol), definition);
             } else {
-                definitions.get(definition.md5()).setHasDefinition(true);
+                definitions.get(definition.md5(symbol instanceof BConstantSymbol)).setHasDefinition(true);
             }
         }
     }
@@ -208,17 +209,17 @@ public class ReferenceFinder extends BLangNodeVisitor {
     private void addReference(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
         if (symbol != null) {
             Definition definition = new Definition(symbol, true, false, pos, "");
-            if (availableInDefinitions(definition)) {
-                definitions.get(definition.md5()).setHasReference(true);
+            if (availableInDefinitions(definition, symbol)) {
+                definitions.get(definition.md5(symbol instanceof BConstantSymbol)).setHasReference(true);
             } else {
-                definitions.put(definition.md5(), definition);
+                definitions.put(definition.md5(symbol instanceof BConstantSymbol), definition);
             }
         }
     }
 
     // search for the symbol in definitions list
-    private boolean availableInDefinitions(Definition definition) {
-        return definitions.containsKey(definition.md5());
+    private boolean availableInDefinitions(Definition definition, BSymbol symbol) {
+        return definitions.containsKey(definition.md5(symbol instanceof BConstantSymbol));
     }
 
     @Override
