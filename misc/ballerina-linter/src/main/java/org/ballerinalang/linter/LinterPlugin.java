@@ -158,7 +158,8 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 }
 
                 /* calculate dlog ending column
-                 * @source - https://stackoverflow.com/questions/22101186/how-to-get-leading-and-trailing-spaces-in-string-java
+                 * @source - https://stackoverflow
+                 * .com/questions/22101186/how-to-get-leading-and-trailing-spaces-in-string-java
                  */
                 int leadingWhitespaceLenth = wsStr.trim().length() == 0 ?
                         wsStr.length() : wsStr.replaceAll("^(\\s+).+", "$1").length() + 1;
@@ -185,7 +186,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
              if (definition.isHasDefinition() && !definition.isHasReference()) {
                  dLog.logDiagnostic(Diagnostic.Kind.WARNING,
                                     definition.getPosition(),
-                                    definition.getSymbol().getName() + " is never used");
+                                    definition.getKind() + " " + definition.getSymbol().getName() + " is never used");
              }
          }
         );

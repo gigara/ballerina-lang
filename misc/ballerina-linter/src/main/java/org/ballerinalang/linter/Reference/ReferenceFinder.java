@@ -193,9 +193,9 @@ public class ReferenceFinder extends BLangNodeVisitor {
     }
 
     // add definition to the arrayList
-    private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
+    private void addDefinition(BSymbol symbol, Diagnostic.DiagnosticPosition pos, String kind) {
         if (!symbol.name.value.contains("$")) {
-            Definition definition = new Definition(symbol, false, true, pos);
+            Definition definition = new Definition(symbol, false, true, pos, kind);
             if (!availableInDefinitions(definition)) {
                 definitions.put(definition.md5(), definition);
             } else {
@@ -207,7 +207,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
     // add reference to the arrayList
     private void addReference(BSymbol symbol, Diagnostic.DiagnosticPosition pos) {
         if (symbol != null) {
-            Definition definition = new Definition(symbol, true, false, pos);
+            Definition definition = new Definition(symbol, true, false, pos, "");
             if (availableInDefinitions(definition)) {
                 definitions.get(definition.md5()).setHasReference(true);
             } else {
@@ -244,13 +244,13 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangXMLNS xmlnsNode) {
-        addDefinition(xmlnsNode.symbol, xmlnsNode.namespaceURI.pos);
+        addDefinition(xmlnsNode.symbol, xmlnsNode.namespaceURI.pos, "XML");
     }
 
     @Override
     public void visit(BLangFunction funcNode) {
         if (!funcNode.name.value.equals("main")) {
-            addDefinition(funcNode.symbol, funcNode.name.pos);
+            addDefinition(funcNode.symbol, funcNode.name.pos, "Function");
         }
         if (funcNode.annAttachments != null) {
             funcNode.annAttachments.forEach(this::acceptNode);
@@ -275,7 +275,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangService serviceNode) {
-        addDefinition(serviceNode.symbol, serviceNode.name.pos);
+        addDefinition(serviceNode.symbol, serviceNode.name.pos, "Service");
         if (serviceNode.annAttachments != null) {
             serviceNode.annAttachments.forEach(this::acceptNode);
         }
@@ -294,7 +294,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangTypeDefinition typeDefinition) {
-        addDefinition(typeDefinition.symbol, typeDefinition.name.pos);
+        addDefinition(typeDefinition.symbol, typeDefinition.name.pos, "Type");
         if (typeDefinition.annAttachments != null) {
             typeDefinition.annAttachments.forEach(this::acceptNode);
         }
@@ -306,7 +306,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangConstant constant) {
-        addDefinition(constant.symbol, constant.name.pos);
+        addDefinition(constant.symbol, constant.name.pos, "Constant");
     }
 
     @Override
@@ -317,7 +317,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
             return;
         }
         if (varNode.symbol != null) {
-            addDefinition(varNode.symbol, varNode.name.pos);
+            addDefinition(varNode.symbol, varNode.name.pos, "Variable");
         }
         if (varNode.annAttachments != null) {
             varNode.annAttachments.forEach(this::acceptNode);
@@ -344,7 +344,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangAnnotation annotationNode) {
-        addDefinition(annotationNode.symbol, annotationNode.name.pos);
+        addDefinition(annotationNode.symbol, annotationNode.name.pos, "Annotation");
         if (annotationNode.annAttachments != null) {
             annotationNode.annAttachments.forEach(this::acceptNode);
         }
@@ -381,7 +381,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangSimpleVariableDef varDefNode) {
         BLangSimpleVariable variable = varDefNode.var;
-        addDefinition(variable.symbol, varDefNode.var.name.pos != null ? varDefNode.var.name.pos : varDefNode.pos);
+        addDefinition(variable.symbol, varDefNode.var.name.pos != null ? varDefNode.var.name.pos : varDefNode.pos, "Variable");
 
         BLangType typeNode = variable.typeNode;
         if (varDefNode.getWS() == null) {
