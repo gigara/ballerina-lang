@@ -27,6 +27,7 @@ import org.ballerinalang.langserver.command.executors.CreateFunctionExecutor;
 import org.ballerinalang.langserver.command.executors.CreateTestExecutor;
 import org.ballerinalang.langserver.command.executors.ImportModuleExecutor;
 import org.ballerinalang.langserver.command.executors.PullModuleExecutor;
+import org.ballerinalang.langserver.command.executors.UnusedVariableExecutor;
 import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.constants.CommandConstants;
 import org.ballerinalang.langserver.common.constants.NodeContextKeys;
@@ -49,6 +50,7 @@ import org.ballerinalang.langserver.util.references.SymbolReferencesModel;
 import org.ballerinalang.model.elements.Flag;
 import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.model.tree.TopLevelNode;
+import org.ballerinalang.model.tree.expressions.FieldBasedAccessNode;
 import org.ballerinalang.model.types.TypeKind;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.CodeAction;
@@ -75,14 +77,19 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BErrorType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BNilType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
+import org.wso2.ballerinalang.compiler.tree.BLangAnnotation;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
 import org.wso2.ballerinalang.compiler.tree.BLangNode;
 import org.wso2.ballerinalang.compiler.tree.BLangPackage;
 import org.wso2.ballerinalang.compiler.tree.BLangService;
+import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 import org.wso2.ballerinalang.compiler.tree.BLangTypeDefinition;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangConstant;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangFieldBasedAccess;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangInvocation;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLAttribute;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangBlockStmt;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangReturn;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangStatement;
@@ -585,6 +592,61 @@ public class CommandUtil {
             }
         }
         return null;
+    }
+
+    public static CodeAction getRemoveUnusedVariableCommand(LSDocument document, Diagnostic diagnostic, LSContext context) {
+        Position position = diagnostic.getRange().getStart();
+        int line = position.getLine();
+        int column = position.getCharacter();
+        String uri = context.get(ExecuteCommandKeys.FILE_URI_KEY);
+        CommandArgument lineArg = new CommandArgument(CommandConstants.ARG_KEY_NODE_LINE, "" + line);
+        CommandArgument colArg = new CommandArgument(CommandConstants.ARG_KEY_NODE_COLUMN, "" + column);
+        CommandArgument uriArg = new CommandArgument(CommandConstants.ARG_KEY_DOC_URI, uri);
+
+        String diagnosedContent = getDiagnosedContent(diagnostic, context, document);
+        Position afterAliasPos = offsetInvocation(diagnosedContent, position);
+        BLangNode node = null;
+        try {
+            SymbolReferencesModel.Reference refAtCursor = getReferenceAtCursor(context, document, afterAliasPos);
+            node = refAtCursor.getbLangNode();
+        } catch (WorkspaceDocumentException | CompilationFailedException e) {
+            e.printStackTrace();
+        }
+
+        String codeActionMessage = "";
+        if (node instanceof BLangFunction) {
+            codeActionMessage = "Function";
+
+        } else if (node instanceof BLangSimpleVariable || node instanceof BLangFieldBasedAccess) {
+            if (node.type instanceof BUnionType) {
+                codeActionMessage = "Object";
+
+            } else {
+                codeActionMessage = "Variable";
+            }
+
+        } else if (node instanceof BLangConstant) {
+            codeActionMessage = "Constant";
+
+        } else if (node instanceof BLangTypeDefinition) {
+            codeActionMessage = "Type";
+
+        } else if (node instanceof BLangService) {
+            codeActionMessage = "Service";
+
+        } else if (node instanceof BLangAnnotation) {
+            codeActionMessage = "Annotation";
+
+        } else if (node instanceof BLangXMLAttribute) {
+            codeActionMessage = "XML";
+        }
+
+        codeActionMessage = "Remove unused " + codeActionMessage;
+
+        List<Object> args = Arrays.asList(lineArg, colArg, uriArg);
+        CodeAction action = new CodeAction(codeActionMessage);
+        action.setCommand(new Command(CommandConstants.REMOVE_UNUSED_VARIABLE, UnusedVariableExecutor.COMMAND, args));
+        return action;
     }
 
     private static BLangFunction getFunctionNode(int line, int column, LSDocument document,
