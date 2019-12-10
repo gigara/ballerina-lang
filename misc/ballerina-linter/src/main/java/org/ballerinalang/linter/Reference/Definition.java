@@ -80,7 +80,9 @@ public class Definition {
         BType type = symbol.type;
         String hash = (symbol.name.value.contains("anonType") || (isConstant && type instanceof BFiniteType) ? "" :
                 symbol.name.value) + type.tag + type.flags
-                + ((type.tsymbol != null) ? type.tsymbol.name.value + symbol.type.tsymbol.pkgID.name.value : "");
+                + ((type.tsymbol != null) ? type.tsymbol.name.value + symbol.type.tsymbol.pkgID.name.value
+                + type.tsymbol.owner.tag: "")
+                + symbol.owner.name;
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(hash.getBytes());
