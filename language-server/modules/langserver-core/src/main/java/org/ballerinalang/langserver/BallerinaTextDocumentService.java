@@ -211,7 +211,6 @@ class BallerinaTextDocumentService implements TextDocumentService {
                 context.put(DocumentServiceKeys.POSITION_KEY, position);
                 context.put(DocumentServiceKeys.FILE_URI_KEY, fileUri);
                 context.put(DocumentServiceKeys.COMPILE_FULL_PROJECT, false);
-                context.put(CommonKeys.DOC_MANAGER_KEY, documentManager);
                 hover = ReferencesUtil.getHover(context);
             } catch (Throwable e) {
                 // Note: Not catching UserErrorException separately to avoid flooding error msgs popups

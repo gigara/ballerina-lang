@@ -23,6 +23,7 @@ import org.ballerinalang.annotation.JavaSPIService;
 import org.ballerinalang.langserver.command.ExecuteCommandKeys;
 import org.ballerinalang.langserver.command.LSCommandExecutor;
 import org.ballerinalang.langserver.command.LSCommandExecutorException;
+import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.constants.CommandConstants;
 import org.ballerinalang.langserver.common.unused.UnusedVisitor;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
@@ -83,7 +84,7 @@ public class UnusedVariableExecutor implements LSCommandExecutor {
             throw new LSCommandExecutorException("Invalid parameters received for the change abstract type command!");
         }
 
-        WorkspaceDocumentManager documentManager = context.get(ExecuteCommandKeys.DOCUMENT_MANAGER_KEY);
+        WorkspaceDocumentManager documentManager = context.get(CommonKeys.DOC_MANAGER_KEY);
 
         Position position = new Position();
         position.setLine(sLine + 1);
