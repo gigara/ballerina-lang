@@ -30,6 +30,7 @@ import org.ballerinalang.langserver.command.executors.CreateFunctionExecutor;
 import org.ballerinalang.langserver.command.executors.CreateTestExecutor;
 import org.ballerinalang.langserver.command.executors.CreateVariableExecutor;
 import org.ballerinalang.langserver.command.executors.ImportModuleExecutor;
+import org.ballerinalang.langserver.command.executors.UnusedVariableExecutor;
 import org.ballerinalang.langserver.common.constants.CommandConstants;
 import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
 import org.ballerinalang.langserver.compiler.LSCompilerUtil;
@@ -316,6 +317,33 @@ public class CommandExecutionTest {
         }
         // Clear old test file
         Files.deleteIfExists(testFilePath);
+    }
+
+    @Test(dataProvider = "remove-unused-variable-data-provider")
+    public void testRemoveUnusedVariable(String config, String source) {
+        LSContextManager.getInstance().clearAllContexts();
+        String configJsonPath = "command" + File.separator + config;
+        Path sourcePath = sourcesPath.resolve("source").resolve(source);
+        JsonObject configJsonObject = FileUtils.fileContentAsObject(configJsonPath);
+        JsonObject expected = configJsonObject.get("expected").getAsJsonObject();
+        List<Object> args = new ArrayList<>();
+        JsonObject arguments = configJsonObject.get("arguments").getAsJsonObject();
+        args.add(new CommandArgument(CommandConstants.ARG_KEY_DOC_URI, sourcePath.toUri().toString()));
+        args.add(new CommandArgument(CommandConstants.ARG_KEY_NODE_LINE, arguments.get("node.line").getAsString()));
+        args.add(new CommandArgument(CommandConstants.ARG_KEY_NODE_COLUMN, arguments.get("node.column").getAsString()));
+        JsonObject responseJson = getCommandResponse(args, UnusedVariableExecutor.COMMAND);
+        responseJson.get("result").getAsJsonObject().get("edit").getAsJsonObject().getAsJsonArray("documentChanges")
+                .forEach(element -> element.getAsJsonObject().remove("textDocument"));
+        Assert.assertEquals(responseJson, expected, "Test Failed for: " + config);
+    }
+
+    @DataProvider(name = "remove-unused-variable-data-provider")
+    public Object[][] removeUnusedVariableDataProvider() {
+        log.info("Test workspace/executeCommand for command {}", UnusedVariableExecutor.COMMAND);
+        return new Object[][] {
+                {"removeUnusedVariable.json", "removeUnusedVariable.bal"},
+                {"removeUnusedFunction.json", "removeUnusedFunction.bal"}
+        };
     }
 
     @DataProvider(name = "package-import-data-provider")

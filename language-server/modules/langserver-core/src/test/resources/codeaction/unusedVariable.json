@@ -1,0 +1,26 @@
+{
+    "range": {
+        "start": {
+            "line": 3,
+            "character": 8
+        },
+        "end": {
+            "line": 3,
+            "character": 9
+        }
+    },
+    "expected": {
+        "title":"Remove unused Variable",
+        "command":"REMOVE_UNUSED_VARIABLE",
+        "arguments":[
+            {
+                "argumentK":"node.line",
+                "argumentV":"3"
+            },
+            {
+                "argumentK":"node.column",
+                "argumentV":"8"
+            }
+        ]
+    }
+}

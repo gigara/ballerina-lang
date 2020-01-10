@@ -119,7 +119,7 @@ public class CodeActionTest {
         Path sourcePath = sourcesPath.resolve("source").resolve(source);
         JsonObject configJsonObject = FileUtils.fileContentAsObject(configJsonPath);
 
-        BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(sourcePath, CompilerPhase.COMPILER_PLUGIN);
+        BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(sourcePath, CompilerPhase.DESUGAR);
         List<Diagnostic> lsDiagnostics = new ArrayList<>();
         ballerinaFile.getDiagnostics().ifPresent(diagnostics -> lsDiagnostics.addAll(getLSDiagnostics(diagnostics)));
         CodeActionContext codeActionContext = new CodeActionContext(lsDiagnostics);
