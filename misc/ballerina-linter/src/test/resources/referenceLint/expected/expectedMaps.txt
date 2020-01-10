@@ -1,3 +1,3 @@
-value is never used (24,38-24,43)
-removedElement is never used (22,12-22,26)
-m is never used (4,17-4,18)
+Variable m is never used (4,17-4,18)
+Variable value is never used (24,38-24,43)
+Variable removedElement is never used (22,12-22,26)

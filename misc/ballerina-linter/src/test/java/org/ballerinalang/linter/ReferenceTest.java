@@ -29,6 +29,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
+import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -78,10 +79,11 @@ public class ReferenceTest {
             if (Files.exists(ballerinaSource)) {
                 String expected = new String(Files.readAllBytes(expectedSource));
 
-                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.DESUGAR);
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
                 List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
 
                 ReferenceFinder referenceFinder = new ReferenceFinder();
+                lintErrors.clear();
                 for (CompilationUnitNode compilationUnit:compilationUnits) {
                     referenceFinder.visit((BLangCompilationUnit) compilationUnit);
                 }

@@ -1,1 +1,1 @@
-name2 is never used (5,12-5,17)
+Variable name2 is never used (5,12-5,17)

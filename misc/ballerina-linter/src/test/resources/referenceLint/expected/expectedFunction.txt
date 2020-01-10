@@ -1,2 +1,2 @@
-giga is never used (1,10-1,14)
-f2 is never used (3,17-3,19)
+Function giga is never used (1,10-1,14)
+Function f2 is never used (3,17-3,19)

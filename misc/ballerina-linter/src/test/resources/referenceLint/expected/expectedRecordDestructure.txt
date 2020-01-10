@@ -1,0 +1,6 @@
+Variable name is never used (3,12-3,16)
+Variable country is never used (5,12-5,19)
+Variable age is never used (18,16-18,19)
+Variable name is never used (18,10-18,14)
+Variable age is never used (4,9-4,12)
+Variable occupation is never used (6,12-6,22)

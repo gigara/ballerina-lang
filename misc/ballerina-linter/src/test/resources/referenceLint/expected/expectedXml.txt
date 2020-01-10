@@ -1,2 +1,2 @@
-x3 is never used (8,9-8,11)
-x1 is never used (4,9-4,11)
+Variable x3 is never used (8,9-8,11)
+Variable x1 is never used (4,9-4,11)

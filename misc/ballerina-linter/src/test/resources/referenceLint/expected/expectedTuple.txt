@@ -1,4 +1,4 @@
-r1 is never used (20,13-20,15)
-q is never used (15,10-15,11)
-r is never used (15,13-15,14)
-aint1 is never used (12,10-12,15)
+Variable aint1 is never used (12,10-12,15)
+Variable q is never used (15,10-15,11)
+Variable r1 is never used (20,13-20,15)
+Variable r is never used (15,13-15,14)

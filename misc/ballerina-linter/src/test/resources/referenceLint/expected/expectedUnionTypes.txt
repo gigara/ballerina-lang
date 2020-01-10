@@ -1,2 +1,2 @@
-valueOrError1 is never used (16,20-16,33)
-value is never used (2,31-2,36)
+Variable valueOrError1 is never used (16,20-16,33)
+Variable value is never used (2,31-2,36)
