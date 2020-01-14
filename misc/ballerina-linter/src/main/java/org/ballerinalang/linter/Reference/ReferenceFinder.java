@@ -795,11 +795,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
     }
 
     @Override
-    public void visit(BLangInvocation.BLangBuiltInMethodInvocation builtInMethodInvocation) {
-        // No implementation needed.
-    }
-
-    @Override
     public void visit(BLangTernaryExpr ternaryExpr) {
         if (ternaryExpr.expr != null) {
             this.acceptNode(ternaryExpr.expr);
