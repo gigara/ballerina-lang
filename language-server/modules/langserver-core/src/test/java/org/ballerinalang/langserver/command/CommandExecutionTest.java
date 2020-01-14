@@ -342,6 +342,9 @@ public class CommandExecutionTest {
         log.info("Test workspace/executeCommand for command {}", UnusedVariableExecutor.COMMAND);
         return new Object[][] {
                 {"removeUnusedVariable.json", "removeUnusedVariable.bal"},
+                {"removeUnusedFunctionParam.json", "removeUnusedFunctionParam.bal"},
+                {"removeUnusedFunctionParam2.json", "removeUnusedFunctionParam.bal"},
+                {"removeUnusedFunctionParam3.json", "removeUnusedFunctionParam.bal"},
                 {"removeUnusedFunction.json", "removeUnusedFunction.bal"}
         };
     }

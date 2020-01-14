@@ -1,0 +1,32 @@
+{
+    "arguments": {
+        "node.line": 7,
+        "node.column": 36
+    },
+    "expected": {
+        "result": {
+            "edit": {
+                "documentChanges": [
+                    {
+                        "edits": [
+                            {
+                                "range": {
+                                    "start": {
+                                        "line": 7,
+                                        "character": 28
+                                    },
+                                    "end": {
+                                        "line": 7,
+                                        "character": 38
+                                    }
+                                },
+                                "newText": ""
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "jsonrpc": "2.0"
+    }
+}
