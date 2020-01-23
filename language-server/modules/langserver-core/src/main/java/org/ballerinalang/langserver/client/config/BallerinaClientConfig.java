@@ -21,6 +21,7 @@ package org.ballerinalang.langserver.client.config;
 public class BallerinaClientConfig {
     private final String home;
     private final boolean allowExperimental;
+    private final boolean linterEnabled;
     private final boolean debugLog;
     private final CodeLensConfig codeLens;
     private final boolean showLSErrors;
@@ -28,6 +29,7 @@ public class BallerinaClientConfig {
     private BallerinaClientConfig() {
         this.home = "";
         this.allowExperimental = false;
+        this.linterEnabled = false;
         this.debugLog = false;
         this.codeLens = new CodeLensConfig();
         this.showLSErrors = false;
@@ -85,5 +87,14 @@ public class BallerinaClientConfig {
      */
     public boolean isShowLSErrors() {
         return showLSErrors;
+    }
+
+    /**
+     * Returns True if show linter enabled, False otherwise.
+     *
+     * @return True if enabled, False otherwise
+     */
+    public boolean isLinterEnabled() {
+        return linterEnabled;
     }
 }

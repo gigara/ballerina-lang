@@ -50,6 +50,8 @@ public enum CompilerOptionName {
 
     EXPERIMENTAL_FEATURES_ENABLED("experimentalFeaturesEnabled"),
 
+    LINTER_SKIPPED("linterSkipped"),
+
     TOOLING_COMPILATION("toolingCompilation");
 
     public final String name;

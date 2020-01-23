@@ -159,6 +159,11 @@ export class BallerinaExtension {
                 this.langClient.onReady().then(fulfilled => {
                     disposeDidChange.dispose();
                     this.context!.subscriptions.push(disposable);
+
+                    const args: DidChangeConfigurationParams = {
+                    settings: workspace.getConfiguration('ballerina'),
+                    };
+                    this.langClient!.sendNotification("workspace/didChangeConfiguration", args);
                 });
             }, (reason) => {
                 throw new Error(reason);

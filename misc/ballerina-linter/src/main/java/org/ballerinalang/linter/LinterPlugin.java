@@ -20,6 +20,7 @@ package org.ballerinalang.linter;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.ballerinalang.compiler.CompilerOptionName;
 import org.ballerinalang.compiler.plugins.AbstractCompilerPlugin;
 import org.ballerinalang.compiler.plugins.SupportedAnnotationPackages;
 import org.ballerinalang.langserver.compiler.format.FormattingConstants;
@@ -32,6 +33,7 @@ import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
 import org.wso2.ballerinalang.compiler.util.CompilerContext;
+import org.wso2.ballerinalang.compiler.util.CompilerOptions;
 import org.wso2.ballerinalang.compiler.util.diagnotic.BDiagnosticSource;
 import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 
@@ -52,10 +54,11 @@ import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
 public class LinterPlugin extends AbstractCompilerPlugin {
     private DiagnosticLog dLog = null;
     private static JsonObject model;
+    CompilerContext compilerContext;
 
     @Override
     public void setCompilerContext(CompilerContext context) {
-
+        compilerContext = context;
     }
 
     @Override
@@ -66,31 +69,37 @@ public class LinterPlugin extends AbstractCompilerPlugin {
     @Override
     public void process(PackageNode packageNode) {
 
-        WhitespaceVisitorEntry whitespaceVisitorEntry = new WhitespaceVisitorEntry();
-        ReferenceFinder referenceFinder = new ReferenceFinder();
+        // check if skipped
+        CompilerOptions options = CompilerOptions.getInstance(compilerContext);
+        boolean isSkipped = options.isSet(CompilerOptionName.LINTER_SKIPPED) && Boolean.parseBoolean(options.get(CompilerOptionName.LINTER_SKIPPED));
 
-        // Collect endpoints throughout the package.
-        for (CompilationUnitNode compilationUnitNode : packageNode.getCompilationUnits()) {
+        if (!isSkipped) {
+            WhitespaceVisitorEntry whitespaceVisitorEntry = new WhitespaceVisitorEntry();
+            ReferenceFinder referenceFinder = new ReferenceFinder();
 
-            JsonElement modelElement = null;
-            try {
-                modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
+            // Collect endpoints throughout the package.
+            for (CompilationUnitNode compilationUnitNode : packageNode.getCompilationUnits()) {
 
-            } catch (JSONGenerationException e) {
-                e.printStackTrace();
+                JsonElement modelElement = null;
+                try {
+                    modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
+
+                } catch (JSONGenerationException e) {
+                    e.printStackTrace();
+                }
+                model = modelElement.getAsJsonObject();
+                FormattingSourceGen.build(model, "CompilationUnit");
+
+                lintErrors.clear();
+                whitespaceVisitorEntry.accept(model, compilationUnitNode);
+                referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
+                LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
             }
-            model = modelElement.getAsJsonObject();
-            FormattingSourceGen.build(model, "CompilationUnit");
 
-            lintErrors.clear();
-            whitespaceVisitorEntry.accept(model, compilationUnitNode);
-            referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
-            LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
+            // log diagnostics of whitespace linter
+            pushWhiteSpacesErrors(model, dLog);
+            pushReferenceErrors(referenceFinder, dLog);
         }
-
-        // log diagnostics of whitespace linter
-        pushWhiteSpacesErrors(model, dLog);
-        pushReferenceErrors(referenceFinder, dLog);
     }
 
     public void pushWhiteSpacesErrors(JsonObject model, DiagnosticLog dLog) {

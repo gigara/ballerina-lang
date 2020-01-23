@@ -106,6 +106,7 @@ dependencies {
     dist project(':openapi-ballerina:openapi-to-ballerina-generator')
     dist project(':openapi-ballerina:openapi-validator')
     dist project(':openapi-ballerina:ballerina-client-generator')
+    dist project(':ballerina-linter')
     dist project(':docerina')
     dist project(':protobuf-ballerina')
     docerina project(':docerina-gradle-plugin')
