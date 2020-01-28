@@ -19,10 +19,10 @@ stream<Order> orderStream = new;
 table<Item> itemStockTable = table {
     { name, price, stockAmount },
     [
-        {"Book", 100.0, 10},
+        {  "Book", 100.0,  10},
         {"Pen", 20.0, 4}
-    ]
-};
+     ]
+ };
 
 stream<OutOfStockAlert> oredrAlertStream = new;
 

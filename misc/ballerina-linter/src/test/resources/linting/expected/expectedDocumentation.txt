@@ -1,4 +1,3 @@
-Only one whitespace is allowed before ballerina (1,7-1,9)
 Documentation should indent properly (Should aligned with the function/service). See the ballerina documentation for more details. (2,1-3,3)
 Documentation should indent properly (Should aligned with the function/service). See the ballerina documentation for more details. (4,1-4,3)
 # +  Should indent properly (5,1-5,2)

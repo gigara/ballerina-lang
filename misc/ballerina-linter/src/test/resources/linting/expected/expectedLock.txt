@@ -1,4 +1,4 @@
-java.lang.AssertionError: Did not match expected [] but found [public Should indent properly (2,17-2,23)
+public Should indent properly (2,17-2,23)
 type Should indent properly (6,2-6,6)
 public Should indent properly (7,19-7,23)
 function Should indent properly (15,26-15,34)

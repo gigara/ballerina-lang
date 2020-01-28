@@ -4468,39 +4468,66 @@ public class LinteringNodeTree {
      * @param node {JsonObject} node as json object
      */
     public void lintRecordLiteralKeyValueNode(JsonObject node, Node compilationUnitNode) {
-        if (node.has(FormattingConstants.WS) && node.has(FormattingConstants.FORMATTING_CONFIG)) {
-            JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
+        if (node.has(FormattingConstants.FORMATTING_CONFIG)) {
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
             String indentation = this.getIndentation(formatConfig, false);
 
-            // Update whitespace for key value of record literal.
-            if (node.has("key")) {
-                JsonObject keyNode = node.getAsJsonObject("key");
-                keyNode.add(FormattingConstants.FORMATTING_CONFIG, formatConfig);
-            }
+            if (node.has(FormattingConstants.WS)) {
+                JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
+                // Update whitespace for colon of the record literal key value pair.
+                this.preserveHeight(node, compilationUnitNode, ws, indentation);
 
-            // Update whitespace for colon of the record literal key value pair.
-            this.preserveHeight(node, compilationUnitNode, ws, indentation);
-            if (this.noHeightAvailable(ws.get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString())) {
-                String text = ws.get(0).getAsJsonObject().get(FormattingConstants.TEXT).getAsString();
+                boolean colonVisited = false;
+                boolean calculatedKey = false;
 
-                if (!ws.get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString().equals(
-                        FormattingConstants.EMPTY_SPACE)) {
-                    logError(compilationUnitNode, ws.get(0).getAsJsonObject(), "Space is not allowed before " + text);
+                for (JsonElement wsItem : ws) {
+                    JsonObject currentWS = wsItem.getAsJsonObject();
+                    String text = currentWS.get(FormattingConstants.TEXT).getAsString();
+
+                    if (text.equals(Tokens.COLON)) {
+                        colonVisited = true;
+                    } else if (text.equals(Tokens.OPENING_BRACKET) && !colonVisited) {
+                        calculatedKey = true;
+                    }
+
+                    if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
+                        if (text.equals(Tokens.COLON) || text.equals(Tokens.CLOSING_BRACKET)) {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                    equals(FormattingConstants.EMPTY_SPACE)) {
+                                logError(compilationUnitNode, currentWS, "No spaces allowed before " + text);
+                            }
+                        } else if (text.equals(Tokens.OPENING_BRACKET)) {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString()
+                                    .equals(this.getWhiteSpaces(formatConfig
+                                                                       .get(FormattingConstants.SPACE_COUNT).getAsInt()))) {
+                                logError(compilationUnitNode, currentWS, text + " Should indent properly");
+                            }
+                        }
+                    }
                 }
 
-                if (!ws.get(0).getAsJsonObject().get(FormattingConstants.WS).getAsString().equals(
-                        FormattingConstants.EMPTY_SPACE)) {
-                    logError(compilationUnitNode, ws.get(0).getAsJsonObject(), "Spaces are not allowed before " + text);
+                // Update whitespace for key value of record literal.
+                if (node.has("key")) {
+                    JsonObject keyNode = node.getAsJsonObject("key");
+                    if (calculatedKey) {
+                        keyNode.add(FormattingConstants.FORMATTING_CONFIG,
+                                    this.getFormattingConfig(0, 0, 0, false,
+                                                             formatConfig.get(FormattingConstants.INDENTED_START_COLUMN).getAsInt(),
+                                                             formatConfig.get(FormattingConstants.USE_PARENT_INDENTATION).getAsBoolean()));
+                    } else {
+                        keyNode.add(FormattingConstants.FORMATTING_CONFIG, formatConfig);
+                    }
                 }
             }
 
             // Update whitespace for value of record literal.
             if (node.has(FormattingConstants.VALUE)) {
                 JsonObject valueNode = node.getAsJsonObject(FormattingConstants.VALUE);
-                JsonObject valueNodeFormatConfig = this.getFormattingConfig(0, 1,
-                                                                            0, false,
-                                                                            this.getWhiteSpaceCount(indentation), true);
+                JsonObject valueNodeFormatConfig = formatConfig;
+                if (node.has(FormattingConstants.WS)) {
+                    valueNodeFormatConfig = this.getFormattingConfig(0, 1,
+                                                                     0, false, this.getWhiteSpaceCount(indentation), true);
+                }
                 valueNode.add(FormattingConstants.FORMATTING_CONFIG, valueNodeFormatConfig);
             }
         }
@@ -4748,6 +4775,7 @@ public class LinteringNodeTree {
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
             JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
             String indentation = this.getIndentation(formatConfig, false);
+            String indentationOfParent = this.getParentIndentation(formatConfig);
             String indentWithParentIndentation = this.getParentIndentation(formatConfig);
             boolean useParentIndentation = formatConfig.get(FormattingConstants.USE_PARENT_INDENTATION).getAsBoolean();
 
@@ -4829,6 +4857,16 @@ public class LinteringNodeTree {
                                 equals(FormattingConstants.EMPTY_SPACE)) {
                             logError(compilationUnitNode, currentWS, "No spaces allowed before " + text);
                         }
+                    } else if (text.equals(Tokens.EQUAL)) {
+                        if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
+                                FormattingConstants.SINGLE_SPACE)) {
+                            logError(compilationUnitNode, currentWS, "Only Single whitespace is allowed before '='");
+                        }
+                    } else if (text.equals(Tokens.SEMICOLON)) {
+                        if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
+                                FormattingConstants.EMPTY_SPACE)) {
+                            logError(compilationUnitNode, currentWS, "Space before ';' is not allowed");
+                        }
                     }
                 }
             }
@@ -4885,6 +4923,16 @@ public class LinteringNodeTree {
                     }
                 }
             }
+            // Update whitespaces for initial expression.
+            if (node.has(FormattingConstants.INITIAL_EXPRESSION)) {
+                node.getAsJsonObject(FormattingConstants.INITIAL_EXPRESSION).add(FormattingConstants.FORMATTING_CONFIG,
+                                                                                 this.getFormattingConfig(0, 1, 0, false,
+                                                                                                          this.getWhiteSpaceCount(
+                                                                                                                  useParentIndentation ?
+                                                                                                                          indentationOfParent :
+                                                                                                                          indentation),
+                                                                                                          true));
+            }
         }
     }
 
@@ -4903,8 +4951,8 @@ public class LinteringNodeTree {
             boolean useParentIndentation = formatConfig.get(FormattingConstants.USE_PARENT_INDENTATION).getAsBoolean();
 
             // Preserve available new lines.
-            this.preserveHeight(node, compilationUnitNode, ws,
-                                useParentIndentation ? indentationOfParent : indentation);
+//            this.preserveHeight(node, compilationUnitNode, ws,
+//                                useParentIndentation ? indentationOfParent : indentation);
 
             // Has at least one line separation in records.
             boolean lineSeparationAvailable = false;
@@ -5414,7 +5462,8 @@ public class LinteringNodeTree {
      * @param node {JsonObject} node as json object
      */
     public void lintServiceNode(JsonObject node, Node compilationUnitNode) {
-        if (node.has(FormattingConstants.WS) && node.has(FormattingConstants.FORMATTING_CONFIG)) {
+        boolean isSkip = node.has("skip") && node.get("skip").getAsBoolean();
+        if (node.has(FormattingConstants.WS) && node.has(FormattingConstants.FORMATTING_CONFIG) && !isSkip) {
             JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
             String indentation = this.getIndentation(formatConfig, false);
@@ -5457,6 +5506,12 @@ public class LinteringNodeTree {
                     JsonObject typeNode = node.getAsJsonObject("typeDefinition")
                             .getAsJsonObject(FormattingConstants.TYPE_NODE);
 
+                    JsonObject typeDefFormatConfig = this.getFormattingConfig(0, 1,
+                                                                              this.getWhiteSpaceCount(
+                                                                                      indentationOfParent), true,
+                                                                              this.getWhiteSpaceCount(
+                                                                                      indentationOfParent), false);
+                    typeNode.add(FormattingConstants.FORMATTING_CONFIG, typeDefFormatConfig);
                 }
 
                 // Update whitespaces for resources.
@@ -6063,7 +6118,6 @@ public class LinteringNodeTree {
                                                                            this.getWhiteSpaceCount(
                                                                                    indentWithParentIndentation));
 
-            this.preserveHeight(node, compilationUnitNode, ws, indentWithParentIndentation);
 
             // Iterate and update whitespaces for the node.
             int openBracesCount = 0;
@@ -6147,6 +6201,12 @@ public class LinteringNodeTree {
                                                        + indentWithParentIndentation)) {
                                     logError(compilationUnitNode, currentWS, text + " Should indent properly");
                                 }
+                            }
+                        } else {
+                            if (!currentWS.get(FormattingConstants.WS).getAsString().
+                                    equals(FormattingConstants.NEW_LINE
+                                                   + indentWithParentIndentation)) {
+                                logError(compilationUnitNode, currentWS, text + " Should indent properly");
                             }
                         }
                     } else {
@@ -6408,9 +6468,11 @@ public class LinteringNodeTree {
                 if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
                     String text = currentWS.get(FormattingConstants.TEXT).getAsString();
                     if (text.equals(Tokens.TRANSACTION)) {
-                        currentWS.addProperty(FormattingConstants.WS,
-                                              this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
-                                                      + indentation);
+                        if (!currentWS.get(FormattingConstants.WS).getAsString()
+                                .equals(this.getNewLines(formatConfig.get(FormattingConstants.NEW_LINE_COUNT).getAsInt())
+                                                + indentation)) {
+                            logError(compilationUnitNode, currentWS, text + " Should indent properly");
+                        }
                     } else if (text.equals(Tokens.ONRETRY)) {
                         if (!currentWS.get(FormattingConstants.WS).getAsString().equals(
                                 FormattingConstants.SINGLE_SPACE)) {
@@ -7582,7 +7644,8 @@ public class LinteringNodeTree {
      * @param node {JsonObject} node as json object
      */
     public void lintVariableDefNode(JsonObject node, Node compilationUnitNode) {
-        if (node.has(FormattingConstants.FORMATTING_CONFIG)) {
+        boolean isSkip = node.has("skip") && node.get("skip").getAsBoolean();
+        if (node.has(FormattingConstants.FORMATTING_CONFIG) && !isSkip) {
             JsonObject formatConfig = node.getAsJsonObject(FormattingConstants.FORMATTING_CONFIG);
             boolean isVarExists = false;
 
@@ -7590,12 +7653,14 @@ public class LinteringNodeTree {
                 JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
                 String indentation = this.getIndentation(formatConfig, false);
 
-                this.preserveHeight(node, compilationUnitNode, ws, indentation);
                 JsonObject firstKeyword = ws.get(0).getAsJsonObject();
                 if (firstKeyword.get(FormattingConstants.TEXT).getAsString().equals(Tokens.VAR)) {
                     isVarExists = true;
+                } else if (firstKeyword.get(FormattingConstants.TEXT).getAsString().equals(Tokens.FOREACH)) {
+                    ws.remove(0);
+                    ws.remove(ws.size());
                 }
-
+                this.preserveHeight(node, compilationUnitNode, ws, indentation);
 
                 // Iterate and update whitespaces for variable def.
                 for (JsonElement wsItem : ws) {

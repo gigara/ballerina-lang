@@ -138,10 +138,10 @@ public function main() {
                             tempOrderTable.amount as amount;
 
     queryStmt = "\ntable<OrderDetails> orderDetailsTable = " +
-            "from personTable as tempPersonTable
-    join orderTable as tempOrderTable " +
-                    "on tempPersonTable.id == tempOrderTable.personId
-    select tempOrderTable.orderId as orderId, " +
+            "from personTable as tempPersonTable " +
+    "join orderTable as tempOrderTable " +
+                    "on tempPersonTable.id == tempOrderTable.personId " +
+    "select tempOrderTable.orderId as orderId, " +
                     "tempPersonTable.name as personName, " +
                     "tempOrderTable.items as items, " +
                     "tempOrderTable.amount as amount;";
@@ -161,13 +161,13 @@ public function main() {
                             tempOrderTable.amount as amount;
 
     queryStmt = "\ntable<OrderDetails> orderDetailsWithFilter = " +
-            "from personTable where name != 'jane' as tempPersonTable
-    join orderTable where personId != 3 as tempOrderTable " +
-                    "on tempPersonTable.id == tempOrderTable.personId
-    select tempOrderTable.orderId as orderId, " +
+            "from personTable where name != 'jane' as tempPersonTable " +
+    "join orderTable where personId != 3 as tempOrderTable " +
+                    "on tempPersonTable.id == tempOrderTable.personId " +
+    "select tempOrderTable.orderId as orderId," +
                     "tempPersonTable.name as personName," +
-                    "tempOrderTable.items as items,
-    tempOrderTable.amount as amount;";
+                    "tempOrderTable.items as items," +
+    "tempOrderTable.amount as amount;";
 
     printTable(queryStmt, "orderDetailsWithFilter: ", orderDetailsWithFilter);
 }
@@ -176,5 +176,9 @@ function printTable(string stmt, string tableName, table<anydata> returnedTable)
     var retData = jsonutils:fromTable(returnedTable);
     io:println(stmt);
     io:print(tableName);
+    
         io:println(io:sprintf("%s", retData));
+    
+
+    
 }

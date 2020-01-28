@@ -12,9 +12,9 @@ public function main() {
     int personAge;
     map<anydata|error> otherDetails = {};{ name : firstName,   age :personAge   ,...otherDetails}=getPerson() ;
 
-    { ...otherDetails } = getPerson();
+    { ...otherDetails } =   getPerson();
 
-    var  { name,age  } = getPerson();
+    var  { name,age  }  =  getPerson();
 
     { name : firstName,
            age :personAge   ,...otherDetails}=getPerson() ;

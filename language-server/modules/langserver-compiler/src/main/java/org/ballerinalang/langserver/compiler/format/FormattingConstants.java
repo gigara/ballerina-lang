@@ -41,6 +41,7 @@ public class FormattingConstants {
     public static final String PARENT = "parent";
     public static final String POSITION = "position";
     public static final String EXPRESSION = "expression";
+    public static final String INITIAL_EXPRESSION = "initialExpression";
     public static final String GROUPED = "grouped";
     public static final String IS_ANON_TYPE = "isAnonType";
     public static final String BODY = "body";

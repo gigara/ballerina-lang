@@ -7,9 +7,11 @@ import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
 import org.ballerinalang.langserver.compiler.common.modal.BallerinaFile;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
+import org.ballerinalang.langserver.compiler.format.JSONGenerationException;
 import org.ballerinalang.langserver.compiler.sourcegen.FormattingSourceGen;
 import org.ballerinalang.linter.Reference.ReferenceFinder;
 import org.ballerinalang.model.elements.PackageID;
+import org.ballerinalang.model.tree.CompilationUnitNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.testng.Assert;
@@ -26,7 +28,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import static org.ballerinalang.langserver.compiler.format.TextDocumentFormatUtil.generateJSON;
+import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
 
 /**
  * Test suit for source code linting.
@@ -42,76 +48,73 @@ public class LinterTest {
     @DataProvider
     public Object[][] lintDataProvider() {
         return new Object[][]{
-                {"abort.bal", "abortCompUnit.txt", "expectedAbort.txt"},
-                {"arrayLiteralExpr.bal", "arrayLiteralExprCompUnit.txt", "expectedArrayLiteralExpr.txt"},
-                {"arrowExpr.bal", "arrowExprCompUnit.txt", "expectedArrowExpr.txt"},
-                {"binaryExpr.bal", "binaryExprCompUnit.txt", "expectedBinaryExpr.txt"},
-                {"bindingPatterns.bal", "bindingPatternsCompUnit.txt", "expectedBindingPatterns.txt"},
-                {"blockExpandOnDemand.bal", "blockExpandOnDemandCompUnit.txt", "expectedBlockExpandOnDemand.txt"},
-                {"break.bal", "breakCompUnit.txt", "expectedBreak.txt"},
-                {"check.bal", "checkCompUnit.txt", "expectedCheck.txt"},
-                {"checkPanic.bal", "checkPanicCompUnit.txt", "expectedCheckPanic.txt"},
-                {"compilationUnit.bal", "compilationUnitCompUnit.txt", "expectedCompilationUnit.txt"},
-                {"compilationUnitMultiEOF.bal", "compilationUnitMultiEOFCompUnit.txt",
-                        "expectedCompilationUnitMultiEOF.txt"},
-                {"compoundAssignment.bal", "compoundAssignmentCompUnit.txt", "expectedCompoundAssignment.txt"},
-                {"constant.bal", "constantCompUnit.txt", "expectedConstant.txt"},
-                {"constrainedType.bal", "constrainedTypeCompUnit.txt", "expectedConstrainedType.txt"},
-                {"continue.bal", "continueCompUnit.txt", "expectedContinue.txt"},
-                {"documentation.bal", "documentationCompUnit.txt", "expectedDocumentation.txt"},
-                {"elvisExpr.bal", "elvisExprCompUnit.txt", "expectedElvisExpr.txt"},
-                {"empty.bal", "emptyCompUnit.txt", "expectedEmpty.txt"},
-                {"endpoint.bal", "endpointCompUnit.txt", "expectedEndpoint.txt"},
-                {"errorVariableDefinition.bal", "errorVariableDefinitionCompUnit.txt",
-                        "expectedErrorVariableDefinition.txt"},
-                {"errorVariableReference.bal", "errorVariableReferenceCompUnit.txt",
-                        "expectedErrorVariableReference.txt"},
-                {"expressionStatement.bal", "expressionStatementCompUnit.txt", "expectedExpressionStatement.txt"},
-                {"fieldBasedAccess.bal", "fieldBasedAccessCompUnit.txt", "expectedFieldBasedAccess.txt"},
-                {"foreach.bal", "foreachCompUnit.txt", "expectedForeach.txt"},
-                {"forever.bal", "foreverCompUnit.txt", "expectedForever.txt"},
-                {"function.bal", "functionCompUnit.txt", "expectedFunction.txt"},
-                {"functionType.bal", "functionTypeCompUnit.txt", "expectedFunctionType.txt"},
-                {"having.bal", "havingCompUnit.txt", "expectedHaving.txt"},
-                {"if.bal", "ifCompUnit.txt", "expectedIf.txt"},
-                {"import.bal", "importCompUnit.txt", "expectedImport.txt"},
-                {"invocation.bal", "invocationCompUnit.txt", "expectedInvocation.txt"},
-                {"lock.bal", "lockCompUnit.txt", "expectedLock.txt"},
-                {"matchStmt.bal", "matchStmtCompUnit.txt", "expectedMatchStmt.txt"},
-                {"namedArgsExpr.bal", "namedArgsExprCompUnit.txt", "expectedNamedArgsExpr.txt"},
-                {"panic.bal", "panicCompUnit.txt", "expectedPanic.txt"},
-                {"recordDestructure.bal", "recordDestructureCompUnit.txt", "expectedRecordDestructure.txt"},
-                {"restArgsExpr.bal", "restArgsExprCompUnit.txt", "expectedRestArgsExpr.txt"},
-                {"return.bal", "returnCompUnit.txt", "expectedReturn.txt"},
-                {"serviceConstruct.bal", "serviceConstructCompUnit.txt", "expectedServiceConstruct.txt"},
-                {"stringTemplateLiteral.bal", "stringTemplateLiteralCompUnit.txt", "expectedStringTemplateLiteral.txt"},
-                {"table.bal", "tableCompUnit.txt", "expectedTable.txt"},
-                {"tableQuery.bal", "tableQueryCompUnit.txt", "expectedTableQuery.txt"},
-                {"ternaryExpr.bal", "ternaryExprCompUnit.txt", "expectedTernaryExpr.txt"},
-                {"transaction.bal", "transactionCompUnit.txt", "expectedTransaction.txt"},
-                {"trap.bal", "trapCompUnit.txt", "expectedTrap.txt"},
-                {"tupleDestructure.bal", "tupleDestrctureCompUnit.txt", "expectedTupleDestructure.txt"},
-                {"tupleType.bal", "tupleTypeCompUnit.txt", "expectedTupleType.txt"},
-                {"tupleTypeRest.bal", "tupleTypeRestCompUnit.txt", "expectedTupleTypeRest.txt"},
-                {"typeDefinition.bal", "typeDefinitionCompUnit.txt", "expectedTypeDefinition.txt"},
-                {"typeDesc.bal", "typeDescCompUnit.txt", "expectedTypeDesc.txt"},
-                {"unicodeCharTest.bal", "unicodeCharTestCompUnit.txt", "expectedUnicodeCharTest.txt"},
-                {"unionType.bal", "unionTypeCompUnit.txt", "expectedUnionType.txt"},
-                {"variableDefinition.bal", "variableDefinitionCompUnit.txt", "expectedVariableDefinition.txt"},
-                {"while.bal", "whileCompUnit.txt", "expectedWhile.txt"},
-                {"worker.bal", "workerCompUnit.txt", "expectedWorker.txt"},
-                {"xmlCommentLiteral.bal", "xmlCommentLiteralCompUnit.txt", "expectedXmlCommentLiteral.txt"},
-                {"xmlElementLiteral.bal", "xmlElementLiteralCompUnit.txt", "expectedXmlElementLiteral.txt"},
-                {"xmlPlLiteral.bal", "xmlPlLiteralCompUnit.txt", "expectedXmlPlLiteral.txt"},
-                {"xmlns.bal", "xmlnsCompUnit.txt", "expectedXmlns.txt"},
-                {"xmlTextLiteral.bal", "xmlTextLiteralCompUnit.txt", "expectedXmlTextLiteral.txt"},
+                {"abort.bal", "expectedAbort.txt"},
+                {"arrayLiteralExpr.bal", "expectedArrayLiteralExpr.txt"},
+                {"arrowExpr.bal", "expectedArrowExpr.txt"},
+                {"binaryExpr.bal", "expectedBinaryExpr.txt"},
+                {"bindingPatterns.bal", "expectedBindingPatterns.txt"},
+                {"blockExpandOnDemand.bal", "expectedBlockExpandOnDemand.txt"},
+                {"break.bal", "expectedBreak.txt"},
+                {"check.bal", "expectedCheck.txt"},
+                {"checkPanic.bal", "expectedCheckPanic.txt"},
+                {"compilationUnit.bal", "expectedCompilationUnit.txt"},
+                {"compilationUnitMultiEOF.bal", "expectedCompilationUnitMultiEOF.txt"},
+                {"compoundAssignment.bal", "expectedCompoundAssignment.txt"},
+                {"constant.bal", "expectedConstant.txt"},
+                {"constrainedType.bal", "expectedConstrainedType.txt"},
+                {"continue.bal", "expectedContinue.txt"},
+                {"documentation.bal", "expectedDocumentation.txt"},
+                {"elvisExpr.bal", "expectedElvisExpr.txt"},
+                {"empty.bal", "expectedEmpty.txt"},
+                {"endpoint.bal", "expectedEndpoint.txt"},
+                {"errorVariableDefinition.bal", "expectedErrorVariableDefinition.txt"},
+                {"errorVariableReference.bal", "expectedErrorVariableReference.txt"},
+                {"expressionStatement.bal", "expectedExpressionStatement.txt"},
+                {"fieldBasedAccess.bal", "expectedFieldBasedAccess.txt"},
+                {"foreach.bal", "expectedForeach.txt"},
+                {"forever.bal", "expectedForever.txt"},
+                {"function.bal", "expectedFunction.txt"},
+                {"functionType.bal", "expectedFunctionType.txt"},
+                {"having.bal", "expectedHaving.txt"},
+                {"if.bal", "expectedIf.txt"},
+                {"import.bal", "expectedImport.txt"},
+                {"invocation.bal", "expectedInvocation.txt"},
+                {"lock.bal", "expectedLock.txt"},
+                {"matchStmt.bal", "expectedMatchStmt.txt"},
+                {"namedArgsExpr.bal", "expectedNamedArgsExpr.txt"},
+                {"panic.bal", "expectedPanic.txt"},
+                {"recordDestructure.bal", "expectedRecordDestructure.txt"},
+                {"restArgsExpr.bal", "expectedRestArgsExpr.txt"},
+                {"return.bal", "expectedReturn.txt"},
+                {"serviceConstruct.bal", "expectedServiceConstruct.txt"},
+                {"stringTemplateLiteral.bal", "expectedStringTemplateLiteral.txt"},
+                {"table.bal", "expectedTable.txt"},
+                {"tableQuery.bal", "expectedTableQuery.txt"},
+                {"ternaryExpr.bal", "expectedTernaryExpr.txt"},
+                {"transaction.bal", "expectedTransaction.txt"},
+                {"trap.bal", "expectedTrap.txt"},
+                {"tupleDestructure.bal", "expectedTupleDestructure.txt"},
+                {"tupleType.bal", "expectedTupleType.txt"},
+                {"tupleTypeRest.bal", "expectedTupleTypeRest.txt"},
+                {"typeDefinition.bal", "expectedTypeDefinition.txt"},
+                {"typeDesc.bal", "expectedTypeDesc.txt"},
+                {"unicodeCharTest.bal", "expectedUnicodeCharTest.txt"},
+                {"unionType.bal", "expectedUnionType.txt"},
+                {"variableDefinition.bal", "expectedVariableDefinition.txt"},
+                {"while.bal", "expectedWhile.txt"},
+                {"worker.bal", "expectedWorker.txt"},
+                {"xmlCommentLiteral.bal", "expectedXmlCommentLiteral.txt"},
+                {"xmlElementLiteral.bal", "expectedXmlElementLiteral.txt"},
+                {"xmlPlLiteral.bal", "expectedXmlPlLiteral.txt"},
+                {"xmlns.bal", "expectedXmlns.txt"},
+                {"xmlTextLiteral.bal", "expectedXmlTextLiteral.txt"},
         };
     }
 
     @DataProvider
     public static Object[][] lengthDataProvider() {
         return new Object[][]{
-                {"main.bal", "compunit.txt", "expected.txt"},
+                {"main.bal", "expected.txt"},
         };
     }
 
@@ -125,47 +128,98 @@ public class LinterTest {
     }
 
     @Test(description = "test white space linting functionality", dataProvider = "lintDataProvider")
-    public void whitespaceTest(String testFile, String compUnit, String expected) throws IOException {
+    public void whitespaceTest(String testFile, String expected) throws IOException {
+        try {
+            Path ballerinaSource = lintingDirectory.resolve("linting").resolve(testFile);;
+            Path expectedSource = lintingDirectory.resolve("linting").resolve("expected").resolve(expected);
+            if (Files.exists(ballerinaSource)) {
+                String expectedStr = new String(Files.readAllBytes(expectedSource));
 
-        Path expectedFilePath = lintingDirectory.resolve("linting").resolve("expected").resolve(expected);
-        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
+                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
 
-        Path compUnitFilePath = lintingDirectory.resolve("linting").resolve("compUnits").resolve(compUnit);
-        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
-        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
-        model = element.getAsJsonObject();
-        FormattingSourceGen.build(model, "CompilationUnit");
+                for (CompilationUnitNode compilationUnitNode : compilationUnits) {
 
-        WhitespaceVisitorEntry visitorEntry = new WhitespaceVisitorEntry();
-        visitorEntry.accept(model, compilationUnit);
+                    JsonElement modelElement = null;
+                    try {
+                        modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
 
-        LinterPlugin linterPlugin = new LinterPlugin();
-        linterPlugin.pushWhiteSpacesErrors(model, diagnosticLog);
+                    } catch (JSONGenerationException e) {
+                        e.printStackTrace();
+                    }
+                    model = modelElement.getAsJsonObject();
+                    FormattingSourceGen.build(model, "CompilationUnit");
 
-        StringBuilder actual = new StringBuilder();
-        for (String line : diagnosticLog.getLog()) {
-            actual.append(line).append(System.lineSeparator());
+                    lintErrors.clear();
+                    WhitespaceVisitorEntry visitorEntry = new WhitespaceVisitorEntry();
+                    visitorEntry.accept(model, compilationUnit);
+
+                    LinterPlugin linterPlugin = new LinterPlugin();
+                    linterPlugin.pushWhiteSpacesErrors(model, diagnosticLog);
+
+                    StringBuilder actual = new StringBuilder();
+                    for (String line : diagnosticLog.getLog()) {
+                        actual.append(line).append(System.lineSeparator());
+                    }
+                }
+
+                StringBuilder actual = new StringBuilder();
+                for (String line : diagnosticLog.getLog()) {
+                    actual.append(line).append(System.lineSeparator());
+                }
+                Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
+            }
+
+        } catch (IOException e) {
+            Assert.fail("Error while generating the service. " + e.getMessage());
+        } catch (CompilationFailedException e) {
+            e.printStackTrace();
         }
-        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
     }
 
     @Test(description = "test line length linting functionality", dataProvider = "lengthDataProvider")
-    public void lineLengthTest(String testFile, String compUnit, String expected) throws IOException {
+    public void lineLengthTest(String testFile, String expected) throws IOException {
+        try {
+            Path ballerinaSource = lintingDirectory.resolve("linting").resolve(testFile);;
+            Path expectedSource = lintingDirectory.resolve("lineLengthAnalyzer").resolve(expected);
+            if (Files.exists(ballerinaSource)) {
+                String expectedStr = new String(Files.readAllBytes(expectedSource));
 
-        Path expectedFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(expected);
-        String expectedStr = new String(Files.readAllBytes(expectedFilePath));
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
+                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
 
-        Path compUnitFilePath = lintingDirectory.resolve("lineLengthAnalyzer").resolve(compUnit);
-        String compUnitStr = new String(Files.readAllBytes(compUnitFilePath));
-        JsonElement element = gson.fromJson(compUnitStr, JsonElement.class);
-        model = element.getAsJsonObject();
+                for (CompilationUnitNode compilationUnitNode : compilationUnits) {
 
-        LineLengthAnalyzer.lintLineLength(model, compilationUnit, diagnosticLog);
-        StringBuilder actual = new StringBuilder();
-        for (String line : diagnosticLog.getLog()) {
-            actual.append(line).append(System.lineSeparator());
+                    JsonElement modelElement = null;
+                    try {
+                        modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
+
+                    } catch (JSONGenerationException e) {
+                        e.printStackTrace();
+                    }
+                    model = modelElement.getAsJsonObject();
+
+                    lintErrors.clear();
+                    LineLengthAnalyzer.lintLineLength(model, compilationUnit, diagnosticLog);
+
+                    StringBuilder actual = new StringBuilder();
+                    for (String line : diagnosticLog.getLog()) {
+                        actual.append(line).append(System.lineSeparator());
+                    }
+                }
+
+                StringBuilder actual = new StringBuilder();
+                for (String line : diagnosticLog.getLog()) {
+                    actual.append(line).append(System.lineSeparator());
+                }
+                Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
+            }
+
+        } catch (IOException e) {
+            Assert.fail("Error while generating the service. " + e.getMessage());
+        } catch (CompilationFailedException e) {
+            e.printStackTrace();
         }
-        Assert.assertEquals(actual.toString(), expectedStr, "Did not match");
     }
 
 }
