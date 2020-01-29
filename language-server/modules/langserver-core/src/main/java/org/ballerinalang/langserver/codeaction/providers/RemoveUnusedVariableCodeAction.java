@@ -41,7 +41,7 @@ import java.util.Optional;
  */
 @JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
 public class RemoveUnusedVariableCodeAction implements BallerinaCodeActionProvider {
-    private final String NEVER_USED = " is never used";
+    private static final String NEVER_USED = " is never used";
 
     /**
      * {@inheritDoc}

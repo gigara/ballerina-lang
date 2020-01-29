@@ -22,7 +22,7 @@ import com.google.gson.JsonObject;
 import org.ballerinalang.model.tree.Node;
 
 /**
- * Ballerina linter whitespace error class
+ * Ballerina linter whitespace error class.
  *
  * @since 1.0.1
  */
@@ -35,6 +35,10 @@ public class LintError {
         this.currentWs = currentWs;
         this.message = message;
         this.compilationUnitNode = compilationUnitNode;
+    }
+
+    public JsonObject getCurrentWs() {
+        return currentWs;
     }
 
     public String getMessage() {

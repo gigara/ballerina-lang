@@ -16,15 +16,12 @@
 package org.ballerinalang.langserver.common.unused;
 
 import org.ballerinalang.langserver.common.LSNodeVisitor;
-import org.ballerinalang.langserver.common.constants.ContextConstants;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
 import org.ballerinalang.langserver.compiler.LSContext;
 import org.ballerinalang.langserver.hover.util.HoverUtil;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.eclipse.lsp4j.Position;
-import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
-import org.wso2.ballerinalang.compiler.semantics.model.symbols.Symbols;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BNilType;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
@@ -40,10 +37,8 @@ import org.wso2.ballerinalang.compiler.tree.BLangVariable;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangConstant;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangGroupExpr;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangInvocation;
-import org.wso2.ballerinalang.compiler.tree.expressions.BLangLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangRecordVarRef;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangServiceConstructorExpr;
-import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangBlockStmt;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangForeach;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangIf;
@@ -60,6 +55,11 @@ import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Linter code action unused variable visitor.
+ *
+ * @since 1.2.0
+ */
 public class UnusedVisitor extends LSNodeVisitor {
     private Position position;
     private boolean terminateVisitor;
@@ -177,22 +177,25 @@ public class UnusedVisitor extends LSNodeVisitor {
 
                     } else if (isRecordVariable) {
                         List<BLangVariable> variables = new ArrayList<>();
-                        for (BLangRecordVariable.BLangRecordVariableKeyValue variable:((BLangRecordVariable) varNode.parent).variableList) {
+                        for (BLangRecordVariable.BLangRecordVariableKeyValue variable:
+                                ((BLangRecordVariable) varNode.parent).variableList) {
                             variables.add(variable.valueBindingPattern);
                         }
                         params = variables;
                     }
 
-                    for (int i = 0; i < params.size(); i++) {
-                        if (params.get(i) == varNode) {
-                            if (params.size() > 1) {
-                                if (i != params.size() -1) {
-                                    DiagnosticPos nextNodePos = params.get(i+1).pos;
-                                    diagnosticPos.eCol = nextNodePos.sCol;
+                    if (params != null) {
+                        for (int i = 0; i < params.size(); i++) {
+                            if (params.get(i) == varNode) {
+                                if (params.size() > 1) {
+                                    if (i != params.size() - 1) {
+                                        DiagnosticPos nextNodePos = params.get(i + 1).pos;
+                                        diagnosticPos.eCol = nextNodePos.sCol;
 
-                                } else {
-                                    DiagnosticPos previousNodePos = params.get(i-1).pos;
-                                    diagnosticPos.sCol = previousNodePos.eCol;
+                                    } else {
+                                        DiagnosticPos previousNodePos = params.get(i - 1).pos;
+                                        diagnosticPos.sCol = previousNodePos.eCol;
+                                    }
                                 }
                             }
                         }

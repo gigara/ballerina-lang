@@ -18,7 +18,6 @@
 package org.wso2.ballerinalang.compiler.util.diagnotic;
 
 import org.ballerinalang.model.elements.PackageID;
-import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.Diagnostic.DiagnosticPosition;
 
 /**

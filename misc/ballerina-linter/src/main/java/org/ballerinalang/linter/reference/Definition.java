@@ -16,19 +16,22 @@
 
  */
 
-package org.ballerinalang.linter.Reference;
+package org.ballerinalang.linter.reference;
 
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BFiniteType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 
-import javax.xml.bind.DatatypeConverter;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+
+import javax.xml.bind.DatatypeConverter;
 
 /**
- * Ballerina linter reference finder definition class
+ * Ballerina linter reference finder definition class.
  *
  * @since 1.0.1
  */
@@ -81,17 +84,17 @@ public class Definition {
         String hash = (symbol.name.value.contains("anonType") || (isConstant && type instanceof BFiniteType) ? "" :
                 symbol.name.value) + type.tag + type.flags
                 + ((type.tsymbol != null) ? type.tsymbol.name.value + symbol.type.tsymbol.pkgID.name.value
-                + type.tsymbol.owner.tag: "")
+                + type.tsymbol.owner.tag : "")
                 + symbol.owner.name;
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(hash.getBytes());
+            md.update(hash.getBytes(StandardCharsets.UTF_8));
             byte[] digest = md.digest();
             String md5 = DatatypeConverter
-                    .printHexBinary(digest).toUpperCase();
+                    .printHexBinary(digest).toUpperCase(Locale.ENGLISH);
             return md5;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        } catch (NoSuchAlgorithmException ignored) {
+
         }
         return null;
     }

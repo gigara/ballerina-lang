@@ -31,7 +31,7 @@ import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Ballerina linter line length analyzer
+ * Ballerina linter line length analyzer.
  *
  * @since 1.0.1
  */
@@ -44,8 +44,9 @@ class LineLengthAnalyzer {
             int length = line.trim().length();
             if (length > 120) {
                 int sCol = line.length() - length + 1;
-                Diagnostic.DiagnosticPosition pos = new DiagnosticPos((BDiagnosticSource) compilationUnitNode.getPosition().getSource(),
-                                                                      lineNo.get(), lineNo.get(), sCol, sCol + length);
+                Diagnostic.DiagnosticPosition pos = new DiagnosticPos(
+                        (BDiagnosticSource) compilationUnitNode.getPosition().getSource(),
+                        lineNo.get(), lineNo.get(), sCol, sCol + length);
 
                 dLog.logDiagnostic(Diagnostic.Kind.WARNING, pos, "Line length should not exceed 120 chars");
             }

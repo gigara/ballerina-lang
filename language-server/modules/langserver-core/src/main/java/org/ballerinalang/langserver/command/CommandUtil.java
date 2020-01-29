@@ -50,7 +50,6 @@ import org.ballerinalang.langserver.util.references.SymbolReferencesModel;
 import org.ballerinalang.model.elements.Flag;
 import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.model.tree.TopLevelNode;
-import org.ballerinalang.model.tree.expressions.FieldBasedAccessNode;
 import org.ballerinalang.model.types.TypeKind;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.CodeAction;
@@ -594,7 +593,8 @@ public class CommandUtil {
         return null;
     }
 
-    public static CodeAction getRemoveUnusedVariableCommand(LSDocument document, Diagnostic diagnostic, LSContext context) {
+    public static CodeAction getRemoveUnusedVariableCommand(LSDocument document, Diagnostic diagnostic,
+                                                            LSContext context) {
         Position position = diagnostic.getRange().getStart();
         int line = position.getLine();
         int column = position.getCharacter();
@@ -609,8 +609,8 @@ public class CommandUtil {
         try {
             SymbolReferencesModel.Reference refAtCursor = getReferenceAtCursor(context, document, afterAliasPos);
             node = refAtCursor.getbLangNode();
-        } catch (WorkspaceDocumentException | CompilationFailedException e) {
-            e.printStackTrace();
+        } catch (WorkspaceDocumentException | CompilationFailedException ignored) {
+
         }
 
         String codeActionMessage = "";

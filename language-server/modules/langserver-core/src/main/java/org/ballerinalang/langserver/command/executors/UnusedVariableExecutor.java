@@ -48,6 +48,11 @@ import java.util.List;
 
 import static org.ballerinalang.langserver.command.CommandUtil.applyWorkspaceEdit;
 
+/**
+ * Command executor for remove unused variables.
+ *
+ * @since 1.2.0
+ */
 @JavaSPIService("org.ballerinalang.langserver.command.LSCommandExecutor")
 public class UnusedVariableExecutor implements LSCommandExecutor {
 
@@ -94,8 +99,8 @@ public class UnusedVariableExecutor implements LSCommandExecutor {
             bLangPackages = LSModuleCompiler.getBLangPackages(context, documentManager,
                                                               LSCustomErrorStrategy.class, true, false
                     , true);
-        } catch (CompilationFailedException e) {
-            e.printStackTrace();
+        } catch (CompilationFailedException ignored) {
+
         }
         context.put(DocumentServiceKeys.BLANG_PACKAGES_CONTEXT_KEY, bLangPackages);
 

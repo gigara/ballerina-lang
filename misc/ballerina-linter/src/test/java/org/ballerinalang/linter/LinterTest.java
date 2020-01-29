@@ -9,11 +9,8 @@ import org.ballerinalang.langserver.compiler.common.modal.BallerinaFile;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
 import org.ballerinalang.langserver.compiler.format.JSONGenerationException;
 import org.ballerinalang.langserver.compiler.sourcegen.FormattingSourceGen;
-import org.ballerinalang.linter.Reference.ReferenceFinder;
 import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.model.tree.CompilationUnitNode;
-import org.ballerinalang.util.diagnostic.Diagnostic;
-import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -27,7 +24,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -135,8 +131,10 @@ public class LinterTest {
             if (Files.exists(ballerinaSource)) {
                 String expectedStr = new String(Files.readAllBytes(expectedSource));
 
-                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
-                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource,
+                                                                             CompilerPhase.COMPILER_PLUGIN);
+                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get()
+                        .getCompilationUnits();
 
                 for (CompilationUnitNode compilationUnitNode : compilationUnits) {
 
@@ -144,8 +142,8 @@ public class LinterTest {
                     try {
                         modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
 
-                    } catch (JSONGenerationException e) {
-                        e.printStackTrace();
+                    } catch (JSONGenerationException ignored) {
+
                     }
                     model = modelElement.getAsJsonObject();
                     FormattingSourceGen.build(model, "CompilationUnit");
@@ -172,8 +170,8 @@ public class LinterTest {
 
         } catch (IOException e) {
             Assert.fail("Error while generating the service. " + e.getMessage());
-        } catch (CompilationFailedException e) {
-            e.printStackTrace();
+        } catch (CompilationFailedException ignored) {
+
         }
     }
 
@@ -185,8 +183,10 @@ public class LinterTest {
             if (Files.exists(ballerinaSource)) {
                 String expectedStr = new String(Files.readAllBytes(expectedSource));
 
-                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
-                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource,
+                                                                             CompilerPhase.COMPILER_PLUGIN);
+                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get()
+                        .getCompilationUnits();
 
                 for (CompilationUnitNode compilationUnitNode : compilationUnits) {
 
@@ -194,8 +194,8 @@ public class LinterTest {
                     try {
                         modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
 
-                    } catch (JSONGenerationException e) {
-                        e.printStackTrace();
+                    } catch (JSONGenerationException ignored) {
+
                     }
                     model = modelElement.getAsJsonObject();
 
@@ -217,8 +217,8 @@ public class LinterTest {
 
         } catch (IOException e) {
             Assert.fail("Error while generating the service. " + e.getMessage());
-        } catch (CompilationFailedException e) {
-            e.printStackTrace();
+        } catch (CompilationFailedException ignored) {
+
         }
     }
 

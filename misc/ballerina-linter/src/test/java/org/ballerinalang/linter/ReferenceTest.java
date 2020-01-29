@@ -22,14 +22,13 @@ import org.ballerinalang.compiler.CompilerPhase;
 import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
 import org.ballerinalang.langserver.compiler.common.modal.BallerinaFile;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
-import org.ballerinalang.linter.Reference.ReferenceFinder;
+import org.ballerinalang.linter.reference.ReferenceFinder;
 import org.ballerinalang.model.tree.CompilationUnitNode;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
-import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +36,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
+
+/**
+ * Test suit for linter reference finding.
+ */
 public class ReferenceTest {
 
     private static final Path RES_DIR = Paths.get("src/test/resources/").toAbsolutePath();
@@ -51,36 +55,38 @@ public class ReferenceTest {
     @DataProvider
     public static Object[][] referenceDataProvider() {
         return new Object[][]{
-                {"constants.bal","expectedConstants.txt"},
-                {"function.bal","expectedFunction.txt"},
-                {"variable.bal","expectedVariable.txt"},
-                {"maps.bal","expectedMaps.txt"},
-                {"matchStmt.bal","expectedMatchStmt.txt"},
-                {"object.bal","expectedObject.txt"},
-                {"recordDestructure.bal","expectedRecordDestructure.txt"},
-                {"serviceConstruct.bal","expectedServiceConstruct.txt"},
-                {"stringTemplateLiteral.bal","expectedStringTemplateLiteral.txt"},
-                {"ternaryExpr.bal","expectedTernaryExpr.txt"},
-                {"tuple.bal","expectedTuple.txt"},
-                {"tupleDestructure.bal","expectedTupleDestructure.txt"},
-                {"transaction.bal","expectedTransaction.txt"},
-                {"unionTypes.bal","expectedUnionTypes.txt"},
-                {"worker.bal","expectedWorker.txt"},
-                {"while.bal","expectedWhile.txt"},
-                {"xml.bal","expectedXml.txt"}
+                {"constants.bal", "expectedConstants.txt"},
+                {"function.bal", "expectedFunction.txt"},
+                {"variable.bal", "expectedVariable.txt"},
+                {"maps.bal", "expectedMaps.txt"},
+                {"matchStmt.bal", "expectedMatchStmt.txt"},
+                {"object.bal", "expectedObject.txt"},
+                {"recordDestructure.bal", "expectedRecordDestructure.txt"},
+                {"serviceConstruct.bal", "expectedServiceConstruct.txt"},
+                {"stringTemplateLiteral.bal", "expectedStringTemplateLiteral.txt"},
+                {"ternaryExpr.bal", "expectedTernaryExpr.txt"},
+                {"tuple.bal", "expectedTuple.txt"},
+                {"tupleDestructure.bal", "expectedTupleDestructure.txt"},
+                {"transaction.bal", "expectedTransaction.txt"},
+                {"unionTypes.bal", "expectedUnionTypes.txt"},
+                {"worker.bal", "expectedWorker.txt"},
+                {"while.bal", "expectedWhile.txt"},
+                {"xml.bal", "expectedXml.txt"}
         };
     }
 
     @Test(description = "Test Ballerina skeleton generation", dataProvider = "referenceDataProvider")
-    public void ReferenceTest(String file, String expectedFile) {
+    public void referenceTest(String file, String expectedFile) {
         try {
             Path ballerinaSource = projectPath.resolve(file);
             Path expectedSource = projectPath.resolve("expected").resolve(expectedFile);
             if (Files.exists(ballerinaSource)) {
                 String expected = new String(Files.readAllBytes(expectedSource));
 
-                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource, CompilerPhase.COMPILER_PLUGIN);
-                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get().getCompilationUnits();
+                BallerinaFile ballerinaFile = ExtendedLSCompiler.compileFile(ballerinaSource,
+                                                                             CompilerPhase.COMPILER_PLUGIN);
+                List<BLangCompilationUnit> compilationUnits = ballerinaFile.getBLangPackage().get()
+                        .getCompilationUnits();
 
                 ReferenceFinder referenceFinder = new ReferenceFinder();
                 lintErrors.clear();
@@ -100,8 +106,8 @@ public class ReferenceTest {
 
         } catch (IOException e) {
             Assert.fail("Error while generating the service. " + e.getMessage());
-        } catch (CompilationFailedException e) {
-            e.printStackTrace();
+        } catch (CompilationFailedException ignored) {
+
         }
     }
 }

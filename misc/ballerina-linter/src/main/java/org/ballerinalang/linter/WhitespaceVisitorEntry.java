@@ -25,7 +25,7 @@ import org.ballerinalang.model.tree.Node;
 import java.util.Map;
 
 /**
- * Ballerina linter whitespace visitor entry
+ * Ballerina linter whitespace visitor entry.
  *
  * @since 1.0.1
  */

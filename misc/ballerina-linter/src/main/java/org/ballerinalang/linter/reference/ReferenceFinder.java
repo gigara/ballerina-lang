@@ -16,14 +16,13 @@
 
  */
 
-package org.ballerinalang.linter.Reference;
+package org.ballerinalang.linter.reference;
 
 import org.ballerinalang.model.elements.Flag;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BConstantSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
-import org.wso2.ballerinalang.compiler.semantics.model.symbols.BVarSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.tree.BLangAnnotation;
 import org.wso2.ballerinalang.compiler.tree.BLangAnnotationAttachment;
@@ -171,7 +170,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Ballerina linter reference finder
+ * Ballerina linter reference finder.
  *
  * @since 1.0.1
  */
@@ -179,7 +178,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
     private HashMap<String, Definition> definitions = new HashMap<>();
 
     /**
-     * return the list of definitions as a HashMap
+     * return the list of definitions as a HashMap.
      *
      * @return definitions
      */
@@ -382,7 +381,8 @@ public class ReferenceFinder extends BLangNodeVisitor {
     @Override
     public void visit(BLangSimpleVariableDef varDefNode) {
         BLangSimpleVariable variable = varDefNode.var;
-        addDefinition(variable.symbol, varDefNode.var.name.pos != null ? varDefNode.var.name.pos : varDefNode.pos, "Variable");
+        addDefinition(variable.symbol, varDefNode.var.name.pos != null ?
+                varDefNode.var.name.pos : varDefNode.pos, "Variable");
 
         BLangType typeNode = variable.typeNode;
         if (varDefNode.getWS() == null) {
@@ -773,7 +773,7 @@ public class ReferenceFinder extends BLangNodeVisitor {
             invocationExpr.argExprs.forEach(this::acceptNode);
         }
         if (invocationExpr.symbol != null) {
-            addReference((BVarSymbol) invocationExpr.symbol, invocationExpr.pos);
+            addReference(invocationExpr.symbol, invocationExpr.pos);
         }
     }
 

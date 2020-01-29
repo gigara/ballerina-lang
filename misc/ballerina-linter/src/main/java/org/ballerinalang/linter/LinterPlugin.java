@@ -26,7 +26,7 @@ import org.ballerinalang.compiler.plugins.SupportedAnnotationPackages;
 import org.ballerinalang.langserver.compiler.format.FormattingConstants;
 import org.ballerinalang.langserver.compiler.format.JSONGenerationException;
 import org.ballerinalang.langserver.compiler.sourcegen.FormattingSourceGen;
-import org.ballerinalang.linter.Reference.ReferenceFinder;
+import org.ballerinalang.linter.reference.ReferenceFinder;
 import org.ballerinalang.model.tree.CompilationUnitNode;
 import org.ballerinalang.model.tree.PackageNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
@@ -71,7 +71,8 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
         // check if skipped
         CompilerOptions options = CompilerOptions.getInstance(compilerContext);
-        boolean isSkipped = options.isSet(CompilerOptionName.LINTER_SKIPPED) && Boolean.parseBoolean(options.get(CompilerOptionName.LINTER_SKIPPED));
+        boolean isSkipped = options.isSet(CompilerOptionName.LINTER_SKIPPED) && Boolean.parseBoolean(
+                options.get(CompilerOptionName.LINTER_SKIPPED));
 
         if (!isSkipped) {
             WhitespaceVisitorEntry whitespaceVisitorEntry = new WhitespaceVisitorEntry();
@@ -84,10 +85,12 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 try {
                     modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
 
-                } catch (JSONGenerationException e) {
-                    e.printStackTrace();
+                } catch (JSONGenerationException ignored) {
+
                 }
-                model = modelElement.getAsJsonObject();
+                if (modelElement != null) {
+                    setModel(modelElement.getAsJsonObject());
+                }
                 FormattingSourceGen.build(model, "CompilationUnit");
 
                 lintErrors.clear();
@@ -192,12 +195,17 @@ public class LinterPlugin extends AbstractCompilerPlugin {
     public void pushReferenceErrors(ReferenceFinder referenceFinder, DiagnosticLog dLog) {
         // log diagnostics of the reference finder
         referenceFinder.getDefinitions().forEach((integer, definition) -> {
-             if (definition.isHasDefinition() && !definition.isHasReference()) {
-                 dLog.logDiagnostic(Diagnostic.Kind.WARNING,
-                                    definition.getPosition(),
-                                    definition.getKind() + " " + definition.getSymbol().getName() + " is never used");
+                 if (definition.isHasDefinition() && !definition.isHasReference()) {
+                     dLog.logDiagnostic(Diagnostic.Kind.WARNING,
+                                        definition.getPosition(),
+                                        definition.getKind() + " "
+                                                + definition.getSymbol().getName() + " is never used");
+                 }
              }
-         }
         );
+    }
+
+    public static void setModel(JsonObject model) {
+        LinterPlugin.model = model;
     }
 }
