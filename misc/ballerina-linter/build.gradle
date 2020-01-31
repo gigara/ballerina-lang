@@ -38,4 +38,4 @@ test {
     }
 }
 
-description = 'Ballerina - Formatting CLI tool'
+description = 'Ballerina - Linting tool'

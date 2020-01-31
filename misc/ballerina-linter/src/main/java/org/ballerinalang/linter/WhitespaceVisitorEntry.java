@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Ballerina linter whitespace visitor entry.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class WhitespaceVisitorEntry {
 

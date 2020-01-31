@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * Ballerina linter whitespace node tree.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class LinteringNodeTree {
     static HashMap<Integer, LintError> lintErrors = new HashMap<>();

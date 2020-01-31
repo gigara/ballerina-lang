@@ -24,7 +24,7 @@ import org.ballerinalang.model.tree.Node;
 /**
  * Ballerina linter whitespace error class.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class LintError {
     private JsonObject currentWs;

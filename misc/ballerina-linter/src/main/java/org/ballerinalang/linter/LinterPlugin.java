@@ -48,7 +48,7 @@ import static org.ballerinalang.linter.LinteringNodeTree.lintErrors;
 /**
  * Ballerina Linter compiler plugin.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 @SupportedAnnotationPackages(value = {"ballerina/linter"})
 public class LinterPlugin extends AbstractCompilerPlugin {
@@ -105,6 +105,12 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         }
     }
 
+    /**
+     * Push whitespace errors.
+     *
+     * @param model json model of the source code
+     * @param dLog diagnostic log
+     */
     public void pushWhiteSpacesErrors(JsonObject model, DiagnosticLog dLog) {
         List<JsonObject> ws = FormattingSourceGen.extractWS(model);
         int sLine = 1;
@@ -192,6 +198,12 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         }
     }
 
+    /**
+     * Push unused variable errors.
+     *
+     * @param referenceFinder reference finder object
+     * @param dLog diagnostic log
+     */
     public void pushReferenceErrors(ReferenceFinder referenceFinder, DiagnosticLog dLog) {
         // log diagnostics of the reference finder
         referenceFinder.getDefinitions().forEach((integer, definition) -> {
@@ -205,6 +217,10 @@ public class LinterPlugin extends AbstractCompilerPlugin {
         );
     }
 
+    /**
+     * set the json model.
+     * @param model compilation node as json
+     */
     public static void setModel(JsonObject model) {
         LinterPlugin.model = model;
     }

@@ -33,7 +33,7 @@ import javax.xml.bind.DatatypeConverter;
 /**
  * Ballerina linter reference finder definition class.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class Definition {
     private BSymbol symbol;

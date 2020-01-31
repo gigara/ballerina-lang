@@ -172,7 +172,7 @@ import java.util.List;
 /**
  * Ballerina linter reference finder.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class ReferenceFinder extends BLangNodeVisitor {
     private HashMap<String, Definition> definitions = new HashMap<>();

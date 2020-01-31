@@ -24,6 +24,9 @@ import org.ballerinalang.util.diagnostic.DiagnosticLog;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * diagnostics log testing.
+ */
 class DiagnosticLogTest implements DiagnosticLog {
     List<String> log = new ArrayList<>();
 

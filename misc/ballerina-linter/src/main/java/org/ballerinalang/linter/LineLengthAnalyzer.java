@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Ballerina linter line length analyzer.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 class LineLengthAnalyzer {
     static void lintLineLength(JsonObject model, CompilationUnitNode compilationUnitNode, DiagnosticLog dLog) {

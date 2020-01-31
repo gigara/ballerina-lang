@@ -37,7 +37,7 @@ import java.util.Optional;
 /**
  * Code Action provider for remove unused variables.
  *
- * @since 1.0.4
+ * @since 1.2.0
  */
 @JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
 public class RemoveUnusedVariableCodeAction implements BallerinaCodeActionProvider {

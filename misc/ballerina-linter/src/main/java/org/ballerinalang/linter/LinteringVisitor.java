@@ -27,7 +27,7 @@ import java.lang.reflect.Method;
 /**
  * Ballerina linter white space visitor method invoker.
  *
- * @since 1.0.1
+ * @since 1.2.0
  */
 public class LinteringVisitor {
 
