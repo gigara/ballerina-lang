@@ -16,10 +16,9 @@
 package org.ballerinalang.langserver.codeaction.providers;
 
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider;
-import org.ballerinalang.langserver.codeaction.CodeActionNodeType;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.codeaction.CodeActionNodeType;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
-import org.ballerinalang.langserver.compiler.LSContext;
 import org.eclipse.lsp4j.CodeAction;
 
 import java.util.Arrays;
@@ -31,16 +30,18 @@ import static org.ballerinalang.langserver.command.CommandUtil.getAllDocGenerati
 /**
  * Code Action provider for adding all documentation for top level items.
  *
- * @since 1.1.0
+ * @since 1.1.1
  */
-@JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
-public class AddAllDocumentationCodeAction implements BallerinaCodeActionProvider {
-    private List<CodeActionNodeType> codeActionNodeTypes = Arrays.asList(CodeActionNodeType.FUNCTION,
-                                                                         CodeActionNodeType.OBJECT,
-                                                                         CodeActionNodeType.SERVICE,
-                                                                         CodeActionNodeType.RESOURCE,
-                                                                         CodeActionNodeType.RECORD,
-                                                                         CodeActionNodeType.OBJECT_FUNCTION);
+@JavaSPIService("org.ballerinalang.langserver.commons.codeaction.spi.LSCodeActionProvider")
+public class AddAllDocumentationCodeAction extends AbstractCodeActionProvider {
+    public AddAllDocumentationCodeAction() {
+        super(Arrays.asList(CodeActionNodeType.FUNCTION,
+                            CodeActionNodeType.OBJECT,
+                            CodeActionNodeType.SERVICE,
+                            CodeActionNodeType.RESOURCE,
+                            CodeActionNodeType.RECORD,
+                            CodeActionNodeType.OBJECT_FUNCTION));
+    }
 
     /**
      * {@inheritDoc}
@@ -49,21 +50,5 @@ public class AddAllDocumentationCodeAction implements BallerinaCodeActionProvide
     public List<CodeAction> getCodeActions(CodeActionNodeType nodeType, LSContext lsContext,
                                            List<org.eclipse.lsp4j.Diagnostic> diagnostics) {
         return Collections.singletonList(getAllDocGenerationCommand(lsContext.get(DocumentServiceKeys.FILE_URI_KEY)));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isNodeBased() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<CodeActionNodeType> getCodeActionNodeTypes() {
-        return codeActionNodeTypes;
     }
 }

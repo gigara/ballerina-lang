@@ -16,10 +16,9 @@
 package org.ballerinalang.langserver.codeaction.providers;
 
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider;
-import org.ballerinalang.langserver.codeaction.CodeActionNodeType;
 import org.ballerinalang.langserver.command.CommandUtil;
-import org.ballerinalang.langserver.compiler.LSContext;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.codeaction.CodeActionNodeType;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Diagnostic;
 
@@ -29,10 +28,10 @@ import java.util.List;
 /**
  * Code Action provider for change abstract type.
  *
- * @since 1.1.0
+ * @since 1.1.1
  */
-@JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
-public class ChangeAbstractTypeObjExecutorCodeAction implements BallerinaCodeActionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.codeaction.spi.LSCodeActionProvider")
+public class ChangeAbstractTypeObjExecutorCodeAction extends AbstractCodeActionProvider {
     private static final String NO_IMPL_FOUND_FOR_FUNCTION = "no implementation found for the function";
     private static final String ABSTRACT_OBJECT = "in abstract object";
 
@@ -40,7 +39,7 @@ public class ChangeAbstractTypeObjExecutorCodeAction implements BallerinaCodeAct
      * {@inheritDoc}
      */
     @Override
-    public List<org.eclipse.lsp4j.CodeAction> getCodeActions(CodeActionNodeType nodeType, LSContext lsContext,
+    public List<CodeAction> getCodeActions(CodeActionNodeType nodeType, LSContext lsContext,
                                                              List<org.eclipse.lsp4j.Diagnostic> diagnostics) {
         List<CodeAction> actions = new ArrayList<>();
 
@@ -59,21 +58,5 @@ public class ChangeAbstractTypeObjExecutorCodeAction implements BallerinaCodeAct
         }
 
         return actions;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isNodeBased() {
-        return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<CodeActionNodeType> getCodeActionNodeTypes() {
-        return null;
     }
 }

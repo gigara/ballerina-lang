@@ -24,13 +24,15 @@ import org.ballerinalang.jvm.util.Flags;
 import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
 import org.ballerinalang.langserver.common.utils.FilterUtils;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.completions.CompletionKeys;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.completion.CompletionKeys;
+import org.ballerinalang.langserver.commons.completion.LSCompletionException;
 import org.ballerinalang.langserver.completions.CompletionSubRuleParser;
 import org.ballerinalang.langserver.completions.SymbolInfo;
+import org.ballerinalang.langserver.completions.providers.AbstractCompletionProvider;
 import org.ballerinalang.langserver.completions.providers.contextproviders.AnnotationAttachmentContextProvider;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
 import org.ballerinalang.langserver.completions.util.Snippet;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.ballerinalang.model.tree.NodeKind;
 import org.eclipse.lsp4j.CompletionItem;
 import org.slf4j.Logger;
@@ -50,8 +52,8 @@ import java.util.stream.Collectors;
 /**
  * Completion item provider for the object type.
  */
-@JavaSPIService("org.ballerinalang.langserver.completions.spi.LSCompletionProvider")
-public class ObjectTypeNodeScopeProvider extends LSCompletionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider")
+public class ObjectTypeNodeScopeProvider extends AbstractCompletionProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectTypeNodeScopeProvider.class);
     public ObjectTypeNodeScopeProvider() {
@@ -59,7 +61,7 @@ public class ObjectTypeNodeScopeProvider extends LSCompletionProvider {
     }
 
     @Override
-    public List<CompletionItem> getCompletions(LSContext context) {
+    public List<CompletionItem> getCompletions(LSContext context) throws LSCompletionException {
         ArrayList<CompletionItem> completionItems = new ArrayList<>();
         BLangNode objectNode = context.get(CompletionKeys.SCOPE_NODE_KEY);
 
@@ -74,11 +76,11 @@ public class ObjectTypeNodeScopeProvider extends LSCompletionProvider {
             return this.getProvider(BallerinaParser.ReturnParameterContext.class).getCompletions(context);
         }
 
-        List<CommonToken> lhsTokens = context.get(CompletionKeys.LHS_TOKENS_KEY);
+        List<CommonToken> lhsTokens = context.get(SourcePruneKeys.LHS_TOKENS_KEY);
         Optional<String> subRule = this.getSubRule(lhsTokens);
         subRule.ifPresent(rule -> CompletionSubRuleParser.parseWithinObjectTypeDefinition(rule, context));
         ParserRuleContext parserRuleContext = context.get(CompletionKeys.PARSER_RULE_CONTEXT_KEY);
-        List<CommonToken> lhsDefaultTokens = context.get(CompletionKeys.LHS_DEFAULT_TOKENS_KEY);
+        List<CommonToken> lhsDefaultTokens = context.get(SourcePruneKeys.LHS_DEFAULT_TOKENS_KEY);
 
         if (this.isAnnotationAttachmentContext(context)) {
             return this.getProvider(AnnotationAttachmentContextProvider.class).getCompletions(context);

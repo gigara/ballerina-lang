@@ -20,10 +20,10 @@ package org.ballerinalang.langserver.completions.providers.contextproviders;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Token;
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.completions.CompletionKeys;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.completions.providers.AbstractCompletionProvider;
 import org.ballerinalang.langserver.completions.util.ItemResolverConstants;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.wso2.ballerinalang.compiler.parser.antlr4.BallerinaParser;
@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  * 
  * @since 0.995.0
  */
-@JavaSPIService("org.ballerinalang.langserver.completions.spi.LSCompletionProvider")
-public class NamespaceDeclarationContextProvider extends LSCompletionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider")
+public class NamespaceDeclarationContextProvider extends AbstractCompletionProvider {
 
     public NamespaceDeclarationContextProvider() {
         this.attachmentPoints.add(BallerinaParser.NamespaceDeclarationContext.class);
@@ -47,7 +47,7 @@ public class NamespaceDeclarationContextProvider extends LSCompletionProvider {
     @Override
     public List<CompletionItem> getCompletions(LSContext ctx) {
         ArrayList<CompletionItem> completionItems = new ArrayList<>();
-        List<CommonToken> lhsTokens = ctx.get(CompletionKeys.LHS_TOKENS_KEY);
+        List<CommonToken> lhsTokens = ctx.get(SourcePruneKeys.LHS_TOKENS_KEY);
         List<CommonToken> lhsDefaultTokens = lhsTokens.stream()
                 .filter(commonToken -> commonToken.getChannel() == Token.DEFAULT_CHANNEL)
                 .collect(Collectors.toList());

@@ -16,15 +16,14 @@
 package org.ballerinalang.langserver.codeaction.providers;
 
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider;
-import org.ballerinalang.langserver.codeaction.CodeActionNodeType;
 import org.ballerinalang.langserver.command.CommandUtil;
-import org.ballerinalang.langserver.command.ExecuteCommandKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.compiler.common.LSDocument;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentException;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentManager;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.codeaction.CodeActionKeys;
+import org.ballerinalang.langserver.commons.codeaction.CodeActionNodeType;
+import org.ballerinalang.langserver.commons.workspace.LSDocumentIdentifier;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentException;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Diagnostic;
 
@@ -36,10 +35,10 @@ import java.util.Optional;
 /**
  * Code Action provider for importing a package.
  *
- * @since 1.1.0
+ * @since 1.1.1
  */
-@JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
-public class ImportModuleExecutorCodeAction implements BallerinaCodeActionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.codeaction.spi.LSCodeActionProvider")
+public class ImportModuleExecutorCodeAction extends AbstractCodeActionProvider {
     private static final String UNDEFINED_FUNCTION = "undefined function";
     private static final String UNDEFINED_MODULE = "undefined module";
     private static final String UNRESOLVED_MODULE = "cannot resolve module";
@@ -50,9 +49,9 @@ public class ImportModuleExecutorCodeAction implements BallerinaCodeActionProvid
     @Override
     public List<CodeAction> getCodeActions(CodeActionNodeType nodeType, LSContext lsContext,
                                            List<Diagnostic> diagnostics) {
-        WorkspaceDocumentManager documentManager = lsContext.get(ExecuteCommandKeys.DOCUMENT_MANAGER_KEY);
-        Optional<Path> filePath = CommonUtil.getPathFromURI(lsContext.get(ExecuteCommandKeys.FILE_URI_KEY));
-        LSDocument document = null;
+        WorkspaceDocumentManager documentManager = lsContext.get(CodeActionKeys.DOCUMENT_MANAGER_KEY);
+        Optional<Path> filePath = CommonUtil.getPathFromURI(lsContext.get(CodeActionKeys.FILE_URI_KEY));
+        LSDocumentIdentifier document = null;
         try {
             document = documentManager.getLSDocument(filePath.get());
         } catch (WorkspaceDocumentException e) {
@@ -60,38 +59,24 @@ public class ImportModuleExecutorCodeAction implements BallerinaCodeActionProvid
         }
         List<CodeAction> actions = new ArrayList<>();
 
-        for (Diagnostic diagnostic : diagnostics) {
-            if (diagnostic.getMessage().startsWith(UNDEFINED_MODULE)) {
-                actions.addAll(CommandUtil.getModuleImportCommand(diagnostic, lsContext));
-            } else if (diagnostic.getMessage().startsWith(UNRESOLVED_MODULE)) {
-                CodeAction codeAction = CommandUtil.getUnresolvedModulesCommand(diagnostic, lsContext);
-                if (codeAction != null) {
-                    actions.add(codeAction);
-                }
-            } else if (diagnostic.getMessage().startsWith(UNDEFINED_FUNCTION)) {
-                CodeAction codeAction = CommandUtil.getFunctionImportCommand(document, diagnostic, lsContext);
-                if (codeAction != null) {
-                    actions.add(codeAction);
+        if (document != null) {
+            for (Diagnostic diagnostic : diagnostics) {
+                if (diagnostic.getMessage().startsWith(UNDEFINED_MODULE)) {
+                    actions.addAll(CommandUtil.getModuleImportCommand(diagnostic, lsContext));
+                } else if (diagnostic.getMessage().startsWith(UNRESOLVED_MODULE)) {
+                    CodeAction codeAction = CommandUtil.getUnresolvedModulesCommand(diagnostic, lsContext);
+                    if (codeAction != null) {
+                        actions.add(codeAction);
+                    }
+                } else if (diagnostic.getMessage().startsWith(UNDEFINED_FUNCTION)) {
+                    CodeAction codeAction = CommandUtil.getFunctionImportCommand(document, diagnostic, lsContext);
+                    if (codeAction != null) {
+                        actions.add(codeAction);
+                    }
                 }
             }
         }
 
         return actions;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isNodeBased() {
-        return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<CodeActionNodeType> getCodeActionNodeTypes() {
-        return null;
     }
 }

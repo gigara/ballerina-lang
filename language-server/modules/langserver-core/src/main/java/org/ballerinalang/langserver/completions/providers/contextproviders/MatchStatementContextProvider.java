@@ -23,16 +23,17 @@ import org.ballerinalang.annotation.JavaSPIService;
 import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
 import org.ballerinalang.langserver.common.utils.FilterUtils;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.completions.CompletionKeys;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.completion.CompletionKeys;
 import org.ballerinalang.langserver.completions.SymbolInfo;
 import org.ballerinalang.langserver.completions.builder.BFunctionCompletionItemBuilder;
 import org.ballerinalang.langserver.completions.builder.BTypeCompletionItemBuilder;
 import org.ballerinalang.langserver.completions.builder.BVariableCompletionItemBuilder;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
+import org.ballerinalang.langserver.completions.providers.AbstractCompletionProvider;
 import org.ballerinalang.langserver.completions.util.filters.DelimiterBasedContentFilter;
 import org.ballerinalang.langserver.completions.util.filters.SymbolFilters;
 import org.ballerinalang.langserver.completions.util.sorters.MatchContextItemSorter;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -58,8 +59,8 @@ import static org.ballerinalang.langserver.completions.util.MatchStatementResolv
 /**
  * Completion Item provider for the match statement parser rule context.
  */
-@JavaSPIService("org.ballerinalang.langserver.completions.spi.LSCompletionProvider")
-public class MatchStatementContextProvider extends LSCompletionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider")
+public class MatchStatementContextProvider extends AbstractCompletionProvider {
 
     public MatchStatementContextProvider() {
         this.attachmentPoints.add(BallerinaParser.MatchStatementContext.class);
@@ -68,7 +69,7 @@ public class MatchStatementContextProvider extends LSCompletionProvider {
     @Override
     public List<CompletionItem> getCompletions(LSContext ctx) {
         ArrayList<CompletionItem> completionItems = new ArrayList<>();
-        List<CommonToken> defaultTokens = ctx.get(CompletionKeys.LHS_TOKENS_KEY).stream()
+        List<CommonToken> defaultTokens = ctx.get(SourcePruneKeys.LHS_TOKENS_KEY).stream()
                 .filter(commonToken -> commonToken.getChannel() == Token.DEFAULT_CHANNEL)
                 .collect(Collectors.toList());
         List<Integer> defaultTokenTypes = defaultTokens.stream().map(CommonToken::getType).collect(Collectors.toList());

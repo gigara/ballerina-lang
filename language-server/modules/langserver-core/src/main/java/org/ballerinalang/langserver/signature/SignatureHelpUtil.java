@@ -20,19 +20,17 @@ import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ballerinalang.compiler.CompilerPhase;
-import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentException;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentManager;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
 import org.ballerinalang.langserver.compiler.ExtendedLSCompiler;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.compiler.LSServiceOperationContext;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentException;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentManager;
-import org.ballerinalang.langserver.completions.CompletionKeys;
 import org.ballerinalang.langserver.completions.SymbolInfo;
 import org.ballerinalang.langserver.completions.util.SourcePruneException;
 import org.ballerinalang.langserver.signature.sourceprune.SignatureTokenTraverserFactory;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.ballerinalang.langserver.sourceprune.SourcePruner;
 import org.ballerinalang.langserver.sourceprune.TokenTraverserFactory;
 import org.ballerinalang.model.elements.MarkdownDocAttachment;
@@ -111,7 +109,7 @@ public class SignatureHelpUtil {
      * @return A {@link Pair} of function path and parameter count
      * @throws CompilationFailedException when compilation fails
      */
-    public static Pair<Optional<String>, Integer> getFunctionInvocationDetails(LSServiceOperationContext serviceContext)
+    public static Pair<Optional<String>, Integer> getFunctionInvocationDetails(LSContext serviceContext)
             throws CompilationFailedException {
         // Generate function invocation from the source pruned text
         Pair<String, Integer> functionInvocationAndParamOffset = extractSourcePrunedInvocationDetails(serviceContext);
@@ -148,7 +146,7 @@ public class SignatureHelpUtil {
         };
 
         // Visit Left-Hand side tokens before cursor
-        List<CommonToken> lhsTokens = context.get(CompletionKeys.LHS_TOKENS_KEY);
+        List<CommonToken> lhsTokens = context.get(SourcePruneKeys.LHS_TOKENS_KEY);
         if (lhsTokens != null) {
             while (lhsTokens.get(0).getType() == BallerinaParser.COMMA) {
                 lhsTokens.remove(0);
@@ -182,7 +180,7 @@ public class SignatureHelpUtil {
         Collections.reverse(tokenTexts);
 
         // Visit Right-Hand side tokens after cursor
-        List<CommonToken> rhsTokens = context.get(CompletionKeys.RHS_TOKENS_KEY);
+        List<CommonToken> rhsTokens = context.get(SourcePruneKeys.RHS_TOKENS_KEY);
         if (rhsTokens != null && !rhsTokens.isEmpty()) {
             // Remove if any comma[,] when RHS next immediate token is right parenthesis
             int lastIndex = tokenTexts.size() - 1;
@@ -223,7 +221,7 @@ public class SignatureHelpUtil {
         return Pair.of(String.join("", tokenTexts), parameterOffset);
     }
 
-    private static Optional<String> parseAndGetFunctionInvocationPath(String subRule, LSServiceOperationContext context)
+    private static Optional<String> parseAndGetFunctionInvocationPath(String subRule, LSContext context)
             throws CompilationFailedException {
         // Replace 'optional field access' with 'field access' to avoid empty top-level nodes
         subRule = subRule.replaceAll("\\?.", ".");
@@ -262,8 +260,7 @@ public class SignatureHelpUtil {
         return resolveSymbolPath(context, evalStatement, new Stack<>());
     }
 
-    private static Optional<String> resolveSymbolPath(LSServiceOperationContext context,
-                                                      BLangNode bLangNode, Stack<String> path) {
+    private static Optional<String> resolveSymbolPath(LSContext context, BLangNode bLangNode, Stack<String> path) {
         if (bLangNode instanceof BLangInvocation) {
             BLangInvocation invocationNode = (BLangInvocation) bLangNode;
             String value = getFullyQualifiedName(invocationNode, context);
@@ -326,7 +323,7 @@ public class SignatureHelpUtil {
         }
     }
 
-    public static Optional<SymbolInfo> getFuncSymbolInfo(LSServiceOperationContext context, String funcName,
+    public static Optional<SymbolInfo> getFuncSymbolInfo(LSContext context, String funcName,
                                                          List<SymbolInfo> visibleSymbols) {
         CompilerContext compilerContext = context.get(DocumentServiceKeys.COMPILER_CONTEXT_KEY);
         SymbolTable symbolTable = SymbolTable.getInstance(compilerContext);
@@ -460,14 +457,13 @@ public class SignatureHelpUtil {
         return signatureInformation;
     }
 
-    private static String getFullyQualifiedName(BLangInvocation bLangInvocation, LSServiceOperationContext context) {
+    private static String getFullyQualifiedName(BLangInvocation bLangInvocation, LSContext context) {
         String result = bLangInvocation.getName().getValue();
         // Add module import prefix, if necessary
         return addPackagePrefix(bLangInvocation.getPackageAlias(), context, result);
     }
 
-    private static String addPackagePrefix(IdentifierNode identifierNode, LSServiceOperationContext context,
-                                           String nodeName) {
+    private static String addPackagePrefix(IdentifierNode identifierNode, LSContext context, String nodeName) {
         String pkgAlias = identifierNode.getValue();
         if (!pkgAlias.isEmpty()) {
             Optional<BLangImportPackage> optImport = CommonUtil.getCurrentFileImports(context).stream()
@@ -573,7 +569,7 @@ public class SignatureHelpUtil {
      * @throws WorkspaceDocumentException when document read error occurs
      */
     public static void pruneSource(LSContext lsContext) throws SourcePruneException, WorkspaceDocumentException {
-        WorkspaceDocumentManager documentManager = lsContext.get(CommonKeys.DOC_MANAGER_KEY);
+        WorkspaceDocumentManager documentManager = lsContext.get(DocumentServiceKeys.DOC_MANAGER_KEY);
         String uri = lsContext.get(DocumentServiceKeys.FILE_URI_KEY);
         if (uri == null) {
             throw new SourcePruneException("fileUri cannot be null!");

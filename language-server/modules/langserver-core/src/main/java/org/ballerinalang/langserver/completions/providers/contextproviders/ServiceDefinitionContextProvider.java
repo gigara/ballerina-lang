@@ -22,11 +22,11 @@ import org.antlr.v4.runtime.Token;
 import org.ballerinalang.annotation.JavaSPIService;
 import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.completions.CompletionKeys;
+import org.ballerinalang.langserver.commons.LSContext;
 import org.ballerinalang.langserver.completions.SymbolInfo;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
+import org.ballerinalang.langserver.completions.providers.AbstractCompletionProvider;
 import org.ballerinalang.langserver.completions.util.Snippet;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.eclipse.lsp4j.CompletionItem;
 import org.wso2.ballerinalang.compiler.parser.antlr4.BallerinaParser;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BPackageSymbol;
@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
  *
  * @since v0.982.0
  */
-@JavaSPIService("org.ballerinalang.langserver.completions.spi.LSCompletionProvider")
-public class ServiceDefinitionContextProvider extends LSCompletionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider")
+public class ServiceDefinitionContextProvider extends AbstractCompletionProvider {
 
     public ServiceDefinitionContextProvider() {
         this.attachmentPoints.add(BallerinaParser.ServiceDefinitionContext.class);
@@ -51,7 +51,7 @@ public class ServiceDefinitionContextProvider extends LSCompletionProvider {
     @Override
     public List<CompletionItem> getCompletions(LSContext context) {
         List<CompletionItem> completionItems = new ArrayList<>();
-        List<CommonToken> lhsTokens = context.get(CompletionKeys.LHS_TOKENS_KEY);
+        List<CommonToken> lhsTokens = context.get(SourcePruneKeys.LHS_TOKENS_KEY);
         List<CommonToken> lhsDefaultTokens = lhsTokens.stream()
                 .filter(commonToken -> commonToken.getChannel() == Token.DEFAULT_CHANNEL)
                 .collect(Collectors.toList());
@@ -117,8 +117,8 @@ public class ServiceDefinitionContextProvider extends LSCompletionProvider {
     }
     
     private List<SymbolInfo> filterListenersFromPackage(LSContext context) {
-        List<CommonToken> defaultTokens = context.get(CompletionKeys.LHS_DEFAULT_TOKENS_KEY);
-        List<Integer> tokenTypes = context.get(CompletionKeys.LHS_DEFAULT_TOKEN_TYPES_KEY);
+        List<CommonToken> defaultTokens = context.get(SourcePruneKeys.LHS_DEFAULT_TOKENS_KEY);
+        List<Integer> tokenTypes = context.get(SourcePruneKeys.LHS_DEFAULT_TOKEN_TYPES_KEY);
         List<SymbolInfo> visibleSymbols = new ArrayList<>(context.get(CommonKeys.VISIBLE_SYMBOLS_KEY));
         if (tokenTypes == null) {
             return new ArrayList<>();

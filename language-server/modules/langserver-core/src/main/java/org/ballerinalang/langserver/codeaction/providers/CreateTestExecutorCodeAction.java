@@ -16,11 +16,10 @@
 package org.ballerinalang.langserver.codeaction.providers;
 
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider;
-import org.ballerinalang.langserver.codeaction.CodeActionNodeType;
 import org.ballerinalang.langserver.command.CommandUtil;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.codeaction.CodeActionNodeType;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
-import org.ballerinalang.langserver.compiler.LSContext;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Diagnostic;
@@ -31,12 +30,14 @@ import java.util.List;
 /**
  * Code Action provider for create variable command.
  *
- * @since 1.1.0
+ * @since 1.1.1
  */
-@JavaSPIService("org.ballerinalang.langserver.codeaction.BallerinaCodeActionProvider")
-public class CreateTestExecutorCodeAction implements BallerinaCodeActionProvider {
-    private List<CodeActionNodeType> codeActionNodeTypes = Arrays.asList(CodeActionNodeType.FUNCTION,
-                                                                 CodeActionNodeType.OBJECT);
+@JavaSPIService("org.ballerinalang.langserver.commons.codeaction.spi.LSCodeActionProvider")
+public class CreateTestExecutorCodeAction extends AbstractCodeActionProvider {
+    public CreateTestExecutorCodeAction() {
+        super(Arrays.asList(CodeActionNodeType.FUNCTION,
+                            CodeActionNodeType.OBJECT));
+    }
 
     /**
      * {@inheritDoc}
@@ -52,21 +53,5 @@ public class CreateTestExecutorCodeAction implements BallerinaCodeActionProvider
             // ignore
         }
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isNodeBased() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<CodeActionNodeType> getCodeActionNodeTypes() {
-        return codeActionNodeTypes;
     }
 }

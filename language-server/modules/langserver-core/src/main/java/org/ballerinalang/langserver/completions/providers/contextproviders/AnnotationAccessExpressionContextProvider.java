@@ -22,11 +22,11 @@ import org.ballerinalang.annotation.JavaSPIService;
 import org.ballerinalang.langserver.LSAnnotationCache;
 import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
+import org.ballerinalang.langserver.commons.LSContext;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.completions.CompletionKeys;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
+import org.ballerinalang.langserver.completions.providers.AbstractCompletionProvider;
 import org.ballerinalang.langserver.completions.util.ItemResolverConstants;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.ballerinalang.model.elements.PackageID;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -49,8 +49,8 @@ import java.util.stream.Collectors;
  * 
  * @since 1.0
  */
-@JavaSPIService("org.ballerinalang.langserver.completions.spi.LSCompletionProvider")
-public class AnnotationAccessExpressionContextProvider extends LSCompletionProvider {
+@JavaSPIService("org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider")
+public class AnnotationAccessExpressionContextProvider extends AbstractCompletionProvider {
 
     public AnnotationAccessExpressionContextProvider() {
         this.attachmentPoints.add(AnnotationAccessExpressionContextProvider.class);
@@ -68,8 +68,8 @@ public class AnnotationAccessExpressionContextProvider extends LSCompletionProvi
      */
     private List<CompletionItem> filterAnnotations(LSContext ctx) {
         List<CompletionItem> completionItems = new ArrayList<>();
-        List<Integer> defaultTokenTypes = ctx.get(CompletionKeys.LHS_DEFAULT_TOKEN_TYPES_KEY);
-        List<CommonToken> defaultTokens = ctx.get(CompletionKeys.LHS_DEFAULT_TOKENS_KEY);
+        List<Integer> defaultTokenTypes = ctx.get(SourcePruneKeys.LHS_DEFAULT_TOKEN_TYPES_KEY);
+        List<CommonToken> defaultTokens = ctx.get(SourcePruneKeys.LHS_DEFAULT_TOKENS_KEY);
         int annotationAccessIndex = defaultTokenTypes.indexOf(BallerinaParser.ANNOTATION_ACCESS);
         int pkgDelimiterIndex = defaultTokenTypes.lastIndexOf(BallerinaParser.COLON);
         CommonToken pkgAlias = null;

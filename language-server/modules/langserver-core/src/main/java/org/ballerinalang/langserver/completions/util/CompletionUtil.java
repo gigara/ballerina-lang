@@ -17,19 +17,18 @@ package org.ballerinalang.langserver.completions.util;
 
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.Token;
-import org.ballerinalang.langserver.common.CommonKeys;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
+import org.ballerinalang.langserver.commons.LSContext;
+import org.ballerinalang.langserver.commons.completion.CompletionKeys;
+import org.ballerinalang.langserver.commons.completion.spi.LSCompletionProvider;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentException;
+import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentManager;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
-import org.ballerinalang.langserver.compiler.LSContext;
-import org.ballerinalang.langserver.compiler.LSServiceOperationContext;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentException;
-import org.ballerinalang.langserver.compiler.workspace.WorkspaceDocumentManager;
-import org.ballerinalang.langserver.completions.CompletionKeys;
-import org.ballerinalang.langserver.completions.LSCompletionProviderFactory;
+import org.ballerinalang.langserver.completions.LSCompletionProviderHolder;
 import org.ballerinalang.langserver.completions.TreeVisitor;
 import org.ballerinalang.langserver.completions.sourceprune.CompletionsTokenTraverserFactory;
-import org.ballerinalang.langserver.completions.spi.LSCompletionProvider;
 import org.ballerinalang.langserver.completions.util.sorters.ItemSorters;
+import org.ballerinalang.langserver.sourceprune.SourcePruneKeys;
 import org.ballerinalang.langserver.sourceprune.SourcePruner;
 import org.ballerinalang.langserver.sourceprune.TokenTraverserFactory;
 import org.eclipse.lsp4j.CompletionItem;
@@ -60,7 +59,7 @@ public class CompletionUtil {
      *
      * @param completionContext     Completion Service Context
      */
-    public static void resolveSymbols(LSServiceOperationContext completionContext) {
+    public static void resolveSymbols(LSContext completionContext) {
         // Visit the package to resolve the symbols
         TreeVisitor treeVisitor = new TreeVisitor(completionContext);
         BLangPackage bLangPackage = completionContext.get(DocumentServiceKeys.CURRENT_BLANG_PACKAGE_CONTEXT_KEY);
@@ -81,7 +80,7 @@ public class CompletionUtil {
         // Set the invocation or field access token type
         setInvocationOrInteractionOrFieldAccessToken(ctx);
         BLangNode scope = ctx.get(CompletionKeys.SCOPE_NODE_KEY);
-        Map<Class, LSCompletionProvider> scopeProviders = LSCompletionProviderFactory.getInstance().getProviders();
+        Map<Class, LSCompletionProvider> scopeProviders = LSCompletionProviderHolder.getInstance().getProviders();
         LSCompletionProvider completionProvider = scopeProviders.get(scope.getClass());
         try {
             items.addAll(completionProvider.getCompletions(ctx));
@@ -109,7 +108,7 @@ public class CompletionUtil {
      * @param context Completion operation context
      */
     private static void setInvocationOrInteractionOrFieldAccessToken(LSContext context) {
-        List<CommonToken> lhsTokens = context.get(CompletionKeys.LHS_TOKENS_KEY);
+        List<CommonToken> lhsTokens = context.get(SourcePruneKeys.LHS_TOKENS_KEY);
         List<Integer> invocationTokens = Arrays.asList(
                 BallerinaParser.COLON, BallerinaParser.DOT, BallerinaParser.RARROW, BallerinaParser.NOT,
                 BallerinaParser.OPTIONAL_FIELD_ACCESS
@@ -144,7 +143,7 @@ public class CompletionUtil {
      * @throws WorkspaceDocumentException when document read error occurs
      */
     public static void pruneSource(LSContext lsContext) throws SourcePruneException, WorkspaceDocumentException {
-        WorkspaceDocumentManager documentManager = lsContext.get(CommonKeys.DOC_MANAGER_KEY);
+        WorkspaceDocumentManager documentManager = lsContext.get(DocumentServiceKeys.DOC_MANAGER_KEY);
         String uri = lsContext.get(DocumentServiceKeys.FILE_URI_KEY);
         if (uri == null) {
             throw new SourcePruneException("fileUri cannot be null!");
