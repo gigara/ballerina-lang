@@ -1,6 +1,5 @@
 package org.ballerinalang.linter;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.ballerinalang.compiler.CompilerPhase;
@@ -38,7 +37,6 @@ public class LinterTest {
     private PackageID packageID = new PackageID(new Name("chamupathi"), new Name("main"), new Name("0.1.0"));
     private DiagnosticLogTest diagnosticLog = new DiagnosticLogTest();
     private Path lintingDirectory = Paths.get("src/test/resources");
-    private Gson gson = new Gson();
     private JsonObject model;
 
     @DataProvider
@@ -68,10 +66,8 @@ public class LinterTest {
                 {"expressionStatement.bal", "expectedExpressionStatement.txt"},
                 {"fieldBasedAccess.bal", "expectedFieldBasedAccess.txt"},
                 {"foreach.bal", "expectedForeach.txt"},
-                {"forever.bal", "expectedForever.txt"},
                 {"function.bal", "expectedFunction.txt"},
                 {"functionType.bal", "expectedFunctionType.txt"},
-                {"having.bal", "expectedHaving.txt"},
                 {"if.bal", "expectedIf.txt"},
                 {"import.bal", "expectedImport.txt"},
                 {"invocation.bal", "expectedInvocation.txt"},
@@ -85,7 +81,6 @@ public class LinterTest {
                 {"serviceConstruct.bal", "expectedServiceConstruct.txt"},
                 {"stringTemplateLiteral.bal", "expectedStringTemplateLiteral.txt"},
                 {"table.bal", "expectedTable.txt"},
-                {"tableQuery.bal", "expectedTableQuery.txt"},
                 {"ternaryExpr.bal", "expectedTernaryExpr.txt"},
                 {"transaction.bal", "expectedTransaction.txt"},
                 {"trap.bal", "expectedTrap.txt"},
