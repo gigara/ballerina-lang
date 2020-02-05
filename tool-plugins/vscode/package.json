@@ -76,10 +76,10 @@
                     "default": false,
                     "description": "If set to true experimental ballerina features will be allowed"
                 },
-                "ballerina.linterEnabled": {
+                "ballerina.linterSkipped": {
                     "type": "boolean",
                     "default": false,
-                    "description": "If set to true ballerina linting features will be allowed"
+                    "description": "If set to true ballerina linting features will be disabled"
                 },
                 "ballerina.debugLog": {
                     "type": "boolean",

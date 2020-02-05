@@ -66,7 +66,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
         // check if skipped
         CompilerOptions options = CompilerOptions.getInstance(compilerContext);
-        boolean isSkipped = options.isSet(CompilerOptionName.LINTER_SKIPPED) && !Boolean.parseBoolean(
+        boolean isSkipped = options.isSet(CompilerOptionName.LINTER_SKIPPED) && Boolean.parseBoolean(
                 options.get(CompilerOptionName.LINTER_SKIPPED));
 
         if (!isSkipped) {

@@ -137,7 +137,7 @@ public class BallerinaWorkspaceService implements WorkspaceService {
                                                                     BallerinaClientConfig.class);
         for (CompilerContext compilerContext : LSContextManager.getInstance().getAllContexts().values()) {
             CompilerOptions options = CompilerOptions.getInstance(compilerContext);
-            options.put(LINTER_SKIPPED, Boolean.toString(clientConfig.isLinterEnabled()));
+            options.put(LINTER_SKIPPED, Boolean.toString(clientConfig.isLinterSkipped()));
         }
         configHolder.updateConfig(clientConfig);
     }
