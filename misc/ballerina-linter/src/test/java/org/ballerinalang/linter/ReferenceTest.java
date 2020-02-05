@@ -94,8 +94,7 @@ public class ReferenceTest {
                     referenceFinder.visit((BLangCompilationUnit) compilationUnit);
                 }
 
-                LinterPlugin linterPlugin = new LinterPlugin();
-                linterPlugin.pushReferenceErrors(referenceFinder, diagnosticLog);
+                LinterUtil.pushReferenceErrors(referenceFinder, diagnosticLog);
 
                 StringBuilder actual = new StringBuilder();
                 for (String line : diagnosticLog.getLog()) {

@@ -147,8 +147,7 @@ public class LinterTest {
                     WhitespaceVisitorEntry visitorEntry = new WhitespaceVisitorEntry();
                     visitorEntry.accept(model, compilationUnit);
 
-                    LinterPlugin linterPlugin = new LinterPlugin();
-                    linterPlugin.pushWhiteSpacesErrors(model, diagnosticLog);
+                    LinterUtil.pushWhiteSpacesErrors(model, diagnosticLog);
 
                     StringBuilder actual = new StringBuilder();
                     for (String line : diagnosticLog.getLog()) {
