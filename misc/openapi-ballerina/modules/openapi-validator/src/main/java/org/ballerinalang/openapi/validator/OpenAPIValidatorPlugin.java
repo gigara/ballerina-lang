@@ -25,12 +25,17 @@ import org.ballerinalang.model.tree.PackageNode;
 import org.ballerinalang.model.tree.ServiceNode;
 import org.ballerinalang.util.diagnostic.Diagnostic;
 import org.ballerinalang.util.diagnostic.DiagnosticLog;
+import org.wso2.ballerinalang.compiler.SourceDirectoryManager;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangExpression;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangListConstructorExpr;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangRecordLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangSimpleVarRef;
+import org.wso2.ballerinalang.compiler.util.CompilerContext;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +48,7 @@ public class OpenAPIValidatorPlugin extends AbstractCompilerPlugin {
     private List<ResourceSummary> resourceSummaryList;
     private List<OpenAPIPathSummary> openAPISummaryList;
     private OpenAPIComponentSummary openAPIComponentSummary;
+    private CompilerContext compilerContext;
 
     @Override
     public void init(DiagnosticLog diagnosticLog) {
@@ -50,6 +56,11 @@ public class OpenAPIValidatorPlugin extends AbstractCompilerPlugin {
         this.resourceSummaryList = new ArrayList<>();
         this.openAPISummaryList = new ArrayList<>();
         this.openAPIComponentSummary = new OpenAPIComponentSummary();
+    }
+
+    @Override
+    public void setCompilerContext(CompilerContext context) {
+        this.compilerContext = context;
     }
 
     @Override
@@ -76,9 +87,28 @@ public class OpenAPIValidatorPlugin extends AbstractCompilerPlugin {
                         String key = contract.getVariableName().getValue();
                         if (key.equals(Constants.CONTRACT)) {
                             if (keyValue.getValue() instanceof BLangLiteral) {
+                                String seperator = File.separator;
                                 BLangLiteral value = (BLangLiteral) keyValue.getValue();
+                                SourceDirectoryManager sourceDirectoryManager = SourceDirectoryManager.getInstance(
+                                        compilerContext);
+                                String sourceDir = sourceDirectoryManager.getSourceDirectory().getPath().toString();
+                                String filePath = serviceNode.getPosition().getSource().getPackageName() + seperator +
+                                        serviceNode.getPosition().getSource().getCompilationUnitName().replaceAll(
+                                                "\\w*.bal", "");
+                                String projectDir = sourceDir + seperator + "src" + seperator + filePath;
                                 if (value.getValue() instanceof String) {
-                                    contractURI = (String) value.getValue();
+                                    String userUri = (String) value.getValue();
+
+                                    if (userUri.contains(projectDir)) {
+                                        contractURI = userUri;
+
+                                    } else {
+                                        try {
+                                            contractURI = Paths.get(projectDir, userUri).toRealPath().toString();
+                                        } catch (IOException e) {
+                                            contractURI = userUri;
+                                        }
+                                    }
                                 } else {
                                     dLog.logDiagnostic(Diagnostic.Kind.ERROR, annotation.getPosition(),
                                             "Contract path should be applied as a string value");
