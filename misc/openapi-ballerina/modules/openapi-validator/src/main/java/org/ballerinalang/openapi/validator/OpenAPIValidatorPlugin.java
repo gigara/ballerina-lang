@@ -103,14 +103,14 @@ public class OpenAPIValidatorPlugin extends AbstractCompilerPlugin {
                         if (key.equals(Constants.CONTRACT)) {
                             if (valueExpr instanceof BLangLiteral) {
                                 BLangLiteral value = (BLangLiteral) valueExpr;
-                                String seperator = File.separator;
+                                String separator = File.separator;
                                 SourceDirectoryManager sourceDirectoryManager = SourceDirectoryManager.getInstance(
                                         compilerContext);
                                 String sourceDir = sourceDirectoryManager.getSourceDirectory().getPath().toString();
-                                String filePath = serviceNode.getPosition().getSource().getPackageName() + seperator +
+                                String filePath = serviceNode.getPosition().getSource().getPackageName() + separator +
                                         serviceNode.getPosition().getSource().getCompilationUnitName().replaceAll(
                                                 "\\w*.bal", "");
-                                String projectDir = sourceDir + seperator + "src" + seperator + filePath;
+                                String projectDir = sourceDir + separator + "src" + separator + filePath;
                                 if (value.getValue() instanceof String) {
                                     String userUri = (String) value.getValue();
 
