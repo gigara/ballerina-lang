@@ -99,15 +99,18 @@ public class OpenAPIValidatorPlugin extends AbstractCompilerPlugin {
                                 if (value.getValue() instanceof String) {
                                     String userUri = (String) value.getValue();
 
+                                    File file = null;
                                     if (userUri.contains(projectDir)) {
-                                        contractURI = userUri;
-
+                                        file = new File(userUri);
                                     } else {
                                         try {
-                                            contractURI = Paths.get(projectDir, userUri).toRealPath().toString();
+                                            file = new File(Paths.get(projectDir, userUri).toRealPath().toString());
                                         } catch (IOException e) {
-                                            contractURI = userUri;
+                                            contractURI = Paths.get(userUri).toString();
                                         }
+                                    }
+                                    if (file != null && file.exists()) {
+                                        contractURI = file.getAbsolutePath();
                                     }
                                 } else {
                                     dLog.logDiagnostic(Diagnostic.Kind.ERROR, annotation.getPosition(),
