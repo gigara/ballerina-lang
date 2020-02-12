@@ -79,19 +79,18 @@ public class LinterPlugin extends AbstractCompilerPlugin {
                 JsonElement modelElement = null;
                 try {
                     modelElement = generateJSON(compilationUnitNode, new HashMap<>(), new HashMap<>());
-
-                } catch (JSONGenerationException ignored) {
-
-                }
-                if (modelElement != null) {
                     setModel(modelElement.getAsJsonObject());
-                }
-                FormattingSourceGen.build(model, "CompilationUnit");
+                    FormattingSourceGen.build(model, "CompilationUnit");
 
-                lintErrors.clear();
-                whitespaceVisitorEntry.accept(model, compilationUnitNode);
-                referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
-                LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
+                    lintErrors.clear();
+                    whitespaceVisitorEntry.accept(model, compilationUnitNode);
+                    referenceFinder.visit((BLangCompilationUnit) compilationUnitNode);
+                    LineLengthAnalyzer.lintLineLength(model, compilationUnitNode, dLog);
+                } catch (JSONGenerationException ignored) {
+                    // Generate json should not fail.
+                    return;
+                }
+
             }
 
             // log diagnostics of whitespace linter
@@ -102,6 +101,7 @@ public class LinterPlugin extends AbstractCompilerPlugin {
 
     /**
      * set the json model.
+     *
      * @param model compilation node as json
      */
     public static void setModel(JsonObject model) {
