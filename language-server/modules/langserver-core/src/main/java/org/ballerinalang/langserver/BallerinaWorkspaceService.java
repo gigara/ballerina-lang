@@ -56,7 +56,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.ballerinalang.compiler.CompilerOptionName.LINTER_SKIPPED;
+import static org.ballerinalang.compiler.CompilerOptionName.LINTER_ENABLED;
 import static org.ballerinalang.langserver.compiler.LSClientLogger.logError;
 import static org.ballerinalang.langserver.compiler.LSClientLogger.notifyUser;
 
@@ -137,7 +137,7 @@ public class BallerinaWorkspaceService implements WorkspaceService {
                                                                     BallerinaClientConfig.class);
         for (CompilerContext compilerContext : LSContextManager.getInstance().getAllContexts().values()) {
             CompilerOptions options = CompilerOptions.getInstance(compilerContext);
-            options.put(LINTER_SKIPPED, Boolean.toString(clientConfig.isLinterSkipped()));
+            options.put(LINTER_ENABLED, Boolean.toString(clientConfig.isLinterEnabled()));
         }
         configHolder.updateConfig(clientConfig);
     }

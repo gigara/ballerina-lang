@@ -50,7 +50,7 @@ public enum CompilerOptionName {
 
     EXPERIMENTAL_FEATURES_ENABLED("experimentalFeaturesEnabled"),
 
-    LINTER_SKIPPED("linterSkipped"),
+    LINTER_ENABLED("linterEnabled"),
 
     TOOLING_COMPILATION("toolingCompilation");
 

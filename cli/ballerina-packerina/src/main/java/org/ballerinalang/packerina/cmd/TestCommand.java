@@ -47,7 +47,7 @@ import java.util.List;
 
 import static org.ballerinalang.compiler.CompilerOptionName.COMPILER_PHASE;
 import static org.ballerinalang.compiler.CompilerOptionName.EXPERIMENTAL_FEATURES_ENABLED;
-import static org.ballerinalang.compiler.CompilerOptionName.LINTER_SKIPPED;
+import static org.ballerinalang.compiler.CompilerOptionName.LINTER_ENABLED;
 import static org.ballerinalang.compiler.CompilerOptionName.LOCK_ENABLED;
 import static org.ballerinalang.compiler.CompilerOptionName.OFFLINE;
 import static org.ballerinalang.compiler.CompilerOptionName.PRESERVE_WHITESPACE;
@@ -123,8 +123,8 @@ public class TestCommand implements BLauncherCmd {
     @CommandLine.Option(names = "--experimental", description = "Enable experimental language features.")
     private boolean experimentalFlag;
 
-    @CommandLine.Option(names = "--skip-lint", description = "Skip linting features.")
-    private boolean skipLint;
+    @CommandLine.Option(names = "--lint", description = "Enable linting features.")
+    private boolean lint;
 
     // --debug flag is handled by ballerina.sh/ballerina.bat. It will launch ballerina with java debug options.
     @CommandLine.Option(names = "--debug", description = "start Ballerina in remote debugging mode")
@@ -262,8 +262,8 @@ public class TestCommand implements BLauncherCmd {
         options.put(LOCK_ENABLED, Boolean.toString(!this.skipLock));
         options.put(TEST_ENABLED, "true");
         options.put(EXPERIMENTAL_FEATURES_ENABLED, Boolean.toString(this.experimentalFlag));
-        options.put(LINTER_SKIPPED, Boolean.toString(this.skipLint));
-        options.put(PRESERVE_WHITESPACE, Boolean.toString(!this.skipLint));
+        options.put(LINTER_ENABLED, Boolean.toString(this.lint));
+        options.put(PRESERVE_WHITESPACE, Boolean.toString(this.lint));
 
         // create builder context
         BuildContext buildContext = new BuildContext(this.sourceRootPath, targetPath, sourcePath, compilerContext);
