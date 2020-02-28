@@ -53,6 +53,7 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BPackageType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BRecordType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BServiceType;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BStreamType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructureType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTableType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTupleType;
@@ -137,8 +138,8 @@ public class BIRTypeWriter implements TypeVisitor {
         BTypeSymbol tsymbol = bFiniteType.tsymbol;
         buff.writeInt(addStringCPEntry(tsymbol.name.value));
         buff.writeInt(tsymbol.flags);
-        buff.writeInt(bFiniteType.valueSpace.size());
-        for (BLangExpression valueLiteral : bFiniteType.valueSpace) {
+        buff.writeInt(bFiniteType.getValueSpace().size());
+        for (BLangExpression valueLiteral : bFiniteType.getValueSpace()) {
             if (!(valueLiteral instanceof BLangLiteral)) {
                 throw new AssertionError(
                         "Type serialization is not implemented for finite type with value: " + valueLiteral.getKind());
@@ -181,6 +182,11 @@ public class BIRTypeWriter implements TypeVisitor {
     @Override
     public void visit(BTableType bTableType) {
         writeTypeCpIndex(bTableType.constraint);
+    }
+
+    @Override
+    public void visit(BStreamType bStreamType) {
+        writeTypeCpIndex(bStreamType.constraint);
     }
 
     @Override
