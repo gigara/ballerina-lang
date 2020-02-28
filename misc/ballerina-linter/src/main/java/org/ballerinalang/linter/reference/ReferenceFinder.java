@@ -235,9 +235,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
         if (funcNode.requiredParams != null) {
             funcNode.requiredParams.forEach(this::acceptNode);
         }
-        if (funcNode.externalAnnAttachments != null) {
-            funcNode.externalAnnAttachments.forEach(this::acceptNode);
-        }
         if (funcNode.returnTypeAnnAttachments != null) {
             funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
         }
@@ -597,9 +594,16 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangRecordLiteral recordLiteral) {
-        if (recordLiteral.keyValuePairs != null) {
-            recordLiteral.keyValuePairs.forEach(bLangRecordKeyValue -> this.acceptNode(bLangRecordKeyValue.valueExpr));
-        }
+        recordLiteral.fields.forEach(field -> {
+            if (field.isKeyValueField()) {
+                BLangRecordLiteral.BLangRecordKeyValueField bLangRecordKeyValue =
+                        (BLangRecordLiteral.BLangRecordKeyValueField) field;
+                this.acceptNode(bLangRecordKeyValue.key.expr);
+                this.acceptNode(bLangRecordKeyValue.valueExpr);
+            } else {
+                this.acceptNode((BLangRecordLiteral.BLangRecordVarNameField) field);
+            }
+        });
     }
 
     @Override
@@ -817,9 +821,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
             if (funcNode.requiredParams != null) {
                 funcNode.requiredParams.forEach(this::acceptNode);
             }
-            if (funcNode.externalAnnAttachments != null) {
-                funcNode.externalAnnAttachments.forEach(this::acceptNode);
-            }
             if (funcNode.returnTypeAnnAttachments != null) {
                 funcNode.returnTypeAnnAttachments.forEach(this::acceptNode);
             }
@@ -1017,11 +1018,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangSimpleVarRef.BLangPackageVarRef packageVarRef) {
-        // No implementation needed.
-    }
-
-    @Override
-    public void visit(BLangSimpleVarRef.BLangConstRef constRef) {
         // No implementation needed.
     }
 
@@ -1234,11 +1230,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangWaitForAllExpr.BLangWaitLiteral waitLiteral) {
-        // No implementation needed.
-    }
-
-    @Override
-    public void visit(BLangRecordLiteral.BLangRecordKeyValue recordKeyValue) {
         // No implementation needed.
     }
 
