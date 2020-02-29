@@ -96,11 +96,12 @@ public class ReferenceTest {
 
                 LinterUtil.pushReferenceErrors(referenceFinder, diagnosticLog);
 
-                StringBuilder actual = new StringBuilder();
+                boolean equals = true;
                 for (String line : diagnosticLog.getLog()) {
-                    actual.append(line).append(System.lineSeparator());
+                    equals = expected.contains(line);
+                    if (!equals) break;
                 }
-                Assert.assertEquals(actual.toString(), expected, "Did not match");
+                Assert.assertTrue(equals, "Did not match");
             }
 
         } catch (IOException e) {
