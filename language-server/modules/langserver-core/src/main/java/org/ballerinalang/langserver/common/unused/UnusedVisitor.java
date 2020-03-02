@@ -23,6 +23,7 @@ import org.ballerinalang.langserver.hover.util.HoverUtil;
 import org.ballerinalang.model.tree.TopLevelNode;
 import org.eclipse.lsp4j.Position;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BNilType;
+import org.wso2.ballerinalang.compiler.tree.BLangBlockFunctionBody;
 import org.wso2.ballerinalang.compiler.tree.BLangCompilationUnit;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
@@ -40,6 +41,7 @@ import org.wso2.ballerinalang.compiler.tree.expressions.BLangInvocation;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangRecordVarRef;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangServiceConstructorExpr;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangBlockStmt;
+import org.wso2.ballerinalang.compiler.tree.statements.BLangExpressionStmt;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangForeach;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangIf;
 import org.wso2.ballerinalang.compiler.tree.statements.BLangRecordDestructure;
@@ -75,6 +77,16 @@ public class UnusedVisitor extends LSNodeVisitor {
         return diagnosticPos;
     }
 
+    @Override
+    public void visit(BLangPackage pkgNode) {
+        boolean isTestSrc = CommonUtil.isTestSource(this.context.get(DocumentServiceKeys.RELATIVE_FILE_PATH_KEY));
+        BLangPackage evalPkg = isTestSrc ? pkgNode.getTestablePkg() : pkgNode;
+        List<TopLevelNode> topLevelNodes = CommonUtil.getCurrentFileTopLevelNodes(evalPkg, this.context);
+        topLevelNodes.stream()
+                .filter(CommonUtil.checkInvalidTypesDefs())
+                .forEach(topLevelNode -> acceptNode((BLangNode) topLevelNode));
+    }
+
     /**
      * Accept node to visit.
      *
@@ -85,29 +97,6 @@ public class UnusedVisitor extends LSNodeVisitor {
             return;
         }
         node.accept(this);
-    }
-
-    private boolean isMatching(DiagnosticPos namePosition) {
-        boolean isMatching = false;
-
-        if (namePosition.sLine == position.getLine()
-                && namePosition.eLine >= position.getLine()
-                && namePosition.sCol <= position.getCharacter()
-                && namePosition.eCol >= position.getCharacter()) {
-            isMatching = true;
-        }
-
-        return isMatching;
-    }
-
-    @Override
-    public void visit(BLangPackage pkgNode) {
-        boolean isTestSrc = CommonUtil.isTestSource(this.context.get(DocumentServiceKeys.RELATIVE_FILE_PATH_KEY));
-        BLangPackage evalPkg = isTestSrc ? pkgNode.getTestablePkg() : pkgNode;
-        List<TopLevelNode> topLevelNodes = CommonUtil.getCurrentFileTopLevelNodes(evalPkg, this.context);
-        topLevelNodes.stream()
-                .filter(CommonUtil.checkInvalidTypesDefs())
-                .forEach(topLevelNode -> acceptNode((BLangNode) topLevelNode));
     }
 
     @Override
@@ -147,6 +136,38 @@ public class UnusedVisitor extends LSNodeVisitor {
         }
     }
 
+    private boolean isMatching(DiagnosticPos namePosition) {
+        boolean isMatching = false;
+
+        if (namePosition.sLine == position.getLine()
+                && namePosition.eLine >= position.getLine()
+                && namePosition.sCol <= position.getCharacter()
+                && namePosition.eCol >= position.getCharacter()) {
+            isMatching = true;
+        }
+
+        return isMatching;
+    }
+
+    /**
+     * Set terminate visitor.
+     */
+    private void setTerminateVisitor() {
+        this.terminateVisitor = true;
+    }
+
+    @Override
+    public void visit(BLangBlockFunctionBody blockFuncBody) {
+        if (blockFuncBody.stmts != null && !terminateVisitor) {
+            blockFuncBody.stmts.forEach(this::acceptNode);
+        }
+    }
+
+    @Override
+    public void visit(BLangExpressionStmt exprStmtNode) {
+        this.acceptNode(exprStmtNode.expr);
+    }
+
     @Override
     public void visit(BLangSimpleVariableDef varDefNode) {
         if (varDefNode.getVariable() != null && !terminateVisitor) {
@@ -177,7 +198,7 @@ public class UnusedVisitor extends LSNodeVisitor {
 
                     } else if (isRecordVariable) {
                         List<BLangVariable> variables = new ArrayList<>();
-                        for (BLangRecordVariable.BLangRecordVariableKeyValue variable:
+                        for (BLangRecordVariable.BLangRecordVariableKeyValue variable :
                                 ((BLangRecordVariable) varNode.parent).variableList) {
                             variables.add(variable.valueBindingPattern);
                         }
@@ -251,7 +272,7 @@ public class UnusedVisitor extends LSNodeVisitor {
             recordTypeNode.fields.forEach(this::acceptNode);
         }
 
-        if (recordTypeNode.initFunction != null  && !terminateVisitor &&
+        if (recordTypeNode.initFunction != null && !terminateVisitor &&
                 !(recordTypeNode.initFunction.returnTypeNode.type instanceof BNilType)) {
             this.acceptNode(recordTypeNode.initFunction);
         }
@@ -415,10 +436,4 @@ public class UnusedVisitor extends LSNodeVisitor {
         }
     }
 
-    /**
-     * Set terminate visitor.
-     */
-    private void setTerminateVisitor() {
-        this.terminateVisitor = true;
-    }
 }

@@ -79,7 +79,11 @@ public class ReferencesUtil {
         context.put(DocumentServiceKeys.FILE_URI_KEY, document.getURIString());
         context.put(DocumentServiceKeys.COMPILE_FULL_PROJECT, true);
         List<BLangPackage> modules = ReferencesUtil.findCursorTokenAndCompileModules(context);
-        fillReferences(modules, context);
+        try {
+            fillReferences(modules, context);
+        } catch (Exception ignored) {
+            // exception should be handled in method
+        }
         context.put(DocumentServiceKeys.BLANG_PACKAGES_CONTEXT_KEY, modules);
         SymbolReferencesModel referencesModel = context.get(NodeContextKeys.REFERENCES_KEY);
         Optional<SymbolReferencesModel.Reference> symbolAtCursor = referencesModel.getReferenceAtCursor();

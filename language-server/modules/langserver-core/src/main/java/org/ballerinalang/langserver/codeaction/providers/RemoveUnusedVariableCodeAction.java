@@ -17,7 +17,6 @@
 package org.ballerinalang.langserver.codeaction.providers;
 
 import org.ballerinalang.annotation.JavaSPIService;
-import org.ballerinalang.langserver.LSGlobalContextKeys;
 import org.ballerinalang.langserver.command.executors.UnusedVariableExecutor;
 import org.ballerinalang.langserver.common.constants.CommandConstants;
 import org.ballerinalang.langserver.common.utils.CommonUtil;
@@ -29,6 +28,7 @@ import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentException
 import org.ballerinalang.langserver.commons.workspace.WorkspaceDocumentManager;
 import org.ballerinalang.langserver.compiler.DocumentServiceKeys;
 import org.ballerinalang.langserver.compiler.exception.CompilationFailedException;
+import org.ballerinalang.langserver.util.references.ReferencesKeys;
 import org.ballerinalang.langserver.util.references.SymbolReferencesModel;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.Command;
@@ -79,7 +79,7 @@ public class RemoveUnusedVariableCodeAction extends AbstractCodeActionProvider {
                                                     List<Diagnostic> diagnosticsOfRange,
                                                     List<Diagnostic> allDiagnostics) {
         List<CodeAction> actions = new ArrayList<>();
-        WorkspaceDocumentManager documentManager = lsContext.get(LSGlobalContextKeys.DOCUMENT_MANAGER_KEY);
+        WorkspaceDocumentManager documentManager = lsContext.get(DocumentServiceKeys.DOC_MANAGER_KEY);
         Optional<Path> filePath = CommonUtil.getPathFromURI(lsContext.get(DocumentServiceKeys.FILE_URI_KEY));
         LSDocumentIdentifier document = null;
         try {
@@ -89,7 +89,14 @@ public class RemoveUnusedVariableCodeAction extends AbstractCodeActionProvider {
         }
         for (Diagnostic diagnostic : allDiagnostics) {
             if (diagnostic.getMessage().endsWith(NEVER_USED)) {
-                actions.add(getRemoveUnusedVariableCommand(document, diagnostic, lsContext));
+                Position position = lsContext.get(DocumentServiceKeys.POSITION_KEY).getPosition();
+                int sLine = position.getLine();
+                if (diagnostic.getRange().getStart().getLine() == sLine) {
+                    CodeAction codeAction = getRemoveUnusedVariableCommand(document, diagnostic, lsContext);
+                    if (codeAction != null) {
+                        actions.add(codeAction);
+                    }
+                }
             }
         }
 
@@ -107,41 +114,49 @@ public class RemoveUnusedVariableCodeAction extends AbstractCodeActionProvider {
         CommandArgument uriArg = new CommandArgument(CommandConstants.ARG_KEY_DOC_URI, uri);
 
         String diagnosedContent = getDiagnosedContent(diagnostic, context, document);
-        Position afterAliasPos = offsetInvocation(diagnosedContent, position);
+        WorkspaceDocumentManager docManager = context.get(DocumentServiceKeys.DOC_MANAGER_KEY);
         BLangNode node = null;
         try {
-            SymbolReferencesModel.Reference refAtCursor = getReferenceAtCursor(context, document, afterAliasPos);
-            node = refAtCursor.getbLangNode();
+            LSDocumentIdentifier lsDocument = docManager.getLSDocument(CommonUtil.getPathFromURI(uri).get());
+            context.put(ReferencesKeys.OFFSET_CURSOR_N_TRY_NEXT_BEST, true);
+            context.put(ReferencesKeys.DO_NOT_SKIP_NULL_SYMBOLS, true);
+            Position afterAliasPos = offsetInvocation(diagnosedContent, position);
+            SymbolReferencesModel.Reference refAtCursor = getReferenceAtCursor(context, lsDocument, afterAliasPos);
+            node = refAtCursor != null ? refAtCursor.getbLangNode() : null;
         } catch (WorkspaceDocumentException | CompilationFailedException ignored) {
 
         }
 
+        if (node == null) {
+            return null;
+        }
+
         String codeActionMessage = "";
         if (node instanceof BLangFunction) {
-            codeActionMessage = "Function";
+            codeActionMessage = "Function '" + ((BLangFunction) node).name.value + "'";
 
         } else if (node instanceof BLangSimpleVariable || node instanceof BLangFieldBasedAccess) {
             if (node.type instanceof BUnionType) {
-                codeActionMessage = "Object";
+                codeActionMessage = "Object '" + ((BLangSimpleVariable) node).name.value + "'";
 
             } else {
-                codeActionMessage = "Variable";
+                codeActionMessage = "Variable '" + ((BLangSimpleVariable) node).name.value + "'";
             }
 
         } else if (node instanceof BLangConstant) {
-            codeActionMessage = "Constant";
+            codeActionMessage = "Constant '" + ((BLangConstant) node).name.value + "'";
 
         } else if (node instanceof BLangTypeDefinition) {
-            codeActionMessage = "Type";
+            codeActionMessage = "Type '" + ((BLangTypeDefinition) node).name.value + "'";
 
         } else if (node instanceof BLangService) {
-            codeActionMessage = "Service";
+            codeActionMessage = "Service '" + ((BLangService) node).name.value + "'";
 
         } else if (node instanceof BLangAnnotation) {
-            codeActionMessage = "Annotation";
+            codeActionMessage = "Annotation '" + ((BLangAnnotation) node).name.value + "'";
 
         } else if (node instanceof BLangXMLAttribute) {
-            codeActionMessage = "XML";
+            codeActionMessage = "XML '" + ((BLangXMLAttribute) node).name.toString() + "'";
         }
 
         codeActionMessage = "Remove unused " + codeActionMessage;
