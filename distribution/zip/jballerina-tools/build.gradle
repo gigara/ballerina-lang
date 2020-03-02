@@ -110,6 +110,7 @@ dependencies {
     dist project(':ballerina-linter')
     dist project(':docerina')
     dist project(':protobuf-ballerina')
+    dist project(':testerina:testerina-runtime')
     docerina project(':docerina-gradle-plugin')
 
     langserverLib project(path: ':language-server:language-server-core', configuration: 'libs')
