@@ -1068,11 +1068,6 @@ public class ReferenceFinder extends BLangNodeVisitor {
     }
 
     @Override
-    public void visit(BLangRecordLiteral.BLangJSONLiteral jsonLiteral) {
-        // No implementation needed.
-    }
-
-    @Override
     public void visit(BLangRecordLiteral.BLangMapLiteral mapLiteral) {
         // No implementation needed.
     }
