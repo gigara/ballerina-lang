@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
 import static org.ballerinalang.compiler.CompilerOptionName.COMPILER_PHASE;
+import static org.ballerinalang.compiler.CompilerOptionName.LINTER_ENABLED;
 import static org.ballerinalang.compiler.CompilerOptionName.PRESERVE_WHITESPACE;
 import static org.ballerinalang.compiler.CompilerOptionName.SKIP_TESTS;
 import static org.ballerinalang.compiler.CompilerOptionName.TEST_ENABLED;
@@ -108,6 +109,7 @@ public class ExtendedLSCompiler extends LSModuleCompiler {
         options.put(PRESERVE_WHITESPACE, Boolean.TRUE.toString());
         options.put(TEST_ENABLED, String.valueOf(true));
         options.put(SKIP_TESTS, String.valueOf(false));
+        options.put(LINTER_ENABLED, String.valueOf(true));
         BLangDiagnosticLog.getInstance(context).errorCount = 0;
         Compiler compiler = Compiler.getInstance(context);
         LSContext lsContext = new LSCompilerOperationContext

@@ -87,7 +87,7 @@ public class RemoveUnusedVariableCodeAction extends AbstractCodeActionProvider {
         } catch (WorkspaceDocumentException e) {
             // ignore
         }
-        for (Diagnostic diagnostic : allDiagnostics) {
+        for (Diagnostic diagnostic : diagnosticsOfRange) {
             if (diagnostic.getMessage().endsWith(NEVER_USED)) {
                 Position position = lsContext.get(DocumentServiceKeys.POSITION_KEY).getPosition();
                 int sLine = position.getLine();
