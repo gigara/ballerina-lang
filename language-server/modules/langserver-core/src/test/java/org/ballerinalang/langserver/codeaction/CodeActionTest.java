@@ -283,7 +283,8 @@ public class CodeActionTest {
                 {"packagePull1.json", "packagePull.bal"},
                 {"packagePull2.json", "packagePull.bal"},
                 {"unusedVariable.json", "removeUnusedVariable.bal"},
-                {"packagePull.json", "packagePull.bal"},
+                {"packagePull1.json", "packagePull.bal"},
+                {"packagePull2.json", "packagePull.bal"},
                 {"changeAbstractTypeObj1.json", "changeAbstractType.bal"},
                 {"changeAbstractTypeObj2.json", "changeAbstractType.bal"}
         };
