@@ -336,12 +336,11 @@ public class LockFileTestCase extends BaseTest {
      * @throws BallerinaTestException When running commands.
      */
     @Test(description = "Test rebuilding and running TestProject2 without lock file.",
-          dependsOnMethods = "testRebuildTestProj2WithLockRemovedAndOffline")
+            dependsOnMethods = "testRebuildTestProj2WithLockRemovedAndOffline")
     public void testRebuildTestProj2WithLockRemoved() throws BallerinaTestException, IOException, InterruptedException {
         // Delete Ballerina.lock
         Path lockFilePath = testProj2Path.resolve("Ballerina.lock");
         Files.delete(lockFilePath);
-        
         // Build module
         String fooBaloFileName = "foo-"
                                  + ProgramFileConstants.IMPLEMENTATION_VERSION + "-"
@@ -355,10 +354,10 @@ public class LockFileTestCase extends BaseTest {
                 .await().atMost(120, SECONDS).until(() -> {
             balClient.runMain("build", new String[]{"-a", "-c"}, envVariables, new String[]{}, new
                     LogLeecher[]{fooBuildLeecher}, testProj2Path.toString());
-            fooBuildLeecher.waitForText(10000);
             return Files.exists(testProj2Path.resolve(fooBaloFile));
         });
-    
+
+        fooBuildLeecher.waitForText(10000);
         lockFilePath = testProj2Path.resolve("Ballerina.lock");
         Assert.assertTrue(Files.exists(lockFilePath));
     

@@ -31,7 +31,7 @@ import org.wso2.ballerinalang.compiler.SourceDirectory;
 import org.wso2.ballerinalang.compiler.tree.BLangPackage;
 import org.wso2.ballerinalang.compiler.util.CompilerContext;
 import org.wso2.ballerinalang.compiler.util.CompilerOptions;
-import org.wso2.ballerinalang.compiler.util.diagnotic.BLangDiagnosticLog;
+import org.wso2.ballerinalang.compiler.util.diagnotic.BLangDiagnosticLogHelper;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
@@ -110,7 +110,7 @@ public class ExtendedLSCompiler extends LSModuleCompiler {
         options.put(TEST_ENABLED, String.valueOf(true));
         options.put(SKIP_TESTS, String.valueOf(false));
         options.put(LINTER_ENABLED, String.valueOf(true));
-        BLangDiagnosticLog.getInstance(context).errorCount = 0;
+        BLangDiagnosticLogHelper.getInstance(context).resetErrorCount();
         Compiler compiler = Compiler.getInstance(context);
         LSContext lsContext = new LSCompilerOperationContext
                 .CompilerOperationContextBuilder(CompileFileContextOperation.COMPILE_FILE)

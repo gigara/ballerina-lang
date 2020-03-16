@@ -135,7 +135,7 @@ public class BallerinaWorkspaceService implements WorkspaceService {
         if (!(params.getSettings() instanceof JsonObject)) {
             return;
         }
-        LSClientConfig clientConfig = GSON.fromJson((JsonObject) params.getSettings(),
+        LSClientConfig clientConfig = GSON.fromJson(((JsonObject) params.getSettings()).get("ballerina"),
                                                                     LSClientConfig.class);
         for (CompilerContext compilerContext : LSContextManager.getInstance().getAllContexts().values()) {
             CompilerOptions options = CompilerOptions.getInstance(compilerContext);

@@ -97,7 +97,9 @@ import org.wso2.ballerinalang.compiler.tree.expressions.BLangWorkerSyncSendExpr;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLAttribute;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLAttributeAccess;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLCommentLiteral;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLElementAccess;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLElementLiteral;
+import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLNavigationAccess;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLProcInsLiteral;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLQName;
 import org.wso2.ballerinalang.compiler.tree.expressions.BLangXMLQuotedString;
@@ -206,7 +208,7 @@ public class ClosureDesugar extends BLangNodeVisitor {
 
         while (pkgNode.lambdaFunctions.peek() != null) {
             BLangLambdaFunction lambdaFunction = pkgNode.lambdaFunctions.poll();
-            lambdaFunction.function = rewrite(lambdaFunction.function, lambdaFunction.cachedEnv);
+            lambdaFunction.function = rewrite(lambdaFunction.function, lambdaFunction.capturedClosureEnv);
         }
 
         // Update function parameters.
@@ -817,8 +819,8 @@ public class ClosureDesugar extends BLangNodeVisitor {
 
     @Override
     public void visit(BLangLambdaFunction bLangLambdaFunction) {
-        bLangLambdaFunction.cachedEnv = env.createClone();
-        bLangLambdaFunction.enclMapSymbols = collectClosureMapSymbols(bLangLambdaFunction.cachedEnv,
+        bLangLambdaFunction.capturedClosureEnv = env.createClone();
+        bLangLambdaFunction.enclMapSymbols = collectClosureMapSymbols(bLangLambdaFunction.capturedClosureEnv,
                 bLangLambdaFunction);
         result = bLangLambdaFunction;
     }
@@ -830,7 +832,7 @@ public class ClosureDesugar extends BLangNodeVisitor {
 
         // Recursively iterate back to the encl invokable and get all map symbols visited.
         TreeMap<Integer, BVarSymbol> enclMapSymbols = new TreeMap<>();
-        while (symbolEnv != null && symbolEnv.enclInvokable == bLangLambdaFunction.cachedEnv.enclInvokable) {
+        while (symbolEnv != null && symbolEnv.enclInvokable == bLangLambdaFunction.capturedClosureEnv.enclInvokable) {
             BVarSymbol mapSym = getMapSymbol(symbolEnv.node);
 
             // Skip non-block bodies
@@ -1180,6 +1182,21 @@ public class ClosureDesugar extends BLangNodeVisitor {
         xmlIndexAccessExpr.expr = rewriteExpr(xmlIndexAccessExpr.expr);
         result = xmlIndexAccessExpr;
     }
+
+
+    @Override
+    public void visit(BLangXMLElementAccess xmlElementAccess) {
+        xmlElementAccess.expr = rewriteExpr(xmlElementAccess.expr);
+        result = xmlElementAccess;
+    }
+
+    @Override
+    public void visit(BLangXMLNavigationAccess xmlNavigation) {
+        xmlNavigation.expr = rewriteExpr(xmlNavigation.expr);
+        xmlNavigation.childIndex = rewriteExpr(xmlNavigation.childIndex);
+        result = xmlNavigation;
+    }
+
 
     @Override
     public void visit(BLangIndexBasedAccess.BLangJSONAccessExpr jsonAccessExpr) {
