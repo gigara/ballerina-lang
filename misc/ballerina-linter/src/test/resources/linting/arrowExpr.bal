@@ -20,4 +20,13 @@ function testArrowExprWithTwoParams() {
 
     function () returns int lambda8 =
 ()=>1 + 1;
+
+    function (int, string) returns string lambda9 =
+        (x, y) => x.toString() + y;
+
+    function (int) returns int lambda10 =
+        x => x + 1;
+
+    function () returns int lambda11 =
+        () => 1 + 1;
 }

@@ -19,7 +19,7 @@ table<Employee>;
 
 function testObjectTypes() returns [ typedesc<Person>,  typedesc<object {}>] {
     typedesc<Person> a =    Person;
-    typedesc<object {}> b = object {
+    typedesc<object {}> b = object  {
         public string name = "";
     };
     return [a,b];
@@ -58,7 +58,14 @@ function testRecordTypes() returns [   typedesc < RecordA>,     typedesc <  reco
 function testRecordTypes2() returns [typedesc<RecordA>, typedesc< record{ } >] {
 typedesc  < RecordA  > a  =    RecordA ;
         typedesc   <record{}  > b=
-             record {string c; int d;};
+        record {string c; int d;};
+    return [a, b];
+}
+
+function testRecordTypes22() returns [typedesc<RecordA>, typedesc< record{ } >] {
+typedesc  < RecordA  > a  =    RecordA ;
+        typedesc   <record{}  > b=
+           record {string c; int d;};
     return [a, b];
 }
 

@@ -59,4 +59,18 @@ public type DummyObject abstract object {
          var d = 0;
         checkpanic caller->respond(res);
      }
+
+     # This is the resource function.
+    #
+       # + caller - http caller information.
+    # + request - request information.
+    resource function newResource2(http:Caller caller, http:Request request) {
+        json? payload;
+          (http:Response | error | ()) clientResponse;
+        (json | error) jsonMsg = request.getJsonPayload();
+        http:Response res = new;
+        res.setPayload("sd");
+        var d = 0;
+        checkpanic caller->respond(res);
+    }
  }

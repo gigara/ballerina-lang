@@ -5,8 +5,8 @@ type CMA error <string, record {| string message?; error cause?; anydata...; |}>
 const ERROR1 = "Some Error One";
 const ERROR2 = "Some Error Two";
 
-function testBasicErrorVariableWithMapDetails() returns [string, string, string, string, map<string>, string?, string?,
-            string?, map<any>, any, any, any] {
+function testBasicErrorVariableWithMapDetails() returns [string, string, string, string, map<string|error>, string?, string?,
+            string?, map<anydata|error>, any, any, any] {
       SMS  err1 =  error  ( "Error One",
       message="Msg One",
       detail="Detail Msg"
