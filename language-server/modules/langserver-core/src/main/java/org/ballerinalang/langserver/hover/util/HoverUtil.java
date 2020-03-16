@@ -25,6 +25,7 @@ import org.ballerinalang.model.symbols.SymbolKind;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.wso2.ballerinalang.compiler.semantics.model.Scope;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BAnnotationSymbol;
@@ -33,6 +34,7 @@ import org.wso2.ballerinalang.compiler.semantics.model.symbols.BStructureTypeSym
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BSymbol;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.BVarSymbol;
 import org.wso2.ballerinalang.compiler.util.Name;
+import org.wso2.ballerinalang.compiler.util.diagnotic.DiagnosticPos;
 import org.wso2.ballerinalang.util.Flags;
 
 import java.util.ArrayList;
@@ -44,6 +46,24 @@ import java.util.Map;
  * Utility class for Hover functionality of language server.
  */
 public class HoverUtil {
+    /**
+     * check whether given position matches the given node's position.
+     *
+     * @param nodePosition position of the current node.
+     * @param textPosition position to be matched.
+     * @return {@link Boolean} return true if position are a match else return false.
+     */
+    public static boolean isMatchingPosition(DiagnosticPos nodePosition, Position textPosition) {
+        boolean isCorrectPosition = false;
+        if (nodePosition.sLine == textPosition.getLine()
+                && nodePosition.eLine >= textPosition.getLine()
+                && nodePosition.sCol <= textPosition.getCharacter()
+                && nodePosition.eCol >= textPosition.getCharacter()) {
+            isCorrectPosition = true;
+        }
+        return isCorrectPosition;
+    }
+
     /**
      * Get Hover from documentation attachment.
      *
