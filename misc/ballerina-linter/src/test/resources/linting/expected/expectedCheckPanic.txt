@@ -1,3 +1,5 @@
+No spaces allowed before | (3,39-3,40)
+No spaces allowed before error (3,41-3,42)
 checkpanic Should indent properly (8,12-8,15)
 checkpanic Should indent properly (10,12-10,22)
 No spaces allowed before ( (10,28-10,29)
