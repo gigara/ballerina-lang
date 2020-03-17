@@ -76,6 +76,7 @@ public class LinterTest {
                 {"namedArgsExpr.bal", "expectedNamedArgsExpr.txt"},
                 {"panic.bal", "expectedPanic.txt"},
                 {"recordDestructure.bal", "expectedRecordDestructure.txt"},
+                {"recordLiteralSpreadOp.bal", "expectedRecordLiteralSpreadOp.txt"},
                 {"restArgsExpr.bal", "expectedRestArgsExpr.txt"},
                 {"return.bal", "expectedReturn.txt"},
                 {"serviceConstruct.bal", "expectedServiceConstruct.txt"},
