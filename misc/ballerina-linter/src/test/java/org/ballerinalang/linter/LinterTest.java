@@ -71,6 +71,7 @@ public class LinterTest {
                 {"if.bal", "expectedIf.txt"},
                 {"import.bal", "expectedImport.txt"},
                 {"invocation.bal", "expectedInvocation.txt"},
+                {"letExpr.bal", "expectedLetExpr.txt"},
                 {"lock.bal", "expectedLock.txt"},
                 {"matchStmt.bal", "expectedMatchStmt.txt"},
                 {"namedArgsExpr.bal", "expectedNamedArgsExpr.txt"},
