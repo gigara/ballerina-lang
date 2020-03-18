@@ -121,6 +121,8 @@ public class LSCompilerUtil {
         options.put(PROJECT_DIR, sourceRoot);
         boolean isExperimentalEnabled = LSClientConfigHolder.getInstance().getConfig().isAllowExperimental();
         options.put(CompilerOptionName.EXPERIMENTAL_FEATURES_ENABLED, Boolean.toString(isExperimentalEnabled));
+        boolean isLinterEnabled = LSClientConfigHolder.getInstance().getConfig().isLinterEnabled();
+        options.put(CompilerOptionName.LINTER_ENABLED, Boolean.toString(isLinterEnabled));
 
         if (null == compilerPhase) {
             throw new AssertionError("Compiler Phase can not be null.");
