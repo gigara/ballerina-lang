@@ -135,13 +135,19 @@ public class BallerinaWorkspaceService implements WorkspaceService {
         if (!(params.getSettings() instanceof JsonObject)) {
             return;
         }
-        LSClientConfig clientConfig = GSON.fromJson(((JsonObject) params.getSettings()).get("ballerina"),
-                                                                    LSClientConfig.class);
-        for (CompilerContext compilerContext : LSContextManager.getInstance().getAllContexts().values()) {
-            CompilerOptions options = CompilerOptions.getInstance(compilerContext);
-            options.put(LINTER_ENABLED, Boolean.toString(clientConfig.isLinterEnabled()));
+        JsonObject settings = (JsonObject) params.getSettings();
+        if (settings.get("ballerina") != null) {
+            LSClientConfig clientConfig = GSON.fromJson(settings.get("ballerina"),
+                    LSClientConfig.class);
+            configHolder.updateConfig(clientConfig);
+            for (CompilerContext compilerContext : LSContextManager.getInstance().getAllContexts().values()) {
+                CompilerOptions options = CompilerOptions.getInstance(compilerContext);
+                options.put(LINTER_ENABLED, Boolean.toString(clientConfig.isLinterEnabled()));
+            }
+        } else {
+            // To support old plugins versions
+            configHolder.updateConfig(GSON.fromJson(settings, LSClientConfig.class));
         }
-        configHolder.updateConfig(clientConfig);
     }
 
     @Override
