@@ -148,10 +148,6 @@ public class LSContextManager {
         return context;
     }
 
-    public Map<String, CompilerContext> getAllContexts() {
-        return contextMap;
-    }
-
     private static void clearCurrentPackage(@Nullable PackageID packageID, CompilerContext context) {
         LSPackageCache instance = LSPackageCache.getInstance(context);
         //Remove current package from cache

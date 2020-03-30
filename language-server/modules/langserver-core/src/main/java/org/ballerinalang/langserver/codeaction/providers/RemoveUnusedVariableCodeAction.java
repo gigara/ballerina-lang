@@ -120,7 +120,7 @@ public class RemoveUnusedVariableCodeAction extends AbstractCodeActionProvider {
             LSDocumentIdentifier lsDocument = docManager.getLSDocument(CommonUtil.getPathFromURI(uri).get());
             context.put(ReferencesKeys.OFFSET_CURSOR_N_TRY_NEXT_BEST, true);
             context.put(ReferencesKeys.DO_NOT_SKIP_NULL_SYMBOLS, true);
-            Position afterAliasPos = offsetInvocation(diagnosedContent, position);
+            Position afterAliasPos = offsetPositionToInvocation(diagnosedContent, position);
             SymbolReferencesModel.Reference refAtCursor = getReferenceAtCursor(context, lsDocument, afterAliasPos);
             node = refAtCursor != null ? refAtCursor.getbLangNode() : null;
         } catch (WorkspaceDocumentException | CompilationFailedException ignored) {
