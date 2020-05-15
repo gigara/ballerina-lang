@@ -36,7 +36,7 @@ public abstract class STNode {
     protected static final STNode[] EMPTY_BUCKET = new STNode[0];
     // The following fields allow us to navigate the tree without the knowledge of the particular tree nodes
     protected int bucketCount;
-    protected STNode[] childBuckets = EMPTY_BUCKET;
+    public STNode[] childBuckets = EMPTY_BUCKET;
 
     STNode(SyntaxKind kind) {
         this.kind = kind;

@@ -31,8 +31,8 @@ import io.ballerinalang.compiler.syntax.tree.Token;
  */
 public class STToken extends STNode {
 
-    public final STNode leadingTrivia;
-    public final STNode trailingTrivia;
+    public STNode leadingTrivia;
+    public STNode trailingTrivia;
 
     // Number of preceding tokens whose lookahead reached lexeme
     public final int lookback = 1; // TODO These is a default number
