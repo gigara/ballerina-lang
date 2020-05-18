@@ -1,60 +1,44 @@
 package org.ballerinalang.langserver.compiler.gigaFormat;
 
-import io.ballerinalang.compiler.internal.parser.tree.STModulePartNode;
-import io.ballerinalang.compiler.internal.parser.tree.STNode;
-import io.ballerinalang.compiler.internal.parser.tree.STNodeList;
 import io.ballerinalang.compiler.syntax.tree.*;
+import org.wso2.ballerinalang.compiler.tree.BLangNode;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class FormattingTransformer extends NodeTransformer<Node> {
-    Class cls;
+    private Stack<Node> otherTopLevelNodes = new Stack<>();
 
-    public void accept(ModulePartNode modulePart) {
-        STModulePartNode compNode = (STModulePartNode) modulePart.internalNode();
-        FormattingNodeTree nodeTree = new FormattingNodeTree();
-        cls = nodeTree.getClass();
-
-        STNodeList imports = (STNodeList) compNode.imports;
-        STNodeList members = (STNodeList) compNode.members;
-
-        STNode[] childBuckets = members.childBuckets;
-        visit(childBuckets);
-
-    }
-
-    private void visit(STNode[] childBuckets) {
-        if (childBuckets != null) {
-            for (STNode childBucket : childBuckets) {
-                if (childBucket != null) {
-                    Method methodcall1 = null;
-                    try {
-                        methodcall1 = cls.getDeclaredMethod("visit", childBucket.getClass());
-                        methodcall1.invoke(cls.newInstance(), childBucket);
-                        visit(childBucket.childBuckets);
-                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
-                            InstantiationException e) {
-                        // TODO: Handle exception properly
-                    }
-                }
-            }
+    public List<Node> accept(Node node) {
+        Node visitNode = node.apply(this);
+        List<Node> nodes = new ArrayList<>();
+        while (!otherTopLevelNodes.empty()) {
+            nodes.add(otherTopLevelNodes.pop());
         }
+        nodes.add(visitNode);
+        return nodes;
     }
 
     @Override
     protected Node transformSyntaxNode(Node node) {
-        return null;
+        return node;
     }
 
     @Override
     public Node transform(ModulePartNode modulePartNode) {
-        return super.transform(modulePartNode);
+        NodeList<ImportDeclarationNode> imports = modulePartNode.imports();
+        NodeList<ModuleMemberDeclarationNode> members = formatNodeList(modulePartNode.members());
+        Token eofToken = modulePartNode.eofToken();
+        return modulePartNode.modify(
+                imports,
+                members,
+                eofToken);
     }
 
     @Override
     public Node transform(FunctionDefinitionNode functionDefinitionNode) {
-
+        functionDefinitionNode.functionKeyword();
         return super.transform(functionDefinitionNode);
     }
 
@@ -616,5 +600,12 @@ public class FormattingTransformer extends NodeTransformer<Node> {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
+    }
+
+    protected <T extends Node> NodeList<T> formatNodeList(NodeList<T> nodeList) {
+        for (T t : nodeList) {
+            t.apply(this);
+        }
+        return nodeList;
     }
 }
