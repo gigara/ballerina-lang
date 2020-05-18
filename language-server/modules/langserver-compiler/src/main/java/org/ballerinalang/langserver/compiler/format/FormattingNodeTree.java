@@ -512,35 +512,46 @@ public class FormattingNodeTree {
             }
 
             // If this is a else block continue to following.
-            if (node.has(FormattingConstants.WS) && node.getAsJsonArray(FormattingConstants.WS).get(0).getAsJsonObject()
-                    .get(FormattingConstants.TEXT).getAsString().equals(Tokens.ELSE)) {
-
+            if (node.has(FormattingConstants.WS)) {
                 JsonArray ws = node.getAsJsonArray(FormattingConstants.WS);
 
-                // Whitespaces for else block should indent as to the parent's start column.
+                // Whitespaces for block should indent as to the parent's start column.
                 String indentation = this.getWhiteSpaces(formatConfig.get(FormattingConstants.START_COLUMN).getAsInt());
 
-                // Preserve available line breaks.
-                this.preserveHeight(ws, indentation, false);
+                if (node.getAsJsonArray(FormattingConstants.WS).get(0).getAsJsonObject()
+                        .get(FormattingConstants.TEXT).getAsString().equals(Tokens.ELSE)) {
 
-                // Iterate and format whitespaces for else node.
-                for (JsonElement wsItem : ws) {
-                    JsonObject currentWS = wsItem.getAsJsonObject();
-                    if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
-                        String text = currentWS.get(FormattingConstants.TEXT).getAsString();
-                        if (text.equals(Tokens.ELSE)) {
-                            currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
-                        } else if (text.equals(Tokens.OPENING_BRACE)) {
-                            currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
-                        } else if (text.equals(Tokens.CLOSING_BRACE)) {
-                            if (node.getAsJsonArray(FormattingConstants.STATEMENTS).size() <= 0) {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.NEW_LINE +
-                                        indentation + FormattingConstants.NEW_LINE + indentation);
-                            } else {
-                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.NEW_LINE +
-                                        indentation);
+                    // Preserve available line breaks.
+                    this.preserveHeight(ws, indentation, false);
+
+                    // Iterate and format whitespaces for else node.
+                    for (JsonElement wsItem : ws) {
+                        JsonObject currentWS = wsItem.getAsJsonObject();
+                        if (this.noHeightAvailable(currentWS.get(FormattingConstants.WS).getAsString())) {
+                            String text = currentWS.get(FormattingConstants.TEXT).getAsString();
+                            if (text.equals(Tokens.ELSE)) {
+                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
+                            } else if (text.equals(Tokens.OPENING_BRACE)) {
+                                currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
+                            } else if (text.equals(Tokens.CLOSING_BRACE)) {
+                                if (node.getAsJsonArray(FormattingConstants.STATEMENTS).size() <= 0) {
+                                    currentWS.addProperty(FormattingConstants.WS, FormattingConstants.NEW_LINE +
+                                            indentation + FormattingConstants.NEW_LINE + indentation);
+                                } else {
+                                    currentWS.addProperty(FormattingConstants.WS, FormattingConstants.NEW_LINE +
+                                            indentation);
+                                }
                             }
                         }
+                    }
+                } else {
+                    // is this is a empty block
+                    this.preserveHeight(ws, indentation, true);
+                    for (JsonElement wsItem : ws) {
+                        JsonObject currentWS = wsItem.getAsJsonObject();
+
+                        currentWS.addProperty(FormattingConstants.WS, FormattingConstants.NEW_LINE +
+                                indentation + FormattingConstants.SPACE_TAB);
                     }
                 }
             }
@@ -576,6 +587,8 @@ public class FormattingNodeTree {
                         } else {
                             currentWS.addProperty(FormattingConstants.WS, FormattingConstants.EMPTY_SPACE);
                         }
+                    } else if (text.equals(Tokens.ELSE)) {
+                        currentWS.addProperty(FormattingConstants.WS, FormattingConstants.SINGLE_SPACE);
                     }
                 }
             }

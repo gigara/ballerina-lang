@@ -172,6 +172,7 @@ public class FormattingTest {
                 {"expectedRecordLiteralSpreadOp.bal", "recordLiteralSpreadOp.bal"},
                 {"expectedLetExpr.bal", "letExpr.bal"},
                 {"expectedStreamingQueries.bal", "streamingQueries.bal"},
+                {"expectedBlockStatement.bal", "blockStatement.bal"},
         };
     }
 
