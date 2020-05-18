@@ -333,7 +333,7 @@ public class STNodeFactory extends STAbstractNodeFactory {
             STNode typeDescriptor,
             STNode variableName,
             STNode inKeyword,
-            STNode ActionOrExpressionNode,
+            STNode actionOrExpressionNode,
             STNode blockStatement) {
 
         return new STForEachStatementNode(
@@ -341,7 +341,7 @@ public class STNodeFactory extends STAbstractNodeFactory {
                 typeDescriptor,
                 variableName,
                 inKeyword,
-                ActionOrExpressionNode,
+                actionOrExpressionNode,
                 blockStatement);
     }
 
@@ -1014,10 +1014,12 @@ public class STNodeFactory extends STAbstractNodeFactory {
     }
 
     public static STNode createTrapExpressionNode(
+            SyntaxKind kind,
             STNode trapKeyword,
             STNode expression) {
 
         return new STTrapExpressionNode(
+                kind,
                 trapKeyword,
                 expression);
     }
@@ -1315,6 +1317,37 @@ public class STNodeFactory extends STAbstractNodeFactory {
                 piEnd);
     }
 
+    public static STNode createTableTypeDescriptorNode(
+            STNode tableKeywordToken,
+            STNode rowTypeParameterNode,
+            STNode keyConstraintNode) {
+
+        return new STTableTypeDescriptorNode(
+                tableKeywordToken,
+                rowTypeParameterNode,
+                keyConstraintNode);
+    }
+
+    public static STNode createTypeParameterNode(
+            STNode ltToken,
+            STNode typeNode,
+            STNode gtToken) {
+
+        return new STTypeParameterNode(
+                ltToken,
+                typeNode,
+                gtToken);
+    }
+
+    public static STNode createKeyTypeConstraintNode(
+            STNode keyKeywordToken,
+            STNode typeParameterNode) {
+
+        return new STKeyTypeConstraintNode(
+                keyKeywordToken,
+                typeParameterNode);
+    }
+
     public static STNode createFunctionTypeDescriptorNode(
             STNode functionKeyword,
             STNode functionSignature) {
@@ -1322,19 +1355,6 @@ public class STNodeFactory extends STAbstractNodeFactory {
         return new STFunctionTypeDescriptorNode(
                 functionKeyword,
                 functionSignature);
-    }
-
-    public static STNode createAnonymousFunctionExpressionNode(
-            STNode annotations,
-            STNode functionKeyword,
-            STNode functionSignature,
-            STNode functionBody) {
-
-        return new STAnonymousFunctionExpressionNode(
-                annotations,
-                functionKeyword,
-                functionSignature,
-                functionBody);
     }
 
     public static STNode createFunctionSignatureNode(
@@ -1348,6 +1368,205 @@ public class STNodeFactory extends STAbstractNodeFactory {
                 parameters,
                 closeParenToken,
                 returnTypeDesc);
+    }
+
+    public static STNode createExplicitAnonymousFunctionExpressionNode(
+            STNode annotations,
+            STNode functionKeyword,
+            STNode functionSignature,
+            STNode functionBody) {
+
+        return new STExplicitAnonymousFunctionExpressionNode(
+                annotations,
+                functionKeyword,
+                functionSignature,
+                functionBody);
+    }
+
+    public static STNode createExpressionFunctionBodyNode(
+            STNode rightDoubleArrow,
+            STNode expression) {
+
+        return new STExpressionFunctionBodyNode(
+                rightDoubleArrow,
+                expression);
+    }
+
+    public static STNode createTupleTypeDescriptorNode(
+            STNode openBracketToken,
+            STNode memberTypeDesc,
+            STNode restTypeDesc,
+            STNode closeBracketToken) {
+
+        return new STTupleTypeDescriptorNode(
+                openBracketToken,
+                memberTypeDesc,
+                restTypeDesc,
+                closeBracketToken);
+    }
+
+    public static STNode createParenthesisedTypeDescriptorNode(
+            STNode openParenToken,
+            STNode typedesc,
+            STNode closeParenToken) {
+
+        return new STParenthesisedTypeDescriptorNode(
+                openParenToken,
+                typedesc,
+                closeParenToken);
+    }
+
+    public static STNode createExplicitNewExpressionNode(
+            STNode NewKeyword,
+            STNode TypeDescriptor,
+            STNode ParenthesizedArgList) {
+
+        return new STExplicitNewExpressionNode(
+                NewKeyword,
+                TypeDescriptor,
+                ParenthesizedArgList);
+    }
+
+    public static STNode createImplicitNewExpressionNode(
+            STNode NewKeyword,
+            STNode ParenthesizedArgList) {
+
+        return new STImplicitNewExpressionNode(
+                NewKeyword,
+                ParenthesizedArgList);
+    }
+
+    public static STNode createParenthesizedArgList(
+            STNode openParenToken,
+            STNode arguments,
+            STNode closeParenToken) {
+
+        return new STParenthesizedArgList(
+                openParenToken,
+                arguments,
+                closeParenToken);
+    }
+
+    public static STNode createQueryConstructTypeNode(
+            STNode tableKeyword,
+            STNode KeySpecifier) {
+
+        return new STQueryConstructTypeNode(
+                tableKeyword,
+                KeySpecifier);
+    }
+
+    public static STNode createFromClauseNode(
+            STNode fromKeyword,
+            STNode typeName,
+            STNode variableName,
+            STNode inKeyword,
+            STNode expression) {
+
+        return new STFromClauseNode(
+                fromKeyword,
+                typeName,
+                variableName,
+                inKeyword,
+                expression);
+    }
+
+    public static STNode createWhereClauseNode(
+            STNode whereKeyword,
+            STNode expression) {
+
+        return new STWhereClauseNode(
+                whereKeyword,
+                expression);
+    }
+
+    public static STNode createLetClauseNode(
+            STNode letKeyword,
+            STNode letVarDeclarations) {
+
+        return new STLetClauseNode(
+                letKeyword,
+                letVarDeclarations);
+    }
+
+    public static STNode createQueryPipelineNode(
+            STNode fromClause,
+            STNode intermediateClauses) {
+
+        return new STQueryPipelineNode(
+                fromClause,
+                intermediateClauses);
+    }
+
+    public static STNode createSelectClauseNode(
+            STNode selectKeyword,
+            STNode expression) {
+
+        return new STSelectClauseNode(
+                selectKeyword,
+                expression);
+    }
+
+    public static STNode createQueryExpressionNode(
+            STNode queryConstructType,
+            STNode queryPipeline,
+            STNode selectClause) {
+
+        return new STQueryExpressionNode(
+                queryConstructType,
+                queryPipeline,
+                selectClause);
+    }
+
+    public static STNode createIntersectionTypeDescriptorNode(
+            STNode leftTypeDesc,
+            STNode bitwiseAndToken,
+            STNode rightTypeDesc) {
+
+        return new STIntersectionTypeDescriptorNode(
+                leftTypeDesc,
+                bitwiseAndToken,
+                rightTypeDesc);
+    }
+
+    public static STNode createImplicitAnonymousFunctionParameters(
+            STNode openParenToken,
+            STNode parameters,
+            STNode closeParenToken) {
+
+        return new STImplicitAnonymousFunctionParameters(
+                openParenToken,
+                parameters,
+                closeParenToken);
+    }
+
+    public static STNode createImplicitAnonymousFunctionExpressionNode(
+            STNode params,
+            STNode rightDoubleArrow,
+            STNode expression) {
+
+        return new STImplicitAnonymousFunctionExpressionNode(
+                params,
+                rightDoubleArrow,
+                expression);
+    }
+
+    public static STNode createStartActionNode(
+            STNode startKeyword,
+            STNode expression) {
+
+        return new STStartActionNode(
+                startKeyword,
+                expression);
+    }
+
+    public static STNode createFlushActionNode(
+            STNode flushKeyword,
+            STNode peerWorker) {
+
+        return new STFlushActionNode(
+                flushKeyword,
+                peerWorker);
     }
 }
 
