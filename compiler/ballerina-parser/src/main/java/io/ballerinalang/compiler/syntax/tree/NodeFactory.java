@@ -2089,12 +2089,15 @@ public abstract class NodeFactory extends AbstractNodeFactory {
     }
 
     public static StartActionNode createStartActionNode(
+            NodeList<AnnotationNode> annotations,
             Token startKeyword,
             ExpressionNode expression) {
+        Objects.requireNonNull(annotations, "annotations must not be null");
         Objects.requireNonNull(startKeyword, "startKeyword must not be null");
         Objects.requireNonNull(expression, "expression must not be null");
 
         STNode stStartActionNode = STNodeFactory.createStartActionNode(
+                annotations.underlyingListNode().internalNode(),
                 startKeyword.internalNode(),
                 expression.internalNode());
         return stStartActionNode.createUnlinkedFacade();
@@ -2110,6 +2113,15 @@ public abstract class NodeFactory extends AbstractNodeFactory {
                 flushKeyword.internalNode(),
                 peerWorker.internalNode());
         return stFlushActionNode.createUnlinkedFacade();
+    }
+
+    public static SingletonTypeDescriptorNode createSingletonTypeDescriptorNode(
+            ExpressionNode simpleContExprNode) {
+        Objects.requireNonNull(simpleContExprNode, "simpleContExprNode must not be null");
+
+        STNode stSingletonTypeDescriptorNode = STNodeFactory.createSingletonTypeDescriptorNode(
+                simpleContExprNode.internalNode());
+        return stSingletonTypeDescriptorNode.createUnlinkedFacade();
     }
 
     public static FunctionDeclarationNode createFunctionDeclarationNode(
@@ -2228,17 +2240,86 @@ public abstract class NodeFactory extends AbstractNodeFactory {
 
     public static ReceiveFieldsNode createReceiveFieldsNode(
             Token openBrace,
-            SeparatedNodeList<NameReferenceNode> receiveField,
+            SeparatedNodeList<NameReferenceNode> receiveFields,
             Token closeBrace) {
         Objects.requireNonNull(openBrace, "openBrace must not be null");
-        Objects.requireNonNull(receiveField, "receiveField must not be null");
+        Objects.requireNonNull(receiveFields, "receiveFields must not be null");
         Objects.requireNonNull(closeBrace, "closeBrace must not be null");
 
         STNode stReceiveFieldsNode = STNodeFactory.createReceiveFieldsNode(
                 openBrace.internalNode(),
-                receiveField.underlyingListNode().internalNode(),
+                receiveFields.underlyingListNode().internalNode(),
                 closeBrace.internalNode());
         return stReceiveFieldsNode.createUnlinkedFacade();
+    }
+
+    public static DoubleGTTokenNode createDoubleGTTokenNode(
+            Token openGTToken,
+            Token endGTToken) {
+        Objects.requireNonNull(openGTToken, "openGTToken must not be null");
+        Objects.requireNonNull(endGTToken, "endGTToken must not be null");
+
+        STNode stDoubleGTTokenNode = STNodeFactory.createDoubleGTTokenNode(
+                openGTToken.internalNode(),
+                endGTToken.internalNode());
+        return stDoubleGTTokenNode.createUnlinkedFacade();
+    }
+
+    public static TrippleGTTokenNode createTrippleGTTokenNode(
+            Token openGTToken,
+            Token middleGTToken,
+            Token endGTToken) {
+        Objects.requireNonNull(openGTToken, "openGTToken must not be null");
+        Objects.requireNonNull(middleGTToken, "middleGTToken must not be null");
+        Objects.requireNonNull(endGTToken, "endGTToken must not be null");
+
+        STNode stTrippleGTTokenNode = STNodeFactory.createTrippleGTTokenNode(
+                openGTToken.internalNode(),
+                middleGTToken.internalNode(),
+                endGTToken.internalNode());
+        return stTrippleGTTokenNode.createUnlinkedFacade();
+    }
+
+    public static WaitActionNode createWaitActionNode(
+            Token waitKeyword,
+            Node waitFutureExpr) {
+        Objects.requireNonNull(waitKeyword, "waitKeyword must not be null");
+        Objects.requireNonNull(waitFutureExpr, "waitFutureExpr must not be null");
+
+        STNode stWaitActionNode = STNodeFactory.createWaitActionNode(
+                waitKeyword.internalNode(),
+                waitFutureExpr.internalNode());
+        return stWaitActionNode.createUnlinkedFacade();
+    }
+
+    public static WaitFieldsListNode createWaitFieldsListNode(
+            Token openBrace,
+            SeparatedNodeList<Node> waitFields,
+            Token closeBrace) {
+        Objects.requireNonNull(openBrace, "openBrace must not be null");
+        Objects.requireNonNull(waitFields, "waitFields must not be null");
+        Objects.requireNonNull(closeBrace, "closeBrace must not be null");
+
+        STNode stWaitFieldsListNode = STNodeFactory.createWaitFieldsListNode(
+                openBrace.internalNode(),
+                waitFields.underlyingListNode().internalNode(),
+                closeBrace.internalNode());
+        return stWaitFieldsListNode.createUnlinkedFacade();
+    }
+
+    public static WaitFieldNode createWaitFieldNode(
+            NameReferenceNode fieldName,
+            Token colon,
+            ExpressionNode waitFutureExpr) {
+        Objects.requireNonNull(fieldName, "fieldName must not be null");
+        Objects.requireNonNull(colon, "colon must not be null");
+        Objects.requireNonNull(waitFutureExpr, "waitFutureExpr must not be null");
+
+        STNode stWaitFieldNode = STNodeFactory.createWaitFieldNode(
+                fieldName.internalNode(),
+                colon.internalNode(),
+                waitFutureExpr.internalNode());
+        return stWaitFieldNode.createUnlinkedFacade();
     }
 }
 

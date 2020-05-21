@@ -24,7 +24,7 @@ import java.util.function.Function;
 
 /**
  * Produces a new tree by doing a depth-first traversal of the tree.
- *
+ * <p>
  * This is a generated class.
  *
  * @since 2.0.0
@@ -2103,11 +2103,14 @@ public abstract class TreeModifier extends NodeTransformer<Node> {
     @Override
     public StartActionNode transform(
             StartActionNode startActionNode) {
+        NodeList<AnnotationNode> annotations =
+                modifyNodeList(startActionNode.annotations());
         Token startKeyword =
                 modifyToken(startActionNode.startKeyword());
         ExpressionNode expression =
                 modifyNode(startActionNode.expression());
         return startActionNode.modify(
+                annotations,
                 startKeyword,
                 expression);
     }
@@ -2122,6 +2125,15 @@ public abstract class TreeModifier extends NodeTransformer<Node> {
         return flushActionNode.modify(
                 flushKeyword,
                 peerWorker);
+    }
+
+    @Override
+    public SingletonTypeDescriptorNode transform(
+            SingletonTypeDescriptorNode singletonTypeDescriptorNode) {
+        ExpressionNode simpleContExprNode =
+                modifyNode(singletonTypeDescriptorNode.simpleContExprNode());
+        return singletonTypeDescriptorNode.modify(
+                simpleContExprNode);
     }
 
     @Override
@@ -2246,14 +2258,83 @@ public abstract class TreeModifier extends NodeTransformer<Node> {
             ReceiveFieldsNode receiveFieldsNode) {
         Token openBrace =
                 modifyToken(receiveFieldsNode.openBrace());
-        SeparatedNodeList<NameReferenceNode> receiveField =
-                modifySeparatedNodeList(receiveFieldsNode.receiveField());
+        SeparatedNodeList<NameReferenceNode> receiveFields =
+                modifySeparatedNodeList(receiveFieldsNode.receiveFields());
         Token closeBrace =
                 modifyToken(receiveFieldsNode.closeBrace());
         return receiveFieldsNode.modify(
                 openBrace,
-                receiveField,
+                receiveFields,
                 closeBrace);
+    }
+
+    @Override
+    public DoubleGTTokenNode transform(
+            DoubleGTTokenNode doubleGTTokenNode) {
+        Token openGTToken =
+                modifyToken(doubleGTTokenNode.openGTToken());
+        Token endGTToken =
+                modifyToken(doubleGTTokenNode.endGTToken());
+        return doubleGTTokenNode.modify(
+                openGTToken,
+                endGTToken);
+    }
+
+    @Override
+    public TrippleGTTokenNode transform(
+            TrippleGTTokenNode trippleGTTokenNode) {
+        Token openGTToken =
+                modifyToken(trippleGTTokenNode.openGTToken());
+        Token middleGTToken =
+                modifyToken(trippleGTTokenNode.middleGTToken());
+        Token endGTToken =
+                modifyToken(trippleGTTokenNode.endGTToken());
+        return trippleGTTokenNode.modify(
+                openGTToken,
+                middleGTToken,
+                endGTToken);
+    }
+
+    @Override
+    public WaitActionNode transform(
+            WaitActionNode waitActionNode) {
+        Token waitKeyword =
+                modifyToken(waitActionNode.waitKeyword());
+        Node waitFutureExpr =
+                modifyNode(waitActionNode.waitFutureExpr());
+        return waitActionNode.modify(
+                waitKeyword,
+                waitFutureExpr);
+    }
+
+    @Override
+    public WaitFieldsListNode transform(
+            WaitFieldsListNode waitFieldsListNode) {
+        Token openBrace =
+                modifyToken(waitFieldsListNode.openBrace());
+        SeparatedNodeList<Node> waitFields =
+                modifySeparatedNodeList(waitFieldsListNode.waitFields());
+        Token closeBrace =
+                modifyToken(waitFieldsListNode.closeBrace());
+        return waitFieldsListNode.modify(
+                openBrace,
+                waitFields,
+                closeBrace);
+    }
+
+    @Override
+    public WaitFieldNode transform(
+            WaitFieldNode waitFieldNode) {
+        NameReferenceNode fieldName =
+                modifyNode(waitFieldNode.fieldName());
+        Token colon =
+                modifyToken(waitFieldNode.colon());
+        ExpressionNode waitFutureExpr =
+                modifyNode(waitFieldNode.waitFutureExpr());
+        return waitFieldNode.modify(
+                fieldName,
+                colon,
+                waitFutureExpr);
     }
 
     // Tokens
@@ -2303,8 +2384,7 @@ public abstract class TreeModifier extends NodeTransformer<Node> {
             return nodeList;
         }
 
-        STNode stNodeList = STNodeFactory.createNodeList(java.util.Arrays.asList(newSTNodes));
-        return nodeListCreator.apply(stNodeList.createUnlinkedFacade());
+        return nodeListCreator.apply(STNodeFactory.createNodeList(newSTNodes).createUnlinkedFacade());
     }
 
     protected <T extends Token> T modifyToken(T token) {

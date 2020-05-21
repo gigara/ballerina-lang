@@ -163,6 +163,23 @@ public enum ParserRuleContext {
     RECEIVE_FIELD_END("receive-field-end"),
     RECEIVE_FIELD("receive-field"),
     RECEIVE_FIELD_NAME("receive-field-name"),
+    INFER_PARAM_END_OR_PARENTHESIS_END("infer-param-end-or-parenthesis-end"),
+    LIST_CONSTRUCTOR_MEMBER_END("list-constructor-member-end"),
+    TYPED_BINDING_PATTERN("typed-binding-pattern"),
+    BINDING_PATTERN("binding-pattern"),
+    CAPTURE_BINDING_PATTERN("capture-binding-pattern"),
+    REST_BINDING_PATTERN("rest-binding-pattern"),
+    LIST_BINDING_PATTERN("list-binding-pattern"),
+    LIST_BINDING_PATTERN_CONTENTS("list-binding-pattern-content"),
+    LIST_BINDING_PATTERN_END_OR_CONTINUE("list-binding-pattern-end-or-continue"),
+    WAIT_KEYWORD_RHS("wait-keyword-rhs"),
+    MULTI_WAIT_FIELDS("multi-wait-fields"),
+    WAIT_FIELD_NAME("wait-field-name"),
+    WAIT_FIELD_NAME_RHS("wait-field-name-rhs"),
+    WAIT_FIELD_END("wait-field-end"),
+    WAIT_FUTURE_EXPR_END("wait-future-expr-end"),
+    ALTERNATE_WAIT_EXPRS("alternate-wait-exprs"),
+    ALTERNATE_WAIT_EXPR_LIST_END("alternate-wait-expr-lit-end"),
 
     // Statements
     STATEMENT("statement"),
@@ -195,15 +212,6 @@ public enum ParserRuleContext {
     NAMED_WORKER_DECL("named-worker-decl"),
     FORK_STMT("fork-stmt"),
     FOREACH_STMT("foreach-stmt"),
-    INFER_PARAM_END_OR_PARENTHESIS_END("infer-param-end-or-parenthesis-end"),
-    LIST_CONSTRUCTOR_MEMBER_END("list-constructor-member-end"),
-    TYPED_BINDING_PATTERN("typed-binding-pattern"),
-    BINDING_PATTERN("binding-pattern"),
-    CAPTURE_BINDING_PATTERN("capture-binding-pattern"),
-    REST_BINDING_PATTERN("rest-binding-pattern"),
-    LIST_BINDING_PATTERN("list-binding-pattern"),
-    LIST_BINDING_PATTERN_CONTENTS("list-binding-pattern-content"),
-    LIST_BINDING_PATTERN_END_OR_CONTINUE("list-binding-pattern-end-or-continue"),
 
     // Keywords
     RETURNS_KEYWORD("returns"),
@@ -262,6 +270,7 @@ public enum ParserRuleContext {
     START_KEYWORD("start"),
     FLUSH_KEYWORD("flush"),
     DEFAULT_KEYWORD("default"),
+    WAIT_KEYWORD("wait"),
 
     // Syntax tokens
     OPEN_PARENTHESIS("("),
@@ -294,6 +303,8 @@ public enum ParserRuleContext {
     PARENTHESISED_TYPE_DESC_START("("),
     BITWISE_AND_OPERATOR("&"),
     EXPR_FUNC_BODY_START("=>"),
+    PLUS_TOKEN("+"),
+    MINUS_TOKEN("-"),
     TUPLE_TYPE_DESC_START("["),
     SYNC_SEND_TOKEN("->>"),
     LEFT_ARROW_TOKEN("<-"),
@@ -364,7 +375,6 @@ public enum ParserRuleContext {
     TABLE_CONSTRUCTOR_OR_QUERY_RHS("table-constructor-or-query-rhs"),
     QUERY_EXPRESSION("query-expr"),
     QUERY_EXPRESSION_RHS("query-expr-rhs"),
-    START_ACTION("start-action"),
 
     // Contexts that expect a type
     TYPE_DESC_IN_ANNOTATION_DECL("type-desc-annotation-descl"),
@@ -419,6 +429,7 @@ public enum ParserRuleContext {
     KEY_CONSTRAINTS_RHS("key-constraints-rhs"),
     ROW_TYPE_PARAM("row-type-param"),
     TABLE_TYPE_DESC_RHS("table-type-desc-rhs"),
+    SIGNED_INT_OR_FLOAT_RHS("signed-int-or-float-rhs"),
     ;
 
     private String value;

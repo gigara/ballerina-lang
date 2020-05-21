@@ -82,6 +82,7 @@ public enum SyntaxKind {
     START_KEYWORD(228, "start"),
     FLUSH_KEYWORD(229, "flush"),
     DEFAULT_KEYWORD(230, "default"),
+    WAIT_KEYWORD(231, "wait"),
 
     // Type keywords
     INT_KEYWORD(250, "int"),
@@ -157,6 +158,8 @@ public enum SyntaxKind {
     XML_COMMENT_END_TOKEN(578, "-->"),
     SYNC_SEND_TOKEN(579, "->>"),
     LEFT_ARROW_TOKEN(580, "<-"),
+    DOUBLE_DOT_LT_TOKEN(580, "..<"),
+    DOUBLE_LT_TOKEN(581, "<<"),
 
     IDENTIFIER_TOKEN(1000),
     STRING_LITERAL(1001),
@@ -266,6 +269,7 @@ public enum SyntaxKind {
     READONLY_TYPE_DESC(2028),
     DISTINCT_TYPE_DESC(2029),
     INTERSECTION_TYPE_DESC(2030),
+    SINGLETON_TYPE_DESC(2031),
 
     // Actions
     REMOTE_METHOD_CALL_ACTION(2500),
@@ -276,7 +280,8 @@ public enum SyntaxKind {
     FLUSH_ACTION(2505),
     ASYNC_SEND_ACTION(2506),
     SYNC_SEND_ACTION(2507),
-    RECEIVE_SEND_ACTION(2508),
+    RECEIVE_ACTION(2508),
+    WAIT_ACTION(2509),
 
     // Other
     RETURN_TYPE_DESCRIPTOR(3000),
@@ -335,6 +340,10 @@ public enum SyntaxKind {
     REST_BINDING_PATTERN(3053),
     LIST_BINDING_PATTERN(3054),
     RECEIVE_FIELDS(3055),
+    DOUBLE_GT_TOKEN(3056, ">>"),
+    TRIPPLE_GT_TOKEN(3057, ">>>"),
+    WAIT_FIELDS_LIST(3058),
+    WAIT_FIELD(3059),
 
     // XML
     XML_ELEMENT(4000),
