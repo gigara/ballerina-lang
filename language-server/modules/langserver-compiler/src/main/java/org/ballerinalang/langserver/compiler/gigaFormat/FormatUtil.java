@@ -17,6 +17,7 @@
  */
 package org.ballerinalang.langserver.compiler.gigaFormat;
 
+import io.ballerinalang.compiler.syntax.tree.ModulePartNode;
 import io.ballerinalang.compiler.syntax.tree.SyntaxTree;
 import io.ballerinalang.compiler.text.TextDocument;
 import io.ballerinalang.compiler.text.TextDocuments;
@@ -44,12 +45,14 @@ public class FormatUtil {
         TextDocument textDocument = TextDocuments.from(content);
         SyntaxTree syntaxTree = SyntaxTree.from(textDocument);
         FormattingTransformer formattingTransformer = new FormattingTransformer();
-        formattingTransformer.accept(syntaxTree.modulePart());
+
+        ModulePartNode newModulePart = formattingTransformer.transform(syntaxTree.modulePart());
+        SyntaxTree newSyntaxTree = syntaxTree.updateWith(newModulePart);
 
         OUT.println("__________________________________________________");
         OUT.println("__________________________________________________");
         OUT.println();
-        OUT.println(syntaxTree.toString());
+        OUT.println(newSyntaxTree.toString());
         OUT.println();
         OUT.println("__________________________________________________");
         OUT.println("__________________________________________________");
