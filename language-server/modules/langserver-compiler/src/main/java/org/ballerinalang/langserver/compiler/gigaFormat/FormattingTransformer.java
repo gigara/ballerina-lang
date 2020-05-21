@@ -21,13 +21,16 @@ public class FormattingTransformer extends NodeTransformer<Node> {
 
     @Override
     protected Node transformSyntaxNode(Node node) {
-        return node;
+        return node.apply(this);
     }
 
     @Override
     public Node transform(ModulePartNode modulePartNode) {
         NodeList<ImportDeclarationNode> imports = modulePartNode.imports();
-        NodeList<ModuleMemberDeclarationNode> members = formatNodeList(modulePartNode.members());
+        for (ModuleMemberDeclarationNode member : modulePartNode.members()) {
+            transformSyntaxNode(member);
+        }
+        NodeList<ModuleMemberDeclarationNode> members = modulePartNode.members();
         Token eofToken = modulePartNode.eofToken();
         return modulePartNode.modify(
                 imports,
@@ -37,15 +40,23 @@ public class FormattingTransformer extends NodeTransformer<Node> {
 
     @Override
     public Node transform(FunctionDefinitionNode functionDefinitionNode) {
-        Token functionKeyword = functionDefinitionNode.functionKeyword();
+        IdentifierToken functionKeyword = functionDefinitionNode.functionName();
 
         MinutiaeList leadingMinutiaeList = functionKeyword.leadingMinutiae();
         MinutiaeList trailingMinutiaeList = functionKeyword.trailingMinutiae();
 
-        return functionDefinitionNode
-                .modify()
-                .withFunctionKeyword(functionKeyword)
-                .apply();
+        Minutiae commentMinutiae = NodeFactory.createCommentMinutiae("// This is a sample comment");
+
+        MinutiaeList newMinutiaeList = leadingMinutiaeList.add(commentMinutiae);
+
+        FunctionDefinitionNode newFunctionDefinitionNode = functionDefinitionNode
+                .modify(functionDefinitionNode.metadata(),
+                        functionDefinitionNode.visibilityQualifier().orElse(null),
+                        functionDefinitionNode.functionKeyword().modify(newMinutiaeList, trailingMinutiaeList),
+                        functionDefinitionNode.functionName(),
+                        functionDefinitionNode.functionSignature(),
+                        functionDefinitionNode.functionBody());
+        return newFunctionDefinitionNode;
     }
 
     @Override
