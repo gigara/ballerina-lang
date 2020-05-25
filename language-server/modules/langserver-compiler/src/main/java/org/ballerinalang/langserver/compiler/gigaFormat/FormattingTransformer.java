@@ -14,22 +14,62 @@ public class FormattingTransformer extends TreeModifier {
         Token functionSignatureOpenPara = getToken(functionSignatureNode.openParenToken());
         Token functionSignatureClosePara = getToken(functionSignatureNode.closeParenToken());
 
+        FunctionBodyNode functionBodyNode = this.modifyNode(functionDefinitionNode.functionBody());
+
         return functionDefinitionNode.modify()
                 .withFunctionKeyword(formatToken(functionKeyword, 0, 1))
                 .withFunctionName((IdentifierToken) formatToken(functionName, 0, 0))
                 .withFunctionSignature(functionSignatureNode.modify(functionSignatureOpenPara, functionSignatureNode.parameters(), functionSignatureClosePara, null))
-                .withFunctionBody(functionDefinitionNode.functionBody())
+                .withFunctionBody(functionBodyNode)
               .apply();
     }
 
     @Override
     public FunctionBodyBlockNode transform(FunctionBodyBlockNode functionBodyBlockNode) {
 
-        Token functionBodyOpenBrace = functionBodyBlockNode.openBraceToken();
-        Token functionBodyCloseBrace = functionBodyBlockNode.closeBraceToken();
+        Token functionBodyOpenBrace = getToken(functionBodyBlockNode.openBraceToken());
+        Token functionBodyCloseBrace = getToken(functionBodyBlockNode.closeBraceToken());
+
+        NodeList<StatementNode> statements = functionBodyBlockNode.statements();
+        for (StatementNode statement : functionBodyBlockNode.statements()) {
+            this.modifyNode(statement);
+        }
 
         return functionBodyBlockNode.modify()
                 .withOpenBraceToken(formatToken(functionBodyOpenBrace, 1, 0))
+                .withCloseBraceToken(formatToken(functionBodyCloseBrace, 0, 0))
+                .withStatements(statements)
+                .apply();
+    }
+
+    @Override
+    public ExpressionStatementNode transform(ExpressionStatementNode expressionStatementNode) {
+        ExpressionNode expression = this.modifyNode(expressionStatementNode.expression());
+        Token semicolonToken = expressionStatementNode.semicolonToken();
+
+        return expressionStatementNode.modify()
+                .withExpression(expression)
+                .withSemicolonToken(formatToken(semicolonToken, 0, 0))
+                .apply();
+    }
+
+    @Override
+    public FunctionCallExpressionNode transform(FunctionCallExpressionNode functionCallExpressionNode) {
+        Node functionName = this.modifyNode(functionCallExpressionNode.functionName());
+
+        return functionCallExpressionNode.modify()
+                .withFunctionName(functionName)
+                .apply();
+    }
+
+    @Override
+    public QualifiedNameReferenceNode transform(QualifiedNameReferenceNode qualifiedNameReferenceNode) {
+        Token modulePrefix = getToken(qualifiedNameReferenceNode.modulePrefix());
+        Token identifier = getToken(qualifiedNameReferenceNode.identifier());
+
+        return qualifiedNameReferenceNode.modify()
+                .withModulePrefix(formatToken(modulePrefix, 0, 0))
+                .withIdentifier((IdentifierToken) formatToken(identifier, 0, 0))
                 .apply();
     }
 
