@@ -1,6 +1,23 @@
 package org.ballerinalang.langserver.compiler.gigaFormat;
 
-import io.ballerinalang.compiler.syntax.tree.*;
+import io.ballerinalang.compiler.syntax.tree.ExpressionNode;
+import io.ballerinalang.compiler.syntax.tree.ExpressionStatementNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionArgumentNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionBodyBlockNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionBodyNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionCallExpressionNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionDefinitionNode;
+import io.ballerinalang.compiler.syntax.tree.FunctionSignatureNode;
+import io.ballerinalang.compiler.syntax.tree.IdentifierToken;
+import io.ballerinalang.compiler.syntax.tree.Minutiae;
+import io.ballerinalang.compiler.syntax.tree.MinutiaeList;
+import io.ballerinalang.compiler.syntax.tree.Node;
+import io.ballerinalang.compiler.syntax.tree.NodeFactory;
+import io.ballerinalang.compiler.syntax.tree.NodeList;
+import io.ballerinalang.compiler.syntax.tree.QualifiedNameReferenceNode;
+import io.ballerinalang.compiler.syntax.tree.StatementNode;
+import io.ballerinalang.compiler.syntax.tree.Token;
+import io.ballerinalang.compiler.syntax.tree.TreeModifier;
 
 public class FormattingTransformer extends TreeModifier {
     private final MinutiaeList EMPTY_SPACE = MinutiaeList.emptyList();
@@ -17,11 +34,13 @@ public class FormattingTransformer extends TreeModifier {
         FunctionBodyNode functionBodyNode = this.modifyNode(functionDefinitionNode.functionBody());
 
         return functionDefinitionNode.modify()
-                .withFunctionKeyword(formatToken(functionKeyword, 0, 1))
-                .withFunctionName((IdentifierToken) formatToken(functionName, 0, 0))
-                .withFunctionSignature(functionSignatureNode.modify(functionSignatureOpenPara, functionSignatureNode.parameters(), functionSignatureClosePara, null))
+                .withFunctionKeyword(formatToken(functionKeyword, 0, 0, 0))
+                .withFunctionName((IdentifierToken) formatToken(functionName, 0, 0, 0))
+                .withFunctionSignature(functionSignatureNode
+                        .modify(functionSignatureOpenPara, functionSignatureNode.parameters(),
+                                functionSignatureClosePara, null))
                 .withFunctionBody(functionBodyNode)
-              .apply();
+                .apply();
     }
 
     @Override
@@ -30,14 +49,11 @@ public class FormattingTransformer extends TreeModifier {
         Token functionBodyOpenBrace = getToken(functionBodyBlockNode.openBraceToken());
         Token functionBodyCloseBrace = getToken(functionBodyBlockNode.closeBraceToken());
 
-        NodeList<StatementNode> statements = functionBodyBlockNode.statements();
-        for (StatementNode statement : functionBodyBlockNode.statements()) {
-            this.modifyNode(statement);
-        }
+        NodeList<StatementNode> statements = this.modifyNodeList(functionBodyBlockNode.statements());
 
         return functionBodyBlockNode.modify()
-                .withOpenBraceToken(formatToken(functionBodyOpenBrace, 1, 0))
-                .withCloseBraceToken(formatToken(functionBodyCloseBrace, 0, 0))
+                .withOpenBraceToken(formatToken(functionBodyOpenBrace, 1, 0, 0))
+                .withCloseBraceToken(formatToken(functionBodyCloseBrace, 0, 0, 0))
                 .withStatements(statements)
                 .apply();
     }
@@ -49,16 +65,23 @@ public class FormattingTransformer extends TreeModifier {
 
         return expressionStatementNode.modify()
                 .withExpression(expression)
-                .withSemicolonToken(formatToken(semicolonToken, 0, 0))
+                .withSemicolonToken(formatToken(semicolonToken, 0, 0, 0))
                 .apply();
     }
 
     @Override
     public FunctionCallExpressionNode transform(FunctionCallExpressionNode functionCallExpressionNode) {
         Node functionName = this.modifyNode(functionCallExpressionNode.functionName());
+        Token functionCallOpenPara = getToken(functionCallExpressionNode.openParenToken());
+        Token functionCallClosePara = getToken(functionCallExpressionNode.closeParenToken());
+        NodeList<FunctionArgumentNode> arguments = this.modifyNodeList(functionCallExpressionNode.arguments());
+        ;
 
         return functionCallExpressionNode.modify()
                 .withFunctionName(functionName)
+                .withOpenParenToken(formatToken(functionCallOpenPara, 0, 0, 0))
+                .withCloseParenToken(formatToken(functionCallClosePara, 0, 0, 0))
+                .withArguments(arguments)
                 .apply();
     }
 
@@ -68,28 +91,30 @@ public class FormattingTransformer extends TreeModifier {
         Token identifier = getToken(qualifiedNameReferenceNode.identifier());
 
         return qualifiedNameReferenceNode.modify()
-                .withModulePrefix(formatToken(modulePrefix, 0, 0))
-                .withIdentifier((IdentifierToken) formatToken(identifier, 0, 0))
+                .withModulePrefix(formatToken(modulePrefix, 4, 0, 1))
+                .withIdentifier((IdentifierToken) formatToken(identifier, 0, 0, 0))
                 .apply();
     }
 
-    private Token formatToken(Token token, int leadingSpaces, int trailingSpaces) {
+    private Token formatToken(Token token, int leadingSpaces, int trailingSpaces, int newLines) {
         MinutiaeList leadingMinutiaeList = token.leadingMinutiae();
         MinutiaeList trailingMinutiaeList = token.trailingMinutiae();
 
-        MinutiaeList newLeadingMinutiaeList = modifyMinutiaeList(leadingMinutiaeList, leadingSpaces);
-        MinutiaeList newTrailingMinutiaeList = modifyMinutiaeList(trailingMinutiaeList, trailingSpaces);
+        MinutiaeList newLeadingMinutiaeList = modifyMinutiaeList(leadingMinutiaeList, leadingSpaces, newLines);
 
-        return token.modify(newLeadingMinutiaeList, newTrailingMinutiaeList);
+        return token.modify(newLeadingMinutiaeList, trailingMinutiaeList);
     }
 
-    private MinutiaeList modifyMinutiaeList(MinutiaeList minutiaeList, int spaces) {
-        Minutiae minutiae = NodeFactory.createWhitespaceMinutiae(getWhiteSpaces(spaces));
+    private MinutiaeList modifyMinutiaeList(MinutiaeList minutiaeList, int spaces, int newLines) {
+        Minutiae minutiae = NodeFactory.createWhitespaceMinutiae(getWhiteSpaces(spaces, newLines));
         return minutiaeList.add(minutiae);
     }
 
-    private String getWhiteSpaces(int column) {
+    private String getWhiteSpaces(int column, int newLines) {
         StringBuilder whiteSpaces = new StringBuilder();
+        for (int i = 0; i <= (newLines - 1); i++) {
+            whiteSpaces.append("\n");
+        }
         for (int i = 0; i <= (column - 1); i++) {
             whiteSpaces.append(" ");
         }
